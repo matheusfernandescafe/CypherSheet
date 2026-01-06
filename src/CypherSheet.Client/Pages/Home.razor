@@ -22,17 +22,14 @@ else if (character == null)
 else
 {
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4" Position="Position.Bottom" Color="Color.Surface" SliderColor="Color.Primary" ActiveTabClass="mud-text-primary" Centered="true">
-        <MudTabPanel Icon="@Icons.Material.Filled.Storage" ToolTip="Database">
-             <DatabaseView Character="character" />
+        <MudTabPanel Icon="@Icons.Material.Filled.Person" ToolTip="Stats">
+            <StatsView Character="character" OnSave="SaveCharacter" />
         </MudTabPanel>
         <MudTabPanel Icon="@Icons.Material.Filled.SportsMma" ToolTip="Skills">
             <SkillsView Character="character" />
         </MudTabPanel>
         <MudTabPanel Icon="@Icons.Material.Filled.AutoAwesome" ToolTip="Abilities">
             <AbilitiesView Character="character" />
-        </MudTabPanel>
-        <MudTabPanel Icon="@Icons.Material.Filled.Person" ToolTip="Stats">
-            <StatsView Character="character" OnSave="SaveCharacter" />
         </MudTabPanel>
         <MudTabPanel Icon="@Icons.Material.Filled.ChangeHistory" ToolTip="Cyphers">
             <CyphersView Character="character" />
@@ -42,6 +39,11 @@ else
         </MudTabPanel>
         <MudTabPanel Icon="@Icons.Material.Filled.EditNote" ToolTip="Notes">
             <NotesView Character="character" />
+        </MudTabPanel>
+        <MudTabPanel Icon="@Icons.Material.Filled.Groups" ToolTip="Personagens" OnClick="@(() => Navigation.NavigateTo("/"))">
+             <div class="d-flex justify-center align-center pa-4">
+                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/"))">Trocar Personagem</MudButton>
+             </div>
         </MudTabPanel>
     </MudTabs>
 }
