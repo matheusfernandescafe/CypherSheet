@@ -1,0 +1,59 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject IDialogService DialogService
+@inject ICharacterRepository Repository
+
+<MudStack Spacing="2">
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddItem">Adicionar Item</MudButton>
+    
+    @if (!Character.Equipment.Any())
+    {
+        <MudText Typo="Typo.body2" Class="pa-4">Mochila varia.</MudText>
+    }
+    else
+    {
+        <MudTable Items="@Character.Equipment" Hover="true" Dense="true" Elevation="0">
+            <HeaderContent>
+                <MudTh>Nome</MudTh>
+                <MudTh>Qtd</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Nome">@context.Name</MudTd>
+                <MudTd DataLabel="Qtd">@context.Quantity</MudTd>
+                <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveItem(context))" />
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public Character Character { get; set; }
+
+    private async Task AddItem()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var result = await DialogService.Show<AddItemDialog>("Novo Item", parameters, options).Result;
+        
+        if (!result.Canceled)
+        {
+             await SaveCharacter();
+             StateHasChanged();
+        }
+    }
+
+    private async Task RemoveItem(Item item)
+    {
+        Character.Equipment.Remove(item);
+        await SaveCharacter();
+    }
+    
+    private async Task SaveCharacter()
+    {
+        await Repository.SaveCharacterAsync(Character);
+    }
+}

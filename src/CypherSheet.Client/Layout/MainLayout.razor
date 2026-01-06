@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider Theme="_theme" />
+<MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
@@ -8,11 +9,28 @@
     <MudAppBar Elevation="1">
         <MudText Typo="Typo.h5" Class="ml-3">Cypher Sheet</MudText>
         <MudSpacer />
-        <!-- Future settings or menu -->
     </MudAppBar>
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.Small" Class="mt-4">
+        <MudContainer MaxWidth="MaxWidth.Small" Class="mt-4 pb-16">
             @Body
         </MudContainer>
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private MudTheme _theme = new MudTheme()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            Primary = new MudBlazor.Utilities.MudColor("#4B95EC"),
+            Surface = new MudBlazor.Utilities.MudColor("#343434"),
+            Background = new MudBlazor.Utilities.MudColor("#191919"),
+            AppbarBackground = new MudBlazor.Utilities.MudColor("#191919"), 
+            DrawerBackground = new MudBlazor.Utilities.MudColor("#191919"), 
+            ActionDefault = Colors.Gray.Lighten3,
+            TextPrimary = Colors.Shades.White,
+            TextSecondary = Colors.Gray.Lighten3,
+            Error = new MudBlazor.Utilities.MudColor("#BD4949")
+        }
+    };
+}

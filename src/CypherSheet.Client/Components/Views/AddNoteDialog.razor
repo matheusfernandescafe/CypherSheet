@@ -1,0 +1,36 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="title" Label="Título" AutoFocus="true" />
+        <MudTextField @bind-Value="content" Label="Conteúdo" Lines="5" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Character Character { get; set; }
+
+    private string title;
+    private string content;
+
+    void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            Snackbar.Add("Título é obrigatório", Severity.Warning);
+            return;
+        }
+        
+        Character.Notes.Add(new Note { Title = title, Content = content });
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}

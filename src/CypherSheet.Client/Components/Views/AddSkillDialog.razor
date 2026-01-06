@@ -1,0 +1,53 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="skillName" Label="Nome da Perícia" AutoFocus="true" />
+        <MudSelect @bind-Value="skillLevel" Label="Nível">
+            <MudSelectItem Value="SkillLevel.Inability">Inabilidade</MudSelectItem>
+            <MudSelectItem Value="SkillLevel.Trained">Treinado</MudSelectItem>
+            <MudSelectItem Value="SkillLevel.Specialized">Especializado</MudSelectItem>
+        </MudSelect>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Character Character { get; set; }
+
+    private string skillName;
+    private SkillLevel skillLevel = SkillLevel.Trained;
+
+    void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(skillName))
+        {
+            Snackbar.Add("Nome é obrigatório", Severity.Warning);
+            return;
+        }
+
+        if (Character == null)
+        {
+            Console.WriteLine("AddSkillDialog: Character is NULL");
+            Snackbar.Add("Erro interno: Personagem não carregado.", Severity.Error);
+            return;
+        }
+
+        if (Character.Skills == null)
+        {
+            Console.WriteLine("AddSkillDialog: Skills list is NULL. Initializing...");
+            Character.Skills = new List<Skill>();
+        }
+        
+        Character.Skills.Add(new Skill { Name = skillName, Level = skillLevel });
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}

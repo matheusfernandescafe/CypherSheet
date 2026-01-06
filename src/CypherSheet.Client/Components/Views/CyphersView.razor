@@ -1,0 +1,58 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject IDialogService DialogService
+@inject ICharacterRepository Repository
+
+<MudStack Spacing="2">
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddCypher">Adicionar Cypher</MudButton>
+    
+    @if (!Character.Cyphers.Any())
+    {
+        <MudText Typo="Typo.body2" Class="pa-4">Nenhum Cypher encontrado.</MudText>
+    }
+    else
+    {
+        @foreach (var cypher in Character.Cyphers)
+        {
+            <MudCard Elevation="2" Class="mb-2">
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">@cypher.Name <MudText Inline="true" Typo="Typo.caption" Class="ml-2">Nível @cypher.Level</MudText></MudText>
+                    <MudText Typo="Typo.body2">@cypher.Effect</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                     <MudSpacer />
+                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveCypher(cypher))" />
+                </MudCardActions>
+            </MudCard>
+        }
+    }
+</MudStack>
+
+@code {
+    [Parameter] public Character Character { get; set; }
+
+    private async Task AddCypher()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var result = await DialogService.Show<AddCypherDialog>("Novo Cypher", parameters, options).Result;
+        
+        if (!result.Canceled)
+        {
+             await SaveCharacter();
+             StateHasChanged();
+        }
+    }
+
+    private async Task RemoveCypher(Cypher cypher)
+    {
+        Character.Cyphers.Remove(cypher);
+        await SaveCharacter();
+    }
+    
+    private async Task SaveCharacter()
+    {
+        await Repository.SaveCharacterAsync(Character);
+    }
+}

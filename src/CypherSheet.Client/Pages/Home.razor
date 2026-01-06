@@ -1,108 +1,69 @@
-﻿@page "/"
+﻿@page "/character/{Id:guid}"
 @using CypherSheet.Domain
 @using CypherSheet.Storage
+@using CypherSheet.Client.Components.Views
 @inject ICharacterRepository Repository
 @inject ISnackbar Snackbar
+@inject NavigationManager Navigation
 
-<PageTitle>Cypher Sheet</PageTitle>
+<PageTitle>@(character?.Name ?? "Carregando...") - Cypher Sheet</PageTitle>
 
-@if (character == null)
+@if (isLoading)
 {
-    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    <MudContainer Class="d-flex justify-center align-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else if (character == null)
+{
+    <MudAlert Severity="Severity.Error">Personagem não encontrado.</MudAlert>
+    <MudButton Variant="Variant.Text" OnClick="@(() => Navigation.NavigateTo("/"))">Voltar</MudButton>
 }
 else
 {
-    <MudStack Spacing="2">
-        <MudCard Elevation="3">
-            <MudCardContent>
-                <MudText Typo="Typo.h5">@character.Name</MudText>
-                <MudText Typo="Typo.body2">@character.Descriptor @character.Type que @character.Focus</MudText>
-                <MudText Typo="Typo.body2">Tier @character.Tier | XP: @character.XP</MudText>
-                
-                <MudAlert Severity="@GetDamageTrackSeverity()" Class="mt-2" Dense="true">
-                    Estado: @character.GetDamageTrack()
-                </MudAlert>
-            </MudCardContent>
-        </MudCard>
-
-        <PoolComponent Pool="@character.Might" OnChange="SaveCharacter" />
-        <PoolComponent Pool="@character.Speed" OnChange="SaveCharacter" />
-        <PoolComponent Pool="@character.Intellect" OnChange="SaveCharacter" />
-        
-        <MudCard Elevation="3" Class="pa-2">
-            <MudCardContent>
-                <MudText Typo="Typo.h6">Recovery</MudText>
-                <MudStack Row="true" Justify="Justify.SpaceBetween">
-                    <MudCheckBox T="bool" Value="@character.Recovery.OneActionUsed" ValueChanged="@((v) => UpdateRecovery(v, 1))" Label="1 Action" Dense="true" Color="Color.Success" />
-                    <MudCheckBox T="bool" Value="@character.Recovery.TenMinutesUsed" ValueChanged="@((v) => UpdateRecovery(v, 2))" Label="10 Mins" Dense="true" Color="Color.Success" />
-                </MudStack>
-                <MudStack Row="true" Justify="Justify.SpaceBetween">
-                     <MudCheckBox T="bool" Value="@character.Recovery.OneHourUsed" ValueChanged="@((v) => UpdateRecovery(v, 3))" Label="1 Hour" Dense="true" Color="Color.Success" />
-                     <MudCheckBox T="bool" Value="@character.Recovery.TenHoursUsed" ValueChanged="@((v) => UpdateRecovery(v, 4))" Label="10 Hours" Dense="true" Color="Color.Success" />
-                </MudStack>
-                 <MudButton Variant="Variant.Outlined" FullWidth="true" OnClick="ResetRecovery" Class="mt-2">Reset Recovery</MudButton>
-            </MudCardContent>
-        </MudCard>
-
-    </MudStack>
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4" Position="Position.Bottom" Color="Color.Surface" SliderColor="Color.Primary" ActiveTabClass="mud-text-primary" Centered="true">
+        <MudTabPanel Icon="@Icons.Material.Filled.Storage" ToolTip="Database">
+             <DatabaseView Character="character" />
+        </MudTabPanel>
+        <MudTabPanel Icon="@Icons.Material.Filled.SportsMma" ToolTip="Skills">
+            <SkillsView Character="character" />
+        </MudTabPanel>
+        <MudTabPanel Icon="@Icons.Material.Filled.AutoAwesome" ToolTip="Abilities">
+            <AbilitiesView Character="character" />
+        </MudTabPanel>
+        <MudTabPanel Icon="@Icons.Material.Filled.Person" ToolTip="Stats">
+            <StatsView Character="character" OnSave="SaveCharacter" />
+        </MudTabPanel>
+        <MudTabPanel Icon="@Icons.Material.Filled.ChangeHistory" ToolTip="Cyphers">
+            <CyphersView Character="character" />
+        </MudTabPanel>
+        <MudTabPanel Icon="@Icons.Material.Filled.Backpack" ToolTip="Equipment">
+            <EquipmentView Character="character" />
+        </MudTabPanel>
+        <MudTabPanel Icon="@Icons.Material.Filled.EditNote" ToolTip="Notes">
+            <NotesView Character="character" />
+        </MudTabPanel>
+    </MudTabs>
 }
 
 @code {
+    [Parameter] public Guid Id { get; set; }
+    
     private Character character;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        var characters = await Repository.GetAllCharactersAsync();
-        if (characters.Any())
-        {
-            character = characters.First();
-        }
-        else
-        {
-            character = new Character 
-            { 
-                Name = "Explorador Padrão",
-                Descriptor = "Resiliente",
-                Type = "Glaive",
-                Focus = "Domina Bestas"
-            };
-            await Repository.SaveCharacterAsync(character);
-        }
-    }
-
-    private Severity GetDamageTrackSeverity()
-    {
-        return character.GetDamageTrack() switch
-        {
-            DamageTrack.Hale => Severity.Success,
-            DamageTrack.Impaired => Severity.Warning,
-            DamageTrack.Debilitated => Severity.Error,
-            DamageTrack.Dead => Severity.Error,
-            _ => Severity.Normal
-        };
+        isLoading = true;
+        character = await Repository.GetCharacterAsync(Id);
+        isLoading = false;
     }
 
     private async Task SaveCharacter()
     {
-        await Repository.SaveCharacterAsync(character);
-        // Snackbar.Add("Salvo", Severity.Info, config => { config.ShowCloseIcon = false; config.VisibleStateDuration = 1000; });
-    }
-    
-    private async Task UpdateRecovery(bool value, int type)
-    {
-        switch (type)
+        if (character != null)
         {
-            case 1: character.Recovery.OneActionUsed = value; break;
-            case 2: character.Recovery.TenMinutesUsed = value; break;
-            case 3: character.Recovery.OneHourUsed = value; break;
-            case 4: character.Recovery.TenHoursUsed = value; break;
+            await Repository.SaveCharacterAsync(character);
         }
-        await SaveCharacter();
-    }
-    
-    private async Task ResetRecovery()
-    {
-        character.Recovery.Reset();
-        await SaveCharacter();
     }
 }

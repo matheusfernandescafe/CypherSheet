@@ -12,9 +12,16 @@ namespace CypherSheet.Domain
         Dead
     }
 
+    public enum SkillLevel
+    {
+        Inability,
+        Trained,
+        Specialized
+    }
+
     public class Character
     {
-        public Guid Id { get; private set; } = Guid.NewGuid();
+        public Guid Id { get; set; } = Guid.NewGuid();
         public string Name { get; set; } = "Novo Personagem";
         public string Descriptor { get; set; } = "";
         public string Type { get; set; } = "";
@@ -22,14 +29,27 @@ namespace CypherSheet.Domain
         public int Tier { get; set; } = 1;
         public int XP { get; set; } = 0;
 
-        public Pool Might { get; private set; }
-        public Pool Speed { get; private set; }
-        public Pool Intellect { get; private set; }
+        public Pool Might { get; set; }
+        public Pool Speed { get; set; }
+        public Pool Intellect { get; set; }
 
-        public List<Ability> Abilities { get; private set; } = new List<Ability>();
-        public Recovery Recovery { get; private set; } = new Recovery();
+        private List<Ability> _abilities = new();
+        public List<Ability> Abilities { get => _abilities; set => _abilities = value ?? new(); }
+
+        private List<Skill> _skills = new();
+        public List<Skill> Skills { get => _skills; set => _skills = value ?? new(); }
+
+        private List<Cypher> _cyphers = new();
+        public List<Cypher> Cyphers { get => _cyphers; set => _cyphers = value ?? new(); }
+
+        private List<Item> _equipment = new();
+        public List<Item> Equipment { get => _equipment; set => _equipment = value ?? new(); }
+
+        private List<Note> _notes = new();
+        public List<Note> Notes { get => _notes; set => _notes = value ?? new(); }
         
-        // Needed for serialization
+        public Recovery Recovery { get; set; } = new Recovery();
+        
         public Character() 
         {
             Might = new Pool("Might", 10);
@@ -67,7 +87,35 @@ namespace CypherSheet.Domain
         public string Name { get; set; } = "";
         public string Cost { get; set; } = "";
         public string Description { get; set; } = "";
-        public string Source { get; set; } = ""; // Type/Focus/Descriptor
+        public string Source { get; set; } = ""; 
+    }
+
+    public class Skill
+    {
+        public string Name { get; set; } = "";
+        public SkillLevel Level { get; set; } = SkillLevel.Trained;
+        public string Source { get; set; } = "";
+    }
+
+    public class Cypher
+    {
+        public string Name { get; set; } = "";
+        public string Level { get; set; } = "";
+        public string Effect { get; set; } = "";
+        public string Source { get; set; } = "";
+    }
+
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+        public int Quantity { get; set; } = 1;
+    }
+
+    public class Note
+    {
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
     }
 
     public class Recovery
@@ -87,7 +135,7 @@ namespace CypherSheet.Domain
         
         public int GetRollBonus(int tier)
         {
-            return tier; // Simplification, usually d6 + tier
+            return tier;
         }
     }
 }

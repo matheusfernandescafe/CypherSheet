@@ -1,0 +1,65 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject IDialogService DialogService
+@inject ICharacterRepository Repository
+
+<MudStack Spacing="2">
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddAbility">Adicionar Habilidade</MudButton>
+    
+    @if (!Character.Abilities.Any())
+    {
+        <MudText Typo="Typo.body2" Class="pa-4">Nenhuma habilidade adicionada.</MudText>
+    }
+    else
+    {
+        <MudExpansionPanels MultiExpansion="true">
+            @foreach (var ability in Character.Abilities)
+            {
+                <MudExpansionPanel Text="@ability.Name">
+                    <TitleContent>
+                        <div class="d-flex justify-space-between flex-grow-1 gap-4">
+                            <MudText Typo="Typo.body1">@ability.Name</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@ability.Cost</MudText>
+                        </div>
+                    </TitleContent>
+                    <ChildContent>
+                        <MudText Typo="Typo.body2">@ability.Description</MudText>
+                        <MudDivider Class="my-2"/>
+                        <MudStack Row="true" Justify="Justify.FlexEnd">
+                             <MudButton Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="@(() => RemoveAbility(ability))">Remover</MudButton>
+                        </MudStack>
+                    </ChildContent>
+                </MudExpansionPanel>
+            }
+        </MudExpansionPanels>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public Character Character { get; set; }
+
+    private async Task AddAbility()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var result = await DialogService.Show<AddAbilityDialog>("Nova Habilidade", parameters, options).Result;
+        
+        if (!result.Canceled)
+        {
+             await SaveCharacter();
+             StateHasChanged();
+        }
+    }
+
+    private async Task RemoveAbility(Ability ability)
+    {
+        Character.Abilities.Remove(ability);
+        await SaveCharacter();
+    }
+    
+    private async Task SaveCharacter()
+    {
+        await Repository.SaveCharacterAsync(Character);
+    }
+}

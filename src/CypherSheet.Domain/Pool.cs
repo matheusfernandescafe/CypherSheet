@@ -4,10 +4,10 @@ namespace CypherSheet.Domain
 {
     public class Pool
     {
-        public string Name { get; private set; }
-        public int Max { get; private set; }
-        public int Current { get; private set; }
-        public int Edge { get; private set; }
+        public string Name { get; set; }
+        public int Max { get; set; }
+        public int Current { get; set; }
+        public int Edge { get; set; }
 
         public Pool(string name, int max, int edge = 0)
         {
@@ -20,7 +20,8 @@ namespace CypherSheet.Domain
             Edge = edge;
         }
         
-        // Constructor for persistence/serialization if needed
+        public Pool() { }
+
         public Pool(string name, int max, int current, int edge)
         {
             Name = name;

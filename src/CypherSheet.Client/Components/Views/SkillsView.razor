@@ -1,0 +1,91 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject IDialogService DialogService
+@inject ICharacterRepository Repository
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2">
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddSkill">Adicionar Perícia</MudButton>
+    
+    @if (!Character.Skills.Any())
+    {
+        <MudText Typo="Typo.body2" Class="pa-4">Nenhuma perícia adicionada.</MudText>
+    }
+    else
+    {
+        <MudList T="Skill" ReadOnly="false">
+            @foreach (var skill in Character.Skills)
+            {
+                <MudListItem Dense="true">
+                     <div class="d-flex align-center justify-space-between width-100">
+                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                             <MudText>@skill.Name</MudText>
+                             <MudChip T="string" Color="@GetColor(skill.Level)" Size="Size.Small" OnClick="@(() => ToggleLevel(skill))">@GetLabel(skill.Level)</MudChip>
+                         </MudStack>
+                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveSkill(skill))" />
+                     </div>
+                </MudListItem>
+                <MudDivider />
+            }
+        </MudList>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public Character Character { get; set; }
+
+    private async Task AddSkill()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        // Passando "parameters" corretamente
+        var result = await DialogService.Show<AddSkillDialog>("Nova Perícia", parameters, options).Result;
+        
+        if (!result.Canceled)
+        {
+             await SaveCharacter();
+             StateHasChanged();
+        }
+    }
+
+    private async Task RemoveSkill(Skill skill)
+    {
+        Character.Skills.Remove(skill);
+        await SaveCharacter();
+    }
+
+    private async Task ToggleLevel(Skill skill)
+    {
+        skill.Level = skill.Level switch
+        {
+            SkillLevel.Inability => SkillLevel.Trained,
+            SkillLevel.Trained => SkillLevel.Specialized,
+            SkillLevel.Specialized => SkillLevel.Inability,
+            _ => SkillLevel.Trained
+        };
+        await SaveCharacter();
+    }
+    
+    private async Task SaveCharacter()
+    {
+        await Repository.SaveCharacterAsync(Character);
+        // Feedack optional
+    }
+
+    private Color GetColor(SkillLevel level) => level switch
+    {
+        SkillLevel.Inability => Color.Error,
+        SkillLevel.Trained => Color.Success,
+        SkillLevel.Specialized => Color.Warning,
+        _ => Color.Default
+    };
+
+    private string GetLabel(SkillLevel level) => level switch
+    {
+        SkillLevel.Inability => "Inabilidade",
+        SkillLevel.Trained => "Treinado",
+        SkillLevel.Specialized => "Especializado",
+        _ => ""
+    };
+}
