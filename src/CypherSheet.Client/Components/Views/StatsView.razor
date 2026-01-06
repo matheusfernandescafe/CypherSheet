@@ -78,14 +78,16 @@ else
                 </MudGrid>
                 
                 <!-- Custom Roll Bonus Field -->
-                <MudNumericField @bind-Value="Character.Recovery.CustomRollBonus" 
-                               Label="1D6 +" 
-                               Variant="Variant.Outlined" 
-                               Min="0" 
-                               T="int" 
-                               OnBlur="SaveCharacter" 
-                               HelperText="Bônus customizado para recuperação"
-                               Class="mt-3" />
+                <div class="d-flex align-center gap-2 mt-3">
+                    <MudText Typo="Typo.body1" Style="white-space: nowrap;">1D6 +</MudText>
+                    <MudNumericField @bind-Value="Character.Recovery.CustomRollBonus" 
+                                   Variant="Variant.Outlined" 
+                                   Min="0" 
+                                   T="int" 
+                                   OnBlur="SaveCharacter" 
+                                   Placeholder="0"
+                                   Style="width: 60px;" />
+                </div>
             </MudCardContent>
         </MudCard>
 
