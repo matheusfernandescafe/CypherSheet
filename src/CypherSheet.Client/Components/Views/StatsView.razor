@@ -22,6 +22,17 @@ else
             </MudCardContent>
         </MudCard>
 
+        <!-- Roll Button -->
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Casino"
+                   FullWidth="true"
+                   Size="Size.Large"
+                   OnClick="OpenRollDialog"
+                   Class="mb-3">
+            Fazer Rolagem
+        </MudButton>
+
         <PoolComponent Pool="@Character.Might" OnChange="SaveCharacter" />
         <PoolComponent Pool="@Character.Speed" OnChange="SaveCharacter" />
         <PoolComponent Pool="@Character.Intellect" OnChange="SaveCharacter" />
@@ -116,7 +127,7 @@ else
 }
 
 @code {
-    [Parameter] public Character Character { get; set; }
+    [Parameter] public Character Character { get; set; } = null!;
     [Parameter] public EventCallback<Character> CharacterChanged { get; set; }
     [Parameter] public EventCallback OnSave { get; set; }
 
@@ -127,10 +138,10 @@ else
         var parameters = new DialogParameters { ["Character"] = Character };
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         
-        var dialog = DialogService.Show<EditCharacterDialog>("Editar Personagem", parameters, options);
+        var dialog = await DialogService.ShowAsync<EditCharacterDialog>("Editar Personagem", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result != null && !result.Canceled)
         {
             await SaveCharacter();
         }
@@ -166,10 +177,10 @@ else
         };
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         
-        var dialog = DialogService.Show<RecoveryDialog>("Recovery", parameters, options);
+        var dialog = await DialogService.ShowAsync<RecoveryDialog>("Recovery", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result != null && !result.Canceled)
         {
             await SaveCharacter();
         }
@@ -193,5 +204,26 @@ else
             Character.Debilitated = value;
         }
         await SaveCharacter();
+    }
+    
+    private async Task OpenRollDialog()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions 
+        { 
+            CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<RollDialog>("Calculadora de Rolagem", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await SaveCharacter();
+            StateHasChanged();
+        }
     }
 }
