@@ -33,6 +33,12 @@ namespace CypherSheet.Domain
         public Pool Speed { get; set; }
         public Pool Intellect { get; set; }
 
+        public int Effort { get; set; } = 1;
+        public int Armor { get; set; } = 0;
+
+        public bool Impaired { get; set; } = false;
+        public bool Debilitated { get; set; } = false;
+
         private List<Ability> _abilities = new();
         public List<Ability> Abilities { get => _abilities; set => _abilities = value ?? new(); }
 

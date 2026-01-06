@@ -19,10 +19,6 @@ else
                 </div>
                 <MudText Typo="Typo.body2">@Character.Descriptor @Character.Type que @Character.Focus</MudText>
                 <MudText Typo="Typo.body2">Tier @Character.Tier | XP: @Character.XP</MudText>
-                
-                <MudAlert Severity="@GetDamageTrackSeverity()" Class="mt-2" Dense="true">
-                    Estado: @Character.GetDamageTrack()
-                </MudAlert>
             </MudCardContent>
         </MudCard>
 
@@ -45,6 +41,39 @@ else
             </MudCardContent>
         </MudCard>
 
+        <MudCard Elevation="3" Class="pa-2">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-2">Atributos Adicionais</MudText>
+                <MudStack Row="true" Spacing="2">
+                    <MudNumericField @bind-Value="Character.Effort" Label="Effort" Variant="Variant.Outlined" Min="0" T="int" OnBlur="SaveCharacter" FullWidth="true" />
+                    <MudNumericField @bind-Value="Character.Armor" Label="Armor" Variant="Variant.Outlined" Min="0" T="int" OnBlur="SaveCharacter" FullWidth="true" />
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+
+        <MudCard Elevation="3" Class="pa-3">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Marcador de Dano</MudText>
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="6">
+                        <MudCheckBox Value="@Character.Impaired" Label="Enfraquecido" Dense="true" Color="Color.Warning" T="bool" ValueChanged="@((v) => UpdateDamageTrack(v, true))" />
+                        <MudText Typo="Typo.caption" Class="ml-8">
+                            +1 Effort per level<br/>
+                            Ignore minor and major effect results on rolls<br/>
+                            Combat roll of 17-20 deals only +1 damage
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudCheckBox Value="@Character.Debilitated" Label="Debilitado" Dense="true" Color="Color.Error" T="bool" ValueChanged="@((v) => UpdateDamageTrack(v, false))" />
+                        <MudText Typo="Typo.caption" Class="ml-8">
+                            Can move only an immediate distance<br/>
+                            Cannot move if Speed Pool is 0
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
     </MudStack>
 }
 
@@ -53,19 +82,7 @@ else
     [Parameter] public EventCallback<Character> CharacterChanged { get; set; }
     [Parameter] public EventCallback OnSave { get; set; }
 
-    private Severity GetDamageTrackSeverity()
-    {
-        if (Character == null) return Severity.Normal;
-        
-        return Character.GetDamageTrack() switch
-        {
-            DamageTrack.Hale => Severity.Success,
-            DamageTrack.Impaired => Severity.Warning,
-            DamageTrack.Debilitated => Severity.Error,
-            DamageTrack.Dead => Severity.Error,
-            _ => Severity.Normal
-        };
-    }
+
 
     private async Task EditStats()
     {
@@ -101,6 +118,19 @@ else
     private async Task ResetRecovery()
     {
         Character.Recovery.Reset();
+        await SaveCharacter();
+    }
+    
+    private async Task UpdateDamageTrack(bool value, bool isImpaired)
+    {
+        if (isImpaired)
+        {
+            Character.Impaired = value;
+        }
+        else
+        {
+            Character.Debilitated = value;
+        }
         await SaveCharacter();
     }
 }
