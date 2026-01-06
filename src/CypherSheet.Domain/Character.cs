@@ -28,6 +28,60 @@ namespace CypherSheet.Domain
         public string Focus { get; set; } = "";
         public int Tier { get; set; } = 1;
         public int XP { get; set; } = 0;
+        public int TotalXPEarned { get; set; } = 0;
+        public int AdvancementsUsed { get; set; } = 0;
+        
+        // Character Advancement Options - Count how many times each was used
+        public int IncreaseCapabilitiesCount { get; set; } = 0;
+        public int MoveTowardPerfectionCount { get; set; } = 0;
+        public int ExtraEffortCount { get; set; } = 0;
+        public int SkillTrainingCount { get; set; } = 0;
+        public int OtherAdvancementCount { get; set; } = 0;
+
+        // Track advancement types used in current tier
+        public List<string> CurrentTierAdvancementTypes { get; set; } = new List<string>();
+
+        public int GetTotalAdvancementsUsed()
+        {
+            return IncreaseCapabilitiesCount + MoveTowardPerfectionCount + 
+                   ExtraEffortCount + SkillTrainingCount + OtherAdvancementCount;
+        }
+
+        public int GetCurrentTierAdvancementsUsed()
+        {
+            return CurrentTierAdvancementTypes.Count;
+        }
+
+        public bool CanUseAdvancementType(string advancementType)
+        {
+            // Can't use the same type twice in the same tier
+            return !CurrentTierAdvancementTypes.Contains(advancementType);
+        }
+
+        public void ResetAllProgressions()
+        {
+            XP = 0;
+            TotalXPEarned = 0;
+            Tier = 1;
+            IncreaseCapabilitiesCount = 0;
+            MoveTowardPerfectionCount = 0;
+            ExtraEffortCount = 0;
+            SkillTrainingCount = 0;
+            OtherAdvancementCount = 0;
+            CurrentTierAdvancementTypes.Clear();
+            Effort = 1; // Reset effort to base value
+        }
+
+        public void CheckTierAdvancement()
+        {
+            var currentTierAdvancements = GetCurrentTierAdvancementsUsed();
+            if (currentTierAdvancements >= 4)
+            {
+                Tier++;
+                // Reset advancement types for new tier
+                CurrentTierAdvancementTypes.Clear();
+            }
+        }
 
         public Pool Might { get; set; }
         public Pool Speed { get; set; }

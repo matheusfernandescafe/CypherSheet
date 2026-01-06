@@ -1,0 +1,394 @@
+@using CypherSheet.Domain
+@using MudBlazor
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-width: 600px;">
+            <MudStack Spacing="4">
+                <!-- Current XP Status -->
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-2">Status Atual</MudText>
+                        <MudGrid>
+                            <MudItem xs="3">
+                                <MudText Typo="Typo.body2" Class="text-center">
+                                    <strong>Tier</strong><br/>
+                                    <MudText Typo="Typo.h4" Color="Color.Info">@Character.Tier</MudText>
+                                </MudText>
+                            </MudItem>
+                            <MudItem xs="3">
+                                <MudText Typo="Typo.body2" Class="text-center">
+                                    <strong>XP Livre</strong><br/>
+                                    <MudText Typo="Typo.h4" Color="Color.Primary">@Character.XP</MudText>
+                                </MudText>
+                            </MudItem>
+                            <MudItem xs="3">
+                                <MudText Typo="Typo.body2" Class="text-center">
+                                    <strong>Avanços Usados</strong><br/>
+                                    <MudText Typo="Typo.h4" Color="Color.Secondary">@Character.GetTotalAdvancementsUsed()</MudText>
+                                </MudText>
+                            </MudItem>
+                            <MudItem xs="3">
+                                <MudText Typo="Typo.body2" Class="text-center">
+                                    <strong>XP Total</strong><br/>
+                                    <MudText Typo="Typo.h4" Color="Color.Success">@Character.TotalXPEarned</MudText>
+                                </MudText>
+                            </MudItem>
+                        </MudGrid>
+                        
+                        <!-- Progress to next tier -->
+                        <div class="mt-3">
+                            <MudText Typo="Typo.body2" Class="mb-1">Progresso para o próximo Tier:</MudText>
+                            <MudProgressLinear Color="Color.Primary" 
+                                             Value="@GetTierProgress()" 
+                                             Class="mb-1" />
+                            <MudText Typo="Typo.caption" Align="Align.Center">
+                                @Character.GetCurrentTierAdvancementsUsed() / 4 avanços
+                            </MudText>
+                        </div>
+                    </MudCardContent>
+                </MudCard>
+
+                <!-- Add/Spend XP -->
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-3">Gerenciar XP</MudText>
+                        <MudStack Row="true" Spacing="2" Class="mb-3">
+                            <MudNumericField @bind-Value="xpAmount" 
+                                           Label="Quantidade de XP" 
+                                           Variant="Variant.Outlined" 
+                                           Min="1" 
+                                           T="int" 
+                                           FullWidth="true" />
+                        </MudStack>
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Success" 
+                                     StartIcon="@Icons.Material.Filled.Add"
+                                     OnClick="AddXP"
+                                     FullWidth="true">
+                                Adicionar XP
+                            </MudButton>
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Warning" 
+                                     StartIcon="@Icons.Material.Filled.Remove"
+                                     OnClick="SpendXP"
+                                     Disabled="@(Character.XP < xpAmount)"
+                                     FullWidth="true">
+                                Gastar XP
+                            </MudButton>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+
+                <!-- Character Advancement -->
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-3">Avanços de Personagem</MudText>
+                        <MudText Typo="Typo.body2" Class="mb-3">
+                            Cada avanço custa 4 XP. Você precisa escolher 4 tipos DIFERENTES de avanço para avançar de tier.
+                        </MudText>
+                        
+                        @if (Character.CurrentTierAdvancementTypes.Any())
+                        {
+                            <MudAlert Severity="Severity.Info" Class="mb-3">
+                                <strong>Avanços usados neste tier (@Character.GetCurrentTierAdvancementsUsed()/4):</strong><br/>
+                                @string.Join(", ", Character.CurrentTierAdvancementTypes.Select(GetAdvancementTypeName))
+                                @if (Character.GetCurrentTierAdvancementsUsed() >= 4)
+                                {
+                                    <br/><strong>Tier completo! Você avançou para o Tier @Character.Tier!</strong>
+                                }
+                            </MudAlert>
+                        }
+                        
+                        <MudStack Spacing="3">
+                            <!-- Increase Capabilities -->
+                            <MudPaper Class="pa-3" Elevation="1">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.subtitle1">
+                                        <strong>Aumentar Capacidades</strong>
+                                    </MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                        Usado @Character.IncreaseCapabilitiesCount vez(es)
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.body2" Class="mb-2">
+                                    +4 pontos para distribuir entre os Pools de atributos
+                                </MudText>
+                                <MudButton Variant="Variant.Filled" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Small"
+                                         OnClick="() => ConfirmAdvancement(AdvancementType.IncreaseCapabilities)"
+                                         Disabled="@(Character.XP < 4 || IsAdvancementDisabled(AdvancementType.IncreaseCapabilities))"
+                                         FullWidth="true">
+                                    Usar Avanço (4 XP)
+                                </MudButton>
+                            </MudPaper>
+
+                            <!-- Move toward Perfection -->
+                            <MudPaper Class="pa-3" Elevation="1">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.subtitle1">
+                                        <strong>Buscar a Perfeição</strong>
+                                    </MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                        Usado @Character.MoveTowardPerfectionCount vez(es)
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.body2" Class="mb-2">
+                                    +1 no Edge de sua escolha
+                                </MudText>
+                                <MudButton Variant="Variant.Filled" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Small"
+                                         OnClick="() => ConfirmAdvancement(AdvancementType.MoveTowardPerfection)"
+                                         Disabled="@(Character.XP < 4 || IsAdvancementDisabled(AdvancementType.MoveTowardPerfection))"
+                                         FullWidth="true">
+                                    Usar Avanço (4 XP)
+                                </MudButton>
+                            </MudPaper>
+
+                            <!-- Extra Effort -->
+                            <MudPaper Class="pa-3" Elevation="1">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.subtitle1">
+                                        <strong>Esforço Extra</strong>
+                                    </MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                        Usado @Character.ExtraEffortCount vez(es)
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.body2" Class="mb-2">
+                                    +1 no Esforço
+                                </MudText>
+                                <MudButton Variant="Variant.Filled" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Small"
+                                         OnClick="() => ConfirmAdvancement(AdvancementType.ExtraEffort)"
+                                         Disabled="@(Character.XP < 4 || IsAdvancementDisabled(AdvancementType.ExtraEffort))"
+                                         FullWidth="true">
+                                    Usar Avanço (4 XP)
+                                </MudButton>
+                            </MudPaper>
+
+                            <!-- Skill Training -->
+                            <MudPaper Class="pa-3" Elevation="1">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.subtitle1">
+                                        <strong>Treinamento de Habilidade</strong>
+                                    </MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                        Usado @Character.SkillTrainingCount vez(es)
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.body2" Class="mb-2">
+                                    Treinar em uma habilidade ou especializar-se em uma habilidade treinada
+                                </MudText>
+                                <MudButton Variant="Variant.Filled" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Small"
+                                         OnClick="() => ConfirmAdvancement(AdvancementType.SkillTraining)"
+                                         Disabled="@(Character.XP < 4 || IsAdvancementDisabled(AdvancementType.SkillTraining))"
+                                         FullWidth="true">
+                                    Usar Avanço (4 XP)
+                                </MudButton>
+                            </MudPaper>
+
+                            <!-- Other -->
+                            <MudPaper Class="pa-3" Elevation="1">
+                                <div class="d-flex justify-space-between align-center mb-2">
+                                    <MudText Typo="Typo.subtitle1">
+                                        <strong>Outros</strong>
+                                    </MudText>
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                        Usado @Character.OtherAdvancementCount vez(es)
+                                    </MudChip>
+                                </div>
+                                <MudText Typo="Typo.body2" Class="mb-2">
+                                    Outras opções de avanço (habilidades especiais, etc.)
+                                </MudText>
+                                <MudButton Variant="Variant.Filled" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Small"
+                                         OnClick="() => ConfirmAdvancement(AdvancementType.Other)"
+                                         Disabled="@(Character.XP < 4 || IsAdvancementDisabled(AdvancementType.Other))"
+                                         FullWidth="true">
+                                    Usar Avanço (4 XP)
+                                </MudButton>
+                            </MudPaper>
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+
+                <!-- Reset Section -->
+                <MudCard Elevation="2">
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6" Class="mb-3">Resetar Progressão</MudText>
+                        <MudText Typo="Typo.body2" Class="mb-3">
+                            Esta ação irá resetar todo o XP, tier e avanços do personagem. Esta ação não pode ser desfeita.
+                        </MudText>
+                        <MudButton Variant="Variant.Filled" 
+                                 Color="Color.Error" 
+                                 StartIcon="@Icons.Material.Filled.RestartAlt"
+                                 OnClick="ConfirmReset"
+                                 FullWidth="true">
+                            Resetar Toda Progressão
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudStack>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Fechar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Character Character { get; set; } = null!;
+    [Parameter] public EventCallback<Character> OnCharacterChanged { get; set; }
+
+    private int xpAmount = 1;
+
+    private double GetTierProgress()
+    {
+        var advancementsInCurrentTier = Character.GetCurrentTierAdvancementsUsed();
+        return (advancementsInCurrentTier / 4.0) * 100;
+    }
+
+    private async Task AddXP()
+    {
+        Character.XP += xpAmount;
+        Character.TotalXPEarned += xpAmount;
+        await OnCharacterChanged.InvokeAsync(Character);
+        Snackbar.Add($"{xpAmount} XP adicionado!", Severity.Success);
+    }
+
+    private async Task SpendXP()
+    {
+        if (Character.XP >= xpAmount)
+        {
+            Character.XP -= xpAmount;
+            await OnCharacterChanged.InvokeAsync(Character);
+            Snackbar.Add($"{xpAmount} XP gasto!", Severity.Info);
+        }
+    }
+
+    private async Task ConfirmAdvancement(AdvancementType type)
+    {
+        if (Character.XP < 4)
+        {
+            Snackbar.Add("XP insuficiente para usar avanço!", Severity.Warning);
+            return;
+        }
+
+        if (IsAdvancementDisabled(type))
+        {
+            Snackbar.Add("Você já usou um avanço neste tier!", Severity.Warning);
+            return;
+        }
+
+        var typeName = GetAdvancementTypeName(type.ToString());
+        
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirmar Avanço", 
+            $"Tem certeza que deseja usar o avanço '{typeName}' por 4 XP?",
+            yesText: "Confirmar", 
+            cancelText: "Cancelar");
+
+        if (result == true)
+        {
+            await UseAdvancement(type);
+        }
+    }
+
+    private bool IsAdvancementDisabled(AdvancementType type)
+    {
+        // Can't use the same type twice in the same tier
+        return !Character.CanUseAdvancementType(type.ToString());
+    }
+
+    private string GetAdvancementTypeName(string type)
+    {
+        return type switch
+        {
+            "IncreaseCapabilities" => "Aumentar Capacidades",
+            "MoveTowardPerfection" => "Buscar a Perfeição",
+            "ExtraEffort" => "Esforço Extra",
+            "SkillTraining" => "Treinamento de Habilidade",
+            "Other" => "Outros",
+            _ => type
+        };
+    }
+    private async Task UseAdvancement(AdvancementType type)
+    {
+        Character.XP -= 4;
+        
+        // Add the advancement type to current tier
+        Character.CurrentTierAdvancementTypes.Add(type.ToString());
+        
+        switch (type)
+        {
+            case AdvancementType.IncreaseCapabilities:
+                Character.IncreaseCapabilitiesCount++;
+                break;
+            case AdvancementType.MoveTowardPerfection:
+                Character.MoveTowardPerfectionCount++;
+                break;
+            case AdvancementType.ExtraEffort:
+                Character.ExtraEffortCount++;
+                Character.Effort++;
+                break;
+            case AdvancementType.SkillTraining:
+                Character.SkillTrainingCount++;
+                break;
+            case AdvancementType.Other:
+                Character.OtherAdvancementCount++;
+                break;
+        }
+
+        // Check for tier advancement
+        Character.CheckTierAdvancement();
+        
+        await OnCharacterChanged.InvokeAsync(Character);
+        
+        if (Character.GetCurrentTierAdvancementsUsed() >= 4)
+        {
+            Snackbar.Add($"Parabéns! Você avançou para o Tier {Character.Tier}!", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("Avanço usado com sucesso!", Severity.Success);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task ConfirmReset()
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirmar Reset", 
+            "Tem certeza que deseja resetar TODA a progressão do personagem? Esta ação não pode ser desfeita e irá remover todo XP, tier e avanços.",
+            yesText: "Sim, Resetar Tudo", 
+            cancelText: "Cancelar");
+
+        if (result == true)
+        {
+            Character.ResetAllProgressions();
+            await OnCharacterChanged.InvokeAsync(Character);
+            Snackbar.Add("Progressão resetada com sucesso!", Severity.Success);
+        }
+    }
+
+    public enum AdvancementType
+    {
+        IncreaseCapabilities,
+        MoveTowardPerfection,
+        ExtraEffort,
+        SkillTraining,
+        Other
+    }
+}

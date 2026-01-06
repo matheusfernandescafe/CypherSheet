@@ -17,8 +17,17 @@ else
                     <MudText Typo="Typo.h5">@Character.Name</MudText>
                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="EditStats" />
                 </div>
-                <MudText Typo="Typo.body2">@Character.Descriptor @Character.Type que @Character.Focus</MudText>
-                <MudText Typo="Typo.body2">Tier @Character.Tier | XP: @Character.XP</MudText>
+                <MudText Typo="Typo.body2">é um @Character.Descriptor @Character.Type que @Character.Focus</MudText>
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.body2">Tier @Character.Tier</MudText>
+                    <MudButton Variant="Variant.Text" 
+                             Color="Color.Primary" 
+                             Size="Size.Small"
+                             OnClick="OpenXPDialog"
+                             Class="pa-1">
+                        XP: @Character.XP
+                    </MudButton>
+                </div>
             </MudCardContent>
         </MudCard>
 
@@ -220,6 +229,27 @@ else
         };
         
         var dialog = await DialogService.ShowAsync<RollDialog>("Calculadora de Rolagem", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await SaveCharacter();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenXPDialog()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions 
+        { 
+            CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<XPDialog>("Gerenciar XP", parameters, options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
