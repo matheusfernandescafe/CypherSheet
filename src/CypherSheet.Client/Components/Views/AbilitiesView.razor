@@ -26,6 +26,7 @@
                         <MudText Typo="Typo.body2">@ability.Description</MudText>
                         <MudDivider Class="my-2"/>
                         <MudStack Row="true" Justify="Justify.FlexEnd">
+                             <MudButton Size="Size.Small" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="@(() => EditAbility(ability))">Editar</MudButton>
                              <MudButton Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="@(() => RemoveAbility(ability))">Remover</MudButton>
                         </MudStack>
                     </ChildContent>
@@ -40,10 +41,21 @@
 
     private async Task AddAbility()
     {
-        var parameters = new DialogParameters { ["Character"] = Character };
+        await OpenAbilityDialog(null);
+    }
+    
+    private async Task EditAbility(Ability ability)
+    {
+        await OpenAbilityDialog(ability);
+    }
+
+    private async Task OpenAbilityDialog(Ability ability)
+    {
+        var parameters = new DialogParameters { ["Character"] = Character, ["AbilityToEdit"] = ability };
+        var title = ability == null ? "Nova Habilidade" : "Editar Habilidade";
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         
-        var result = await DialogService.Show<AddAbilityDialog>("Nova Habilidade", parameters, options).Result;
+        var result = await DialogService.Show<AddAbilityDialog>(title, parameters, options).Result;
         
         if (!result.Canceled)
         {

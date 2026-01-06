@@ -16,38 +16,49 @@
         <MudList T="Skill" ReadOnly="false">
             @foreach (var skill in Character.Skills)
             {
-                <MudListItem Dense="true">
-                     <div class="d-flex align-center justify-space-between width-100">
-                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                             <MudText>@skill.Name</MudText>
-                             <MudChip T="string" Color="@GetColor(skill.Level)" Size="Size.Small" OnClick="@(() => ToggleLevel(skill))">@GetLabel(skill.Level)</MudChip>
-                         </MudStack>
-                         <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveSkill(skill))" />
-                     </div>
-                </MudListItem>
-                <MudDivider />
-            }
-        </MudList>
-    }
-</MudStack>
-
-@code {
-    [Parameter] public Character Character { get; set; }
-
-    private async Task AddSkill()
-    {
-        var parameters = new DialogParameters { ["Character"] = Character };
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        
-        // Passando "parameters" corretamente
-        var result = await DialogService.Show<AddSkillDialog>("Nova Perícia", parameters, options).Result;
-        
-        if (!result.Canceled)
-        {
-             await SaveCharacter();
-             StateHasChanged();
-        }
-    }
+                 <MudListItem Dense="true">
+                      <div class="d-flex align-center justify-space-between width-100">
+                          <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                              <MudText>@skill.Name</MudText>
+                              <MudChip T="string" Color="@GetColor(skill.Level)" Size="Size.Small" OnClick="@(() => ToggleLevel(skill))">@GetLabel(skill.Level)</MudChip>
+                              <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditSkill(skill))" />
+                          </MudStack>
+                          <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveSkill(skill))" />
+                      </div>
+                 </MudListItem>
+                 <MudDivider />
+             }
+         </MudList>
+     }
+ </MudStack>
+ 
+ @code {
+     [Parameter] public Character Character { get; set; }
+ 
+     private async Task AddSkill()
+     {
+         await OpenSkillDialog(null);
+     }
+     
+     private async Task EditSkill(Skill skill)
+     {
+         await OpenSkillDialog(skill);
+     }
+ 
+     private async Task OpenSkillDialog(Skill skill)
+     {
+         var parameters = new DialogParameters { ["Character"] = Character, ["SkillToEdit"] = skill };
+         var title = skill == null ? "Nova Perícia" : "Editar Perícia";
+         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+         
+         var result = await DialogService.Show<AddSkillDialog>(title, parameters, options).Result;
+         
+         if (!result.Canceled)
+         {
+              await SaveCharacter();
+              StateHasChanged();
+         }
+     }
 
     private async Task RemoveSkill(Skill skill)
     {

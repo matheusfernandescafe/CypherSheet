@@ -21,6 +21,7 @@
                 </MudCardContent>
                 <MudCardActions>
                      <MudSpacer />
+                     <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => EditCypher(cypher))" />
                      <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveCypher(cypher))" />
                 </MudCardActions>
             </MudCard>
@@ -33,10 +34,21 @@
 
     private async Task AddCypher()
     {
-        var parameters = new DialogParameters { ["Character"] = Character };
+        await OpenCypherDialog(null);
+    }
+    
+    private async Task EditCypher(Cypher cypher)
+    {
+        await OpenCypherDialog(cypher);
+    }
+
+    private async Task OpenCypherDialog(Cypher cypher)
+    {
+        var parameters = new DialogParameters { ["Character"] = Character, ["CypherToEdit"] = cypher };
+        var title = cypher == null ? "Novo Cypher" : "Editar Cypher";
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         
-        var result = await DialogService.Show<AddCypherDialog>("Novo Cypher", parameters, options).Result;
+        var result = await DialogService.Show<AddCypherDialog>(title, parameters, options).Result;
         
         if (!result.Canceled)
         {

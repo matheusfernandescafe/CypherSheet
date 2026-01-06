@@ -16,7 +16,8 @@
                             <MudText Typo="Typo.h6">@note.Title</MudText>
                         </CardHeaderContent>
                         <CardHeaderActions>
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveNote(note))" />
+                             <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" OnClick="@(() => EditNote(note))" />
+                             <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => RemoveNote(note))" />
                         </CardHeaderActions>
                     </MudCardHeader>
                     <MudCardContent>
@@ -33,10 +34,21 @@
 
     private async Task AddNote()
     {
-        var parameters = new DialogParameters { ["Character"] = Character };
+        await OpenNoteDialog(null);
+    }
+    
+    private async Task EditNote(Note note)
+    {
+        await OpenNoteDialog(note);
+    }
+
+    private async Task OpenNoteDialog(Note note)
+    {
+        var parameters = new DialogParameters { ["Character"] = Character, ["NoteToEdit"] = note };
+        var title = note == null ? "Nova Nota" : "Editar Nota";
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         
-        var result = await DialogService.Show<AddNoteDialog>("Nova Nota", parameters, options).Result;
+        var result = await DialogService.Show<AddNoteDialog>(title, parameters, options).Result;
         
         if (!result.Canceled)
         {

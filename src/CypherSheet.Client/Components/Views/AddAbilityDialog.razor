@@ -18,10 +18,21 @@
 @code {
     [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
     [Parameter] public Character Character { get; set; }
+    [Parameter] public Ability AbilityToEdit { get; set; }
 
     private string name;
     private string cost;
     private string description;
+
+    protected override void OnInitialized()
+    {
+        if (AbilityToEdit != null)
+        {
+            name = AbilityToEdit.Name;
+            cost = AbilityToEdit.Cost;
+            description = AbilityToEdit.Description;
+        }
+    }
 
     void Submit()
     {
@@ -31,7 +42,17 @@
             return;
         }
         
-        Character.Abilities.Add(new Ability { Name = name, Cost = cost, Description = description });
+        if (AbilityToEdit != null)
+        {
+            AbilityToEdit.Name = name;
+            AbilityToEdit.Cost = cost;
+            AbilityToEdit.Description = description;
+        }
+        else
+        {
+            Character.Abilities.Add(new Ability { Name = name, Cost = cost, Description = description });
+        }
+
         MudDialog.Close(DialogResult.Ok(true));
     }
     void Cancel() => MudDialog.Cancel();

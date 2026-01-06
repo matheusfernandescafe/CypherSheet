@@ -21,9 +21,19 @@
 @code {
     [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
     [Parameter] public Character Character { get; set; }
+    [Parameter] public Skill SkillToEdit { get; set; }
 
     private string skillName;
     private SkillLevel skillLevel = SkillLevel.Trained;
+
+    protected override void OnInitialized()
+    {
+        if (SkillToEdit != null)
+        {
+            skillName = SkillToEdit.Name;
+            skillLevel = SkillToEdit.Level;
+        }
+    }
 
     void Submit()
     {
@@ -35,18 +45,25 @@
 
         if (Character == null)
         {
-            Console.WriteLine("AddSkillDialog: Character is NULL");
-            Snackbar.Add("Erro interno: Personagem não carregado.", Severity.Error);
-            return;
+             Snackbar.Add("Erro interno: Personagem não carregado.", Severity.Error);
+             return;
         }
 
         if (Character.Skills == null)
         {
-            Console.WriteLine("AddSkillDialog: Skills list is NULL. Initializing...");
             Character.Skills = new List<Skill>();
         }
         
-        Character.Skills.Add(new Skill { Name = skillName, Level = skillLevel });
+        if (SkillToEdit != null)
+        {
+            SkillToEdit.Name = skillName;
+            SkillToEdit.Level = skillLevel;
+        }
+        else
+        {
+            Character.Skills.Add(new Skill { Name = skillName, Level = skillLevel });
+        }
+        
         MudDialog.Close(DialogResult.Ok(true));
     }
     void Cancel() => MudDialog.Cancel();

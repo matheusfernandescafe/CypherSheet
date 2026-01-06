@@ -17,9 +17,19 @@
 @code {
     [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
     [Parameter] public Character Character { get; set; }
+    [Parameter] public Note NoteToEdit { get; set; }
 
     private string title;
     private string content;
+
+    protected override void OnInitialized()
+    {
+        if (NoteToEdit != null)
+        {
+            title = NoteToEdit.Title;
+            content = NoteToEdit.Content;
+        }
+    }
 
     void Submit()
     {
@@ -29,7 +39,16 @@
             return;
         }
         
-        Character.Notes.Add(new Note { Title = title, Content = content });
+        if (NoteToEdit != null)
+        {
+            NoteToEdit.Title = title;
+            NoteToEdit.Content = content;
+        }
+        else
+        {
+            Character.Notes.Add(new Note { Title = title, Content = content });
+        }
+        
         MudDialog.Close(DialogResult.Ok(true));
     }
     void Cancel() => MudDialog.Cancel();

@@ -1,6 +1,7 @@
 @using CypherSheet.Domain
 @using CypherSheet.Storage
 @inject ICharacterRepository Repository
+@inject IDialogService DialogService
 @inject ISnackbar Snackbar
 
 @if (Character == null)
@@ -12,7 +13,10 @@ else
     <MudStack Spacing="2">
         <MudCard Elevation="3">
             <MudCardContent>
-                <MudText Typo="Typo.h5">@Character.Name</MudText>
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.h5">@Character.Name</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="EditStats" />
+                </div>
                 <MudText Typo="Typo.body2">@Character.Descriptor @Character.Type que @Character.Focus</MudText>
                 <MudText Typo="Typo.body2">Tier @Character.Tier | XP: @Character.XP</MudText>
                 
@@ -61,6 +65,20 @@ else
             DamageTrack.Dead => Severity.Error,
             _ => Severity.Normal
         };
+    }
+
+    private async Task EditStats()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var dialog = DialogService.Show<EditCharacterDialog>("Editar Personagem", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await SaveCharacter();
+        }
     }
 
     private async Task SaveCharacter()

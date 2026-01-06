@@ -18,10 +18,21 @@
 @code {
     [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
     [Parameter] public Character Character { get; set; }
+    [Parameter] public Cypher CypherToEdit { get; set; }
 
     private string name;
     private string level;
     private string effect;
+
+    protected override void OnInitialized()
+    {
+        if (CypherToEdit != null)
+        {
+            name = CypherToEdit.Name;
+            level = CypherToEdit.Level;
+            effect = CypherToEdit.Effect;
+        }
+    }
 
     void Submit()
     {
@@ -31,7 +42,17 @@
             return;
         }
         
-        Character.Cyphers.Add(new Cypher { Name = name, Level = level, Effect = effect });
+        if (CypherToEdit != null)
+        {
+            CypherToEdit.Name = name;
+            CypherToEdit.Level = level;
+            CypherToEdit.Effect = effect;
+        }
+        else
+        {
+            Character.Cyphers.Add(new Cypher { Name = name, Level = level, Effect = effect });
+        }
+
         MudDialog.Close(DialogResult.Ok(true));
     }
     void Cancel() => MudDialog.Cancel();

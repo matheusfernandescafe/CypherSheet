@@ -22,6 +22,7 @@
                 <MudTd DataLabel="Nome">@context.Name</MudTd>
                 <MudTd DataLabel="Qtd">@context.Quantity</MudTd>
                 <MudTd>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => EditItem(context))" />
                     <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveItem(context))" />
                 </MudTd>
             </RowTemplate>
@@ -34,10 +35,21 @@
 
     private async Task AddItem()
     {
-        var parameters = new DialogParameters { ["Character"] = Character };
+        await OpenItemDialog(null);
+    }
+    
+    private async Task EditItem(Item item)
+    {
+        await OpenItemDialog(item);
+    }
+
+    private async Task OpenItemDialog(Item item)
+    {
+        var parameters = new DialogParameters { ["Character"] = Character, ["ItemToEdit"] = item };
+        var title = item == null ? "Novo Item" : "Editar Item";
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         
-        var result = await DialogService.Show<AddItemDialog>("Novo Item", parameters, options).Result;
+        var result = await DialogService.Show<AddItemDialog>(title, parameters, options).Result;
         
         if (!result.Canceled)
         {

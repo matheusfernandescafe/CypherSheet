@@ -1,0 +1,33 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="Character.Name" Label="Nome" AutoFocus="true" />
+        <MudTextField @bind-Value="Character.Descriptor" Label="Descritor" HelperText="Ex: Resiliente, Charmoso" />
+        <MudTextField @bind-Value="Character.Type" Label="Tipo" HelperText="Ex: Glaive, Jack, Nano" />
+        <MudTextField @bind-Value="Character.Focus" Label="Foco" HelperText="Ex: Domina Bestas, Controla Gravidade" />
+        <MudNumericField @bind-Value="Character.Tier" Label="Tier" Min="1" Max="6" />
+        <MudNumericField @bind-Value="Character.XP" Label="XP" Min="0" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Character Character { get; set; }
+
+    void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(Character.Name))
+        {
+             // Basic validation
+             return;
+        }
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}
