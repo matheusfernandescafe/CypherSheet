@@ -130,6 +130,7 @@ namespace CypherSheet.Domain
         public bool TenMinutesUsed { get; set; }
         public bool OneHourUsed { get; set; }
         public bool TenHoursUsed { get; set; }
+        public int CustomRollBonus { get; set; } = 0;
 
         public void Reset()
         {
@@ -141,7 +142,7 @@ namespace CypherSheet.Domain
         
         public int GetRollBonus(int tier)
         {
-            return tier;
+            return tier + CustomRollBonus;
         }
     }
 }
