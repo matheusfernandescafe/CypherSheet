@@ -8,6 +8,74 @@
 
 <PageTitle>@(character?.Name ?? "Carregando...") - Cypher Sheet</PageTitle>
 
+<style>
+    .app-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+    }
+    
+    .content-area {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 60px;
+    }
+    
+    .custom-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: var(--mud-palette-surface);
+        border-top: 1px solid var(--mud-palette-divider);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        z-index: 1000;
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .footer-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        height: 100%;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--mud-palette-text-secondary);
+        text-decoration: none;
+        padding: 4px;
+    }
+    
+    .footer-item:hover:not(.disabled) {
+        background: var(--mud-palette-action-default-hover);
+    }
+    
+    .footer-item.active {
+        color: var(--mud-palette-primary);
+    }
+    
+    .footer-item.disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    
+    .footer-item .mud-icon-root {
+        font-size: 1.5rem;
+    }
+    
+    .footer-item-label {
+        font-size: 0.65rem;
+        margin-top: 2px;
+        text-align: center;
+        line-height: 1;
+    }
+</style>
+
 @if (isLoading)
 {
     <MudContainer Class="d-flex justify-center align-center" Style="height: 100vh;">
@@ -21,31 +89,80 @@ else if (character == null)
 }
 else
 {
-    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4" Position="Position.Bottom" Color="Color.Surface" SliderColor="Color.Primary" ActiveTabClass="mud-text-primary" Centered="true">
-        <MudTabPanel Icon="@Icons.Material.Filled.Person" ToolTip="Stats">
-            <StatsView Character="character" OnSave="SaveCharacter" />
-        </MudTabPanel>
-        <MudTabPanel Icon="@Icons.Material.Filled.SportsMma" ToolTip="Skills">
-            <SkillsView Character="character" />
-        </MudTabPanel>
-        <MudTabPanel Icon="@Icons.Material.Filled.AutoAwesome" ToolTip="Abilities">
-            <AbilitiesView Character="character" />
-        </MudTabPanel>
-        <MudTabPanel Icon="@Icons.Material.Filled.ChangeHistory" ToolTip="Cyphers">
-            <CyphersView Character="character" />
-        </MudTabPanel>
-        <MudTabPanel Icon="@Icons.Material.Filled.Backpack" ToolTip="Equipment">
-            <EquipmentView Character="character" />
-        </MudTabPanel>
-        <MudTabPanel Icon="@Icons.Material.Filled.EditNote" ToolTip="Notes">
-            <NotesView Character="character" />
-        </MudTabPanel>
-        <MudTabPanel Icon="@Icons.Material.Filled.Groups" ToolTip="Personagens" OnClick="@(() => Navigation.NavigateTo("/"))">
-             <div class="d-flex justify-center align-center pa-4">
-                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/"))">Trocar Personagem</MudButton>
-             </div>
-        </MudTabPanel>
-    </MudTabs>
+    <div class="app-container">
+        <div class="content-area">
+            @switch (currentTab)
+            {
+                case TabType.Stats:
+                    <StatsView Character="character" OnSave="SaveCharacter" />
+                    break;
+                case TabType.Skills:
+                    <SkillsView Character="character" />
+                    break;
+                case TabType.Abilities:
+                    <AbilitiesView Character="character" />
+                    break;
+                case TabType.Cyphers:
+                    <CyphersView Character="character" />
+                    break;
+                case TabType.Equipment:
+                    <EquipmentView Character="character" />
+                    break;
+                case TabType.Notes:
+                    <NotesView Character="character" />
+                    break;
+                case TabType.Characters:
+                    <div class="d-flex justify-center align-center pa-4">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/"))">Trocar Personagem</MudButton>
+                    </div>
+                    break;
+            }
+        </div>
+        
+        <div class="custom-footer">
+            <div class="footer-item @(currentTab == TabType.Stats ? "active" : "") @(character == null ? "disabled" : "")" 
+                 @onclick="@(() => NavigateToTab(TabType.Stats))">
+                <MudIcon Icon="@Icons.Material.Filled.Person" />
+                <span class="footer-item-label">Stats</span>
+            </div>
+            
+            <div class="footer-item @(currentTab == TabType.Skills ? "active" : "") @(character == null ? "disabled" : "")" 
+                 @onclick="@(() => NavigateToTab(TabType.Skills))">
+                <MudIcon Icon="@Icons.Material.Filled.SportsMma" />
+                <span class="footer-item-label">Skills</span>
+            </div>
+            
+            <div class="footer-item @(currentTab == TabType.Abilities ? "active" : "") @(character == null ? "disabled" : "")" 
+                 @onclick="@(() => NavigateToTab(TabType.Abilities))">
+                <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" />
+                <span class="footer-item-label">Abilities</span>
+            </div>
+            
+            <div class="footer-item @(currentTab == TabType.Cyphers ? "active" : "") @(character == null ? "disabled" : "")" 
+                 @onclick="@(() => NavigateToTab(TabType.Cyphers))">
+                <MudIcon Icon="@Icons.Material.Filled.ChangeHistory" />
+                <span class="footer-item-label">Cyphers</span>
+            </div>
+            
+            <div class="footer-item @(currentTab == TabType.Equipment ? "active" : "") @(character == null ? "disabled" : "")" 
+                 @onclick="@(() => NavigateToTab(TabType.Equipment))">
+                <MudIcon Icon="@Icons.Material.Filled.Backpack" />
+                <span class="footer-item-label">Equip.</span>
+            </div>
+            
+            <div class="footer-item @(currentTab == TabType.Notes ? "active" : "") @(character == null ? "disabled" : "")" 
+                 @onclick="@(() => NavigateToTab(TabType.Notes))">
+                <MudIcon Icon="@Icons.Material.Filled.EditNote" />
+                <span class="footer-item-label">Notes</span>
+            </div>
+            
+            <div class="footer-item @(currentTab == TabType.Characters ? "active" : "")" 
+                 @onclick="@(() => NavigateToTab(TabType.Characters))">
+                <MudIcon Icon="@Icons.Material.Filled.Groups" />
+                <span class="footer-item-label">Chars</span>
+            </div>
+        </div>
+    </div>
 }
 
 @code {
@@ -54,11 +171,26 @@ else
     private Character character;
     private bool isLoading = true;
 
+    private enum TabType { Stats, Skills, Abilities, Cyphers, Equipment, Notes, Characters }
+    private TabType currentTab = TabType.Stats;
+
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
         character = await Repository.GetCharacterAsync(Id);
         isLoading = false;
+    }
+
+    private void NavigateToTab(TabType tab)
+    {
+        // Only allow navigation to character tabs if a character is loaded
+        if (character == null && tab != TabType.Characters)
+        {
+            Snackbar.Add("Selecione um personagem primeiro", Severity.Warning);
+            return;
+        }
+        
+        currentTab = tab;
     }
 
     private async Task SaveCharacter()
