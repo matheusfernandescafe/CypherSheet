@@ -72,9 +72,10 @@
      private string selectedFilterString = string.Empty;
 
      private IEnumerable<Ability> FilteredAbilities => 
-         string.IsNullOrEmpty(selectedFilterString) 
+         (string.IsNullOrEmpty(selectedFilterString) 
              ? Character.Abilities
-             : Character.Abilities.Where(a => a.Type.ToString() == selectedFilterString);
+             : Character.Abilities.Where(a => a.Type.ToString() == selectedFilterString))
+         .OrderBy(a => a.Name);
  
      private async Task AddAbility()
      {

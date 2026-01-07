@@ -15,7 +15,7 @@
     }
     else
     {
-        @foreach (var cypher in Character.Cyphers)
+        @foreach (var cypher in Character.Cyphers.OrderBy(c => c.Name))
         {
             <MudCard Elevation="2" Class="mb-2">
                 <MudCardContent>

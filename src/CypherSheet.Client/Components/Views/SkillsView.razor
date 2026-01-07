@@ -66,9 +66,10 @@
      private string selectedFilterString = string.Empty;
 
      private IEnumerable<Skill> FilteredSkills => 
-         string.IsNullOrEmpty(selectedFilterString) 
+         (string.IsNullOrEmpty(selectedFilterString) 
              ? Character.Skills
-             : Character.Skills.Where(s => s.Type.ToString() == selectedFilterString);
+             : Character.Skills.Where(s => s.Type.ToString() == selectedFilterString))
+         .OrderBy(s => s.Name);
  
      private async Task AddSkill()
      {

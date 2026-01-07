@@ -15,7 +15,7 @@
     }
     else
     {
-        <MudTable Items="@Character.Equipment" Hover="true" Dense="true" Elevation="0">
+        <MudTable Items="@Character.Equipment.OrderBy(e => e.Name)" Hover="true" Dense="true" Elevation="0">
             <HeaderContent>
                 <MudTh>Nome</MudTh>
                 <MudTh>Qtd</MudTh>

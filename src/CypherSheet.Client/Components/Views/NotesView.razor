@@ -15,7 +15,7 @@
     else
     {
         <MudGrid>
-            @foreach (var note in Character.Notes)
+            @foreach (var note in Character.Notes.OrderBy(n => n.Title))
             {
                 <MudItem xs="12" sm="6" md="4">
                     <MudCard Elevation="2">
