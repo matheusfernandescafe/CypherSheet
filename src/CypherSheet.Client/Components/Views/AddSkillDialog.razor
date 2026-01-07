@@ -5,12 +5,20 @@
 
 <MudDialog>
     <DialogContent>
-        <MudTextField @bind-Value="skillName" Label="Nome da Perícia" AutoFocus="true" />
-        <MudSelect @bind-Value="skillLevel" Label="Nível">
-            <MudSelectItem Value="SkillLevel.Inability">Inabilidade</MudSelectItem>
-            <MudSelectItem Value="SkillLevel.Trained">Treinado</MudSelectItem>
-            <MudSelectItem Value="SkillLevel.Specialized">Especializado</MudSelectItem>
-        </MudSelect>
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="skillName" Label="Nome da Perícia" AutoFocus="true" />
+            <MudSelect @bind-Value="skillType" Label="Tipo">
+                <MudSelectItem Value="SkillType.Might">Might</MudSelectItem>
+                <MudSelectItem Value="SkillType.Speed">Speed</MudSelectItem>
+                <MudSelectItem Value="SkillType.Intellect">Intellect</MudSelectItem>
+            </MudSelect>
+            <MudSelect @bind-Value="skillLevel" Label="Nível">
+                <MudSelectItem Value="SkillLevel.Inability">Inabilidade</MudSelectItem>
+                <MudSelectItem Value="SkillLevel.Trained">Treinado</MudSelectItem>
+                <MudSelectItem Value="SkillLevel.Specialized">Especializado</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="skillDescription" Label="Descrição (opcional)" Lines="3" />
+        </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancelar</MudButton>
@@ -19,12 +27,14 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
-    [Parameter] public Character Character { get; set; }
-    [Parameter] public Skill SkillToEdit { get; set; }
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Character Character { get; set; } = null!;
+    [Parameter] public Skill? SkillToEdit { get; set; }
 
-    private string skillName;
+    private string skillName = "";
     private SkillLevel skillLevel = SkillLevel.Trained;
+    private SkillType skillType = SkillType.Intellect;
+    private string skillDescription = "";
 
     protected override void OnInitialized()
     {
@@ -32,6 +42,8 @@
         {
             skillName = SkillToEdit.Name;
             skillLevel = SkillToEdit.Level;
+            skillType = SkillToEdit.Type;
+            skillDescription = SkillToEdit.Description;
         }
     }
 
@@ -58,10 +70,18 @@
         {
             SkillToEdit.Name = skillName;
             SkillToEdit.Level = skillLevel;
+            SkillToEdit.Type = skillType;
+            SkillToEdit.Description = skillDescription;
         }
         else
         {
-            Character.Skills.Add(new Skill { Name = skillName, Level = skillLevel });
+            Character.Skills.Add(new Skill 
+            { 
+                Name = skillName, 
+                Level = skillLevel, 
+                Type = skillType, 
+                Description = skillDescription 
+            });
         }
         
         MudDialog.Close(DialogResult.Ok(true));

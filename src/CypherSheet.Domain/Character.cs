@@ -19,6 +19,13 @@ namespace CypherSheet.Domain
         Specialized
     }
 
+    public enum SkillType
+    {
+        Might,
+        Speed,
+        Intellect
+    }
+
     public class Character
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -154,6 +161,8 @@ namespace CypherSheet.Domain
     {
         public string Name { get; set; } = "";
         public SkillLevel Level { get; set; } = SkillLevel.Trained;
+        public SkillType Type { get; set; } = SkillType.Might;
+        public string Description { get; set; } = "";
         public string Source { get; set; } = "";
     }
 
