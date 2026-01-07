@@ -18,7 +18,10 @@
         }
         else if (!characters.Any())
         {
-            <MudAlert Severity="Severity.Info">Nenhum personagem encontrado. Crie o seu primeiro!</MudAlert>
+            <div style="position: relative; min-height: 300px;">
+                <EmptyStateWatermark Icon="@Icons.Material.Filled.Groups" />
+                <MudAlert Severity="Severity.Info" style="position: relative; z-index: 1;">Nenhum personagem encontrado. Crie o seu primeiro!</MudAlert>
+            </div>
         }
         else
         {

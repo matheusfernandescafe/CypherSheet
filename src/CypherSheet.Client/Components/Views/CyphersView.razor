@@ -8,7 +8,10 @@
     
     @if (!Character.Cyphers.Any())
     {
-        <MudText Typo="Typo.body2" Class="pa-4">Nenhum Cypher encontrado.</MudText>
+        <div style="position: relative; min-height: 300px;">
+            <EmptyStateWatermark Icon="@Icons.Material.Filled.ChangeHistory" />
+            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">Nenhum Cypher encontrado.</MudText>
+        </div>
     }
     else
     {

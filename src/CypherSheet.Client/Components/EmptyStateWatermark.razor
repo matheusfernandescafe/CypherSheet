@@ -1,0 +1,32 @@
+@* Componente para exibir marca d'água quando não há itens *@
+
+<div class="empty-state-watermark">
+    <MudIcon Icon="@Icon" Class="watermark-icon" />
+</div>
+
+<style>
+    .empty-state-watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 0;
+        pointer-events: none;
+    }
+    
+    .watermark-icon {
+        font-size: 8rem !important;
+        color: var(--mud-palette-text-disabled);
+        opacity: 0.1;
+    }
+    
+    @@media (max-width: 600px) {
+        .watermark-icon {
+            font-size: 6rem !important;
+        }
+    }
+</style>
+
+@code {
+    [Parameter] public string Icon { get; set; } = string.Empty;
+}

@@ -8,7 +8,10 @@
     
     @if (!Character.Abilities.Any())
     {
-        <MudText Typo="Typo.body2" Class="pa-4">Nenhuma habilidade adicionada.</MudText>
+        <div style="position: relative; min-height: 300px;">
+            <EmptyStateWatermark Icon="@Icons.Material.Filled.AutoAwesome" />
+            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">Nenhuma habilidade adicionada.</MudText>
+        </div>
     }
     else
     {
