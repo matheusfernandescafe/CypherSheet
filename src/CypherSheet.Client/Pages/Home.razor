@@ -116,6 +116,9 @@ else
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/"))">Trocar Personagem</MudButton>
                     </div>
                     break;
+                case TabType.Settings:
+                    <SettingsView />
+                    break;
             }
         </div>
         
@@ -161,6 +164,12 @@ else
                 <MudIcon Icon="@Icons.Material.Filled.Groups" />
                 <span class="footer-item-label">Chars</span>
             </div>
+            
+            <div class="footer-item @(currentTab == TabType.Settings ? "active" : "")" 
+                 @onclick="@(() => NavigateToTab(TabType.Settings))">
+                <MudIcon Icon="@Icons.Material.Filled.Settings" />
+                <span class="footer-item-label">Config</span>
+            </div>
         </div>
     </div>
 }
@@ -171,7 +180,7 @@ else
     private Character character;
     private bool isLoading = true;
 
-    private enum TabType { Stats, Skills, Abilities, Cyphers, Equipment, Notes, Characters }
+    private enum TabType { Stats, Skills, Abilities, Cyphers, Equipment, Notes, Characters, Settings }
     private TabType currentTab = TabType.Stats;
 
     protected override async Task OnInitializedAsync()
@@ -184,7 +193,7 @@ else
     private void NavigateToTab(TabType tab)
     {
         // Only allow navigation to character tabs if a character is loaded
-        if (character == null && tab != TabType.Characters)
+        if (character == null && tab != TabType.Characters && tab != TabType.Settings)
         {
             Snackbar.Add("Selecione um personagem primeiro", Severity.Warning);
             return;

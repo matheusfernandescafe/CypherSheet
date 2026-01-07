@@ -1,0 +1,133 @@
+@using MudBlazor
+@using CypherSheet.Domain
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4">
+    <MudStack Spacing="4">
+        <MudText Typo="Typo.h4" Class="mb-4">Configurações</MudText>
+        
+        <!-- Seção de Idioma -->
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudStack Spacing="3">
+                <MudText Typo="Typo.h6">Idioma</MudText>
+                <MudListItem T="string" Dense="false" OnClick="OpenLanguageDialog" Style="cursor: pointer; border-radius: 8px;" Class="hover-item">
+                    <div class="d-flex align-center justify-space-between width-100">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.Language" />
+                            <MudText>Idioma da Aplicação</MudText>
+                        </MudStack>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.body2" Class="text-muted">Português</MudText>
+                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                        </MudStack>
+                    </div>
+                </MudListItem>
+            </MudStack>
+        </MudPaper>
+
+        <!-- Seção de Aparência -->
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudStack Spacing="3">
+                <MudText Typo="Typo.h6">Aparência</MudText>
+                <MudListItem T="string" Dense="false" Style="border-radius: 8px;">
+                    <div class="d-flex align-center justify-space-between width-100">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.DarkMode" />
+                            <MudText>Modo Escuro</MudText>
+                        </MudStack>
+                        <MudSwitch T="bool" @bind-Value="isDarkMode" Color="Color.Primary" />
+                    </div>
+                </MudListItem>
+            </MudStack>
+        </MudPaper>
+
+        <!-- Seção de Dados -->
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudStack Spacing="3">
+                <MudText Typo="Typo.h6">Gerenciar Dados</MudText>
+                
+                <MudListItem T="string" Dense="false" OnClick="ExportCharacter" Style="cursor: pointer; border-radius: 8px;" Class="hover-item">
+                    <div class="d-flex align-center justify-space-between width-100">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.FileDownload" />
+                            <MudText>Exportar Personagem</MudText>
+                        </MudStack>
+                        <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                    </div>
+                </MudListItem>
+                
+                <MudListItem T="string" Dense="false" OnClick="ImportCharacter" Style="cursor: pointer; border-radius: 8px;" Class="hover-item">
+                    <div class="d-flex align-center justify-space-between width-100">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.FileUpload" />
+                            <MudText>Importar Personagem</MudText>
+                        </MudStack>
+                        <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                    </div>
+                </MudListItem>
+                
+                <MudDivider />
+                
+                <MudListItem T="string" Dense="false" OnClick="DeleteAllData" Style="cursor: pointer; border-radius: 8px;" Class="hover-item">
+                    <div class="d-flex align-center justify-space-between width-100">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" />
+                            <MudText Color="Color.Error">Deletar Todas as Informações</MudText>
+                        </MudStack>
+                        <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Error" />
+                    </div>
+                </MudListItem>
+            </MudStack>
+        </MudPaper>
+
+        <!-- Spacer para empurrar o footer para baixo -->
+        <div style="height: 60px;"></div>
+
+        <!-- Footer com informações do projeto -->
+        <MudPaper Class="pa-4" Elevation="1" Style="margin-top: auto;">
+            <MudStack Spacing="2" AlignItems="AlignItems.Center">
+                <MudLink Href="https://github.com/matheusfernandescafe/CypherSheet" Target="_blank" Underline="Underline.Hover">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="@Icons.Custom.Brands.GitHub" Size="Size.Small" />
+                        <MudText Typo="Typo.body2">GitHub do Projeto</MudText>
+                    </MudStack>
+                </MudLink>
+                <MudText Typo="Typo.caption" Class="text-muted">@AppVersion.FullVersion</MudText>
+            </MudStack>
+        </MudPaper>
+    </MudStack>
+</MudContainer>
+
+<style>
+    .hover-item:hover {
+        background-color: var(--mud-palette-action-default-hover);
+    }
+</style>
+
+@code {
+    private bool isDarkMode = false;
+
+    private async Task OpenLanguageDialog()
+    {
+        // TODO: Implementar modal de seleção de idioma
+        await Task.CompletedTask;
+    }
+
+    private async Task ExportCharacter()
+    {
+        // TODO: Implementar exportação de personagem
+        await Task.CompletedTask;
+    }
+
+    private async Task ImportCharacter()
+    {
+        // TODO: Implementar importação de personagem
+        await Task.CompletedTask;
+    }
+
+    private async Task DeleteAllData()
+    {
+        // TODO: Implementar confirmação e exclusão de todos os dados
+        await Task.CompletedTask;
+    }
+}
