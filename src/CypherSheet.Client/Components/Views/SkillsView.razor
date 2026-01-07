@@ -1,0 +1,159 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject IDialogService DialogService
+@inject ICharacterRepository Repository
+@inject ISnackbar Snackbar
+
+<MudStack Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddSkill">Adicionar Perícia</MudButton>
+        <MudSelect @bind-Value="selectedFilterString" Label="Filtrar por Tipo" Clearable="true" Style="min-width: 150px;">
+            <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+            <MudSelectItem Value="@nameof(SkillType.Might)">Might</MudSelectItem>
+            <MudSelectItem Value="@nameof(SkillType.Speed)">Speed</MudSelectItem>
+            <MudSelectItem Value="@nameof(SkillType.Intellect)">Intellect</MudSelectItem>
+        </MudSelect>
+    </MudStack>
+    
+    @if (!FilteredSkills.Any())
+    {
+        <div style="position: relative; min-height: 300px;">
+            <EmptyStateWatermark Icon="@Icons.Material.Filled.SportsMma" />
+            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">
+                @if (!Character.Skills.Any())
+                {
+                    <text>Nenhuma perícia adicionada.</text>
+                }
+                else
+                {
+                    <text>Nenhuma perícia encontrada para o filtro selecionado.</text>
+                }
+            </MudText>
+        </div>
+    }
+    else
+    {
+        @foreach (var skill in FilteredSkills)
+        {
+            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditSkill(skill))">
+                <div class="d-flex flex-column width-100">
+                    <div class="d-flex align-center justify-space-between width-100 mb-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.subtitle1">@skill.Name</MudText>
+                            <MudChip T="string" Color="@GetTypeColor(skill.Type)" Size="Size.Small">@GetTypeLabel(skill.Type)</MudChip>
+                            <MudChip T="string" Color="@GetLevelColor(skill.Level)" Size="Size.Small" @onclick="@(() => ToggleLevel(skill))">@GetLevelLabel(skill.Level)</MudChip>
+                        </MudStack>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async () => await ConfirmRemoveSkill(skill))" />
+                        </MudStack>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(skill.Description))
+                    {
+                        <MudText Typo="Typo.body2" Class="text-muted ml-0">@skill.Description</MudText>
+                    }
+                </div>
+            </MudPaper>
+        }
+    }
+ </MudStack>
+ 
+ @code {
+     [Parameter] public Character Character { get; set; } = null!;
+
+     private string selectedFilterString = string.Empty;
+
+     private IEnumerable<Skill> FilteredSkills => 
+         (string.IsNullOrEmpty(selectedFilterString) 
+             ? Character.Skills
+             : Character.Skills.Where(s => s.Type.ToString() == selectedFilterString))
+         .OrderBy(s => s.Name);
+ 
+     private async Task AddSkill()
+     {
+         await OpenSkillDialog(null);
+     }
+     
+     private async Task EditSkill(Skill skill)
+     {
+         await OpenSkillDialog(skill);
+     }
+ 
+     private async Task OpenSkillDialog(Skill? skill)
+     {
+         var parameters = new DialogParameters { ["Character"] = Character, ["SkillToEdit"] = skill };
+         var title = skill == null ? "Nova Perícia" : "Editar Perícia";
+         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+         
+         var dialogReference = await DialogService.ShowAsync<AddSkillDialog>(title, parameters, options);
+         var result = await dialogReference.Result;
+         
+         if (result != null && !result.Canceled)
+         {
+              await SaveCharacter();
+              StateHasChanged();
+         }
+     }
+
+    private async Task ConfirmRemoveSkill(Skill skill)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirmar Remoção", 
+            $"Tem certeza que deseja remover a perícia '{skill.Name}'?",
+            yesText:"Remover", cancelText:"Cancelar");
+
+        if (result == true)
+        {
+            await RemoveSkill(skill);
+        }
+    }
+
+    private async Task RemoveSkill(Skill skill)
+    {
+        Character.Skills.Remove(skill);
+        await SaveCharacter();
+    }
+
+    private async Task ToggleLevel(Skill skill)
+    {
+        skill.Level = skill.Level switch
+        {
+            SkillLevel.Inability => SkillLevel.Trained,
+            SkillLevel.Trained => SkillLevel.Specialized,
+            SkillLevel.Specialized => SkillLevel.Inability,
+            _ => SkillLevel.Trained
+        };
+        await SaveCharacter();
+    }
+    
+    private async Task SaveCharacter()
+    {
+        await Repository.SaveCharacterAsync(Character);
+        // Feedack optional
+    }
+
+    private Color GetLevelColor(SkillLevel level) => level switch
+    {
+        SkillLevel.Inability => Color.Error,
+        SkillLevel.Trained => Color.Success,
+        SkillLevel.Specialized => Color.Warning,
+        _ => Color.Default
+    };
+
+    private string GetLevelLabel(SkillLevel level) => level switch
+    {
+        SkillLevel.Inability => "Inabilidade",
+        SkillLevel.Trained => "Treinado",
+        SkillLevel.Specialized => "Especializado",
+        _ => ""
+    };
+
+    private Color GetTypeColor(SkillType type) => Color.Default;
+
+    private string GetTypeLabel(SkillType type) => type switch
+    {
+        SkillType.Might => "Might",
+        SkillType.Speed => "Speed",
+        SkillType.Intellect => "Intellect",
+        _ => ""
+    };
+}

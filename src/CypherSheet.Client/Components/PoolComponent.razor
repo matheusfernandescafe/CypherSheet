@@ -1,0 +1,57 @@
+@using CypherSheet.Domain
+
+<MudCard Class="pa-3 ma-1" Elevation="2">
+    <MudCardContent>
+        <MudText Typo="Typo.h6" Class="mb-3">@Pool.Name</MudText>
+        
+        <div class="d-flex justify-center align-center gap-2 mb-3">
+            <MudIconButton Icon="@Icons.Material.Filled.Remove" OnClick="Decrease" Disabled="@(Pool.Current <= 0)" Color="Color.Primary" Size="Size.Large" />
+            <MudText Typo="Typo.h3" Style="min-width: 60px; text-align: center;">@Pool.Current</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Add" OnClick="Increase" Disabled="@(Pool.Current >= Pool.Max)" Color="Color.Primary" Size="Size.Large" />
+        </div>
+        
+        <MudDivider Class="mb-2" />
+        
+        <div class="d-flex justify-space-between align-center gap-2">
+            <MudNumericField @bind-Value="Pool.Max" Label="Max" Variant="Variant.Outlined" Min="0" T="int" OnBlur="OnMaxChanged" Immediate="false" />
+            <MudNumericField @bind-Value="Pool.Edge" Label="Edge" Variant="Variant.Outlined" Min="0" T="int" OnBlur="OnEdgeChanged" Immediate="false" />
+        </div>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public Pool Pool { get; set; }
+    [Parameter] public EventCallback OnChange { get; set; }
+
+    private async Task Decrease()
+    {
+        if (Pool.Current > 0)
+        {
+            Pool.Spend(1);
+            await OnChange.InvokeAsync();
+        }
+    }
+
+    private async Task Increase()
+    {
+        if (Pool.Current < Pool.Max)
+        {
+            Pool.Recover(1);
+            await OnChange.InvokeAsync();
+        }
+    }
+
+    private async Task OnMaxChanged()
+    {
+        if (Pool.Current > Pool.Max)
+        {
+            Pool.Current = Pool.Max;
+        }
+        await OnChange.InvokeAsync();
+    }
+
+    private async Task OnEdgeChanged()
+    {
+        await OnChange.InvokeAsync();
+    }
+}

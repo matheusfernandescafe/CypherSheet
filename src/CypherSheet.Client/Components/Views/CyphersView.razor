@@ -1,0 +1,132 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject IDialogService DialogService
+@inject ICharacterRepository Repository
+
+<MudStack Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddCypher">Adicionar Cypher</MudButton>
+        <MudSelect @bind-Value="selectedFilterString" Label="Filtrar por Tipo" Clearable="true" Style="min-width: 150px;">
+            <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+            <MudSelectItem Value="@nameof(CypherType.Cypher)">Cypher</MudSelectItem>
+            <MudSelectItem Value="@nameof(CypherType.Artifact)">Artefato</MudSelectItem>
+        </MudSelect>
+    </MudStack>
+    
+    @if (!FilteredCyphers.Any())
+    {
+        <div style="position: relative; min-height: 300px;">
+            <EmptyStateWatermark Icon="@Icons.Material.Filled.ChangeHistory" />
+            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">
+                @if (!Character.Cyphers.Any())
+                {
+                    <text>Nenhum Cypher encontrado.</text>
+                }
+                else
+                {
+                    <text>Nenhum Cypher encontrado para o filtro selecionado.</text>
+                }
+            </MudText>
+        </div>
+    }
+    else
+    {
+        @foreach (var cypher in FilteredCyphers)
+        {
+            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditCypher(cypher))">
+                <div class="d-flex flex-column width-100">
+                    <div class="d-flex align-center justify-space-between width-100 mb-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.subtitle1">@cypher.Name</MudText>
+                            <MudChip T="string" Color="@GetTypeColor(cypher.Type)" Size="Size.Small">@GetTypeLabel(cypher.Type)</MudChip>
+                            <MudChip T="string" Color="@(cypher.IsActive ? Color.Success : Color.Default)" Size="Size.Small">@(cypher.IsActive ? "Ativo" : "Inativo")</MudChip>
+                        </MudStack>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async () => await ConfirmRemoveCypher(cypher))" />
+                        </MudStack>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(cypher.Description))
+                    {
+                        <MudText Typo="Typo.body2" Class="text-muted ml-0">@cypher.Description</MudText>
+                    }
+                </div>
+            </MudPaper>
+        }
+    }
+</MudStack>
+
+@code {
+    [Parameter] public Character Character { get; set; } = null!;
+
+    private string selectedFilterString = string.Empty;
+
+    private IEnumerable<Cypher> FilteredCyphers => 
+        (string.IsNullOrEmpty(selectedFilterString) 
+            ? Character.Cyphers
+            : Character.Cyphers.Where(c => c.Type.ToString() == selectedFilterString))
+        .OrderBy(c => c.Name);
+
+    private async Task AddCypher()
+    {
+        await OpenCypherDialog(null);
+    }
+    
+    private async Task EditCypher(Cypher cypher)
+    {
+        await OpenCypherDialog(cypher);
+    }
+
+    private async Task OpenCypherDialog(Cypher? cypher)
+    {
+        var parameters = new DialogParameters { ["Character"] = Character, ["CypherToEdit"] = cypher };
+        var title = cypher == null ? "Novo Cypher" : "Editar Cypher";
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var dialogReference = await DialogService.ShowAsync<AddCypherDialog>(title, parameters, options);
+        var result = await dialogReference.Result;
+        
+        if (result != null && !result.Canceled)
+        {
+             await SaveCharacter();
+             StateHasChanged();
+        }
+    }
+
+    private async Task RemoveCypher(Cypher cypher)
+    {
+        Character.Cyphers.Remove(cypher);
+        await SaveCharacter();
+    }
+
+    private async Task ConfirmRemoveCypher(Cypher cypher)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirmar Remoção", 
+            $"Tem certeza que deseja remover o cypher '{cypher.Name}'?",
+            yesText:"Remover", cancelText:"Cancelar");
+
+        if (result == true)
+        {
+            await RemoveCypher(cypher);
+        }
+    }
+    
+    private async Task SaveCharacter()
+    {
+        await Repository.SaveCharacterAsync(Character);
+    }
+
+    private Color GetTypeColor(CypherType type) => type switch
+    {
+        CypherType.Cypher => Color.Primary,
+        CypherType.Artifact => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private string GetTypeLabel(CypherType type) => type switch
+    {
+        CypherType.Cypher => "Cypher",
+        CypherType.Artifact => "Artefato",
+        _ => ""
+    };
+}

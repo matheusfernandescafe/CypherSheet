@@ -1,0 +1,73 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject IDialogService DialogService
+@inject ICharacterRepository Repository
+
+<MudStack Spacing="2">
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddNote">Adicionar Nota</MudButton>
+    
+    @if (!Character.Notes.Any())
+    {
+        <div style="position: relative; min-height: 300px;">
+            <EmptyStateWatermark Icon="@Icons.Material.Filled.EditNote" />
+        </div>
+    }
+    else
+    {
+        @foreach (var note in Character.Notes.OrderBy(n => n.Title))
+        {
+            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditNote(note))">
+                <div class="d-flex flex-column width-100">
+                    <div class="d-flex align-center justify-space-between width-100 mb-2">
+                        <MudText Typo="Typo.h6">@note.Title</MudText>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveNote(note))" />
+                        </MudStack>
+                    </div>
+                    <MudText Typo="Typo.body2" Style="white-space: pre-wrap;" Class="text-muted">@note.Content</MudText>
+                </div>
+            </MudPaper>
+        }
+    }
+</MudStack>
+
+@code {
+    [Parameter] public required Character Character { get; set; }
+
+    private async Task AddNote()
+    {
+        await OpenNoteDialog(null);
+    }
+    
+    private async Task EditNote(Note note)
+    {
+        await OpenNoteDialog(note);
+    }
+
+    private async Task OpenNoteDialog(Note? note)
+    {
+        var parameters = new DialogParameters { ["Character"] = Character, ["NoteToEdit"] = note };
+        var title = note == null ? "Nova Nota" : "Editar Nota";
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var result = await DialogService.ShowAsync<AddNoteDialog>(title, parameters, options);
+        var dialogResult = await result.Result;
+        
+        if (dialogResult != null && !dialogResult.Canceled)
+        {
+             await SaveCharacter();
+             StateHasChanged();
+        }
+    }
+
+    private async Task RemoveNote(Note note)
+    {
+        Character.Notes.Remove(note);
+        await SaveCharacter();
+    }
+        
+    private async Task SaveCharacter()
+    {
+        await Repository.SaveCharacterAsync(Character);
+    }
+}

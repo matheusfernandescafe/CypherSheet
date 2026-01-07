@@ -1,0 +1,271 @@
+@using CypherSheet.Domain
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-width: 600px;">
+            <MudText Typo="Typo.h6" Class="mb-4">Calculadora de Rolagem</MudText>
+            
+            <!-- Effort Section -->
+            <MudCard Elevation="2" Class="mb-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">
+                        Esforço por Pool
+                        <br />
+                        <small>Disponível: @Character.Effort</small>
+                    </MudText>
+                    
+                    @if (RollCalc.TotalEffort > Character.Effort)
+                    {
+                        <MudAlert Severity="Severity.Error" Class="mb-3">
+                            Esforço total (@RollCalc.TotalEffort) excede o limite do personagem (@Character.Effort)
+                        </MudAlert>
+                    }
+                    
+                    <MudGrid Spacing="3">
+                        <MudItem xs="4">
+                            <MudNumericField @bind-Value="RollCalc.MightEffort" 
+                                           Label="Might Effort" 
+                                           Variant="Variant.Outlined" 
+                                           Min="0" 
+                                           Max="@GetMaxEffortForPool()"
+                                           T="int" 
+                                           FullWidth="true" />
+                        </MudItem>
+                        <MudItem xs="4">
+                            <MudNumericField @bind-Value="RollCalc.SpeedEffort" 
+                                           Label="Speed Effort" 
+                                           Variant="Variant.Outlined" 
+                                           Min="0" 
+                                           Max="@GetMaxEffortForPool()"
+                                           T="int" 
+                                           FullWidth="true" />
+                        </MudItem>
+                        <MudItem xs="4">
+                            <MudNumericField @bind-Value="RollCalc.IntellectEffort" 
+                                           Label="Intellect Effort" 
+                                           Variant="Variant.Outlined" 
+                                           Min="0" 
+                                           Max="@GetMaxEffortForPool()"
+                                           T="int" 
+                                           FullWidth="true" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Modifiers Section -->
+            <MudCard Elevation="2" Class="mb-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">Modificadores</MudText>
+                    <MudGrid Spacing="3">
+                        <MudItem xs="4">
+                            <MudNumericField @bind-Value="RollCalc.Bonus" 
+                                           Label="Bônus" 
+                                           Variant="Variant.Outlined" 
+                                           Min="0"
+                                           T="int" 
+                                           FullWidth="true" />
+                        </MudItem>
+                        <MudItem xs="4">
+                            <MudNumericField @bind-Value="RollCalc.Penalty" 
+                                           Label="Penalidade" 
+                                           Variant="Variant.Outlined" 
+                                           Min="0"
+                                           T="int" 
+                                           FullWidth="true" />
+                        </MudItem>
+                        <MudItem xs="4">
+                            <MudNumericField @bind-Value="RollCalc.AbilityCost" 
+                                           Label="Custo Habilidade" 
+                                           Variant="Variant.Outlined" 
+                                           Min="0"
+                                           T="int" 
+                                           FullWidth="true" />
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Status Effects -->
+            @if (Character.Impaired || Character.Debilitated)
+            {
+                <MudAlert Severity="Severity.Warning" Class="mb-4">
+                    <MudText>
+                        @if (Character.Impaired)
+                        {
+                            <span>Enfraquecido: +1 Effort adicional por nível aplicado</span>
+                        }
+                        @if (Character.Debilitated)
+                        {
+                            <br /><span>Debilitado: Movimento limitado</span>
+                        }
+                    </MudText>
+                </MudAlert>
+            }
+
+            <!-- Cost Breakdown -->
+            <MudCard Elevation="2" Class="mb-4">
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1" Class="mb-3">Custo por Pool</MudText>
+                    <MudGrid Spacing="2">
+                        <MudItem xs="4">
+                            <MudText Typo="Typo.body2">
+                                <strong>Might:</strong> @GetMightTotalCost()
+                                <br />
+                                <small>Disponível: @Character.Might.Current</small>
+                                @if (Character.Might.Current < GetMightTotalCost())
+                                {
+                                    <br /><small style="color: red;">Insuficiente!</small>
+                                }
+                            </MudText>
+                        </MudItem>
+                        <MudItem xs="4">
+                            <MudText Typo="Typo.body2">
+                                <strong>Speed:</strong> @RollCalc.CalculateSpeedCost(Character.Speed.Edge, Character.Impaired)
+                                <br />
+                                <small>Disponível: @Character.Speed.Current</small>
+                                @if (Character.Speed.Current < RollCalc.CalculateSpeedCost(Character.Speed.Edge, Character.Impaired))
+                                {
+                                    <br /><small style="color: red;">Insuficiente!</small>
+                                }
+                            </MudText>
+                        </MudItem>
+                        <MudItem xs="4">
+                            <MudText Typo="Typo.body2">
+                                <strong>Intellect:</strong> @RollCalc.CalculateIntellectCost(Character.Intellect.Edge, Character.Impaired)
+                                <br />
+                                <small>Disponível: @Character.Intellect.Current</small>
+                                @if (Character.Intellect.Current < RollCalc.CalculateIntellectCost(Character.Intellect.Edge, Character.Impaired))
+                                {
+                                    <br /><small style="color: red;">Insuficiente!</small>
+                                }
+                            </MudText>
+                        </MudItem>
+                    </MudGrid>
+                    
+                    <MudDivider Class="my-3" />
+                    
+                    <MudText Typo="Typo.h6" Color="@GetCostColor()">
+                        Custo Total: @GetTotalCost()
+                    </MudText>
+                    
+                    @if (!CanAffordAll())
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Error">
+                            Pontos insuficientes nos pools!
+                        </MudText>
+                    }
+                    
+                    @if (RollCalc.TotalEffort > Character.Effort)
+                    {
+                        <MudText Typo="Typo.body2" Color="Color.Error">
+                            Esforço total excede o limite!
+                        </MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+
+            <!-- Future: Dice Roll Section -->
+            <MudCard Elevation="2" Class="mb-4" Style="opacity: 0.6;">
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Rolagem de Dados</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        <em>Funcionalidade será implementada em breve</em>
+                    </MudText>
+                </MudCardContent>
+            </MudCard>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Error" OnClick="Reset">Limpar</MudButton>
+        <MudButton Color="Color.Primary" 
+                   Variant="Variant.Filled" 
+                   OnClick="ApplyCosts"
+                   Disabled="@(!CanAffordAll() || RollCalc.TotalEffort == 0 || RollCalc.TotalEffort > Character.Effort)">
+            Aplicar Custos
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Character Character { get; set; } = null!;
+    
+    private RollCalculation RollCalc = new();
+
+    private void Cancel() => MudDialog.Cancel();
+    
+    private void Reset()
+    {
+        RollCalc = new RollCalculation();
+        StateHasChanged();
+    }
+    
+    private void ApplyCosts()
+    {
+        if (!CanAffordAll())
+        {
+            Snackbar.Add("Pontos insuficientes nos pools!", Severity.Error);
+            return;
+        }
+        
+        if (RollCalc.TotalEffort == 0)
+        {
+            Snackbar.Add("Selecione pelo menos 1 nível de esforço!", Severity.Warning);
+            return;
+        }
+        
+        if (RollCalc.TotalEffort > Character.Effort)
+        {
+            Snackbar.Add("Esforço total excede o limite do personagem!", Severity.Error);
+            return;
+        }
+        
+        // Apply costs to character pools
+        int mightCost = GetMightTotalCost();
+        int speedCost = RollCalc.CalculateSpeedCost(Character.Speed.Edge, Character.Impaired);
+        int intellectCost = RollCalc.CalculateIntellectCost(Character.Intellect.Edge, Character.Impaired);
+        
+        if (mightCost > 0) Character.Might.Spend(mightCost);
+        if (speedCost > 0) Character.Speed.Spend(speedCost);
+        if (intellectCost > 0) Character.Intellect.Spend(intellectCost);
+        
+        Snackbar.Add($"Custos aplicados! Total: {GetTotalCost()} pontos", Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    
+    private int GetMaxEffortForPool()
+    {
+        // O máximo que pode ser gasto em um pool individual é limitado pelo esforço total restante
+        int remainingEffort = Character.Effort - (RollCalc.TotalEffort - Math.Max(RollCalc.MightEffort, Math.Max(RollCalc.SpeedEffort, RollCalc.IntellectEffort)));
+        return Math.Max(0, remainingEffort);
+    }
+    
+    private int GetMightTotalCost()
+    {
+        return RollCalc.CalculateMightCost(Character.Might.Edge, Character.Impaired) + RollCalc.AbilityCost;
+    }
+    
+    private int GetTotalCost()
+    {
+        return GetMightTotalCost() + 
+               RollCalc.CalculateSpeedCost(Character.Speed.Edge, Character.Impaired) + 
+               RollCalc.CalculateIntellectCost(Character.Intellect.Edge, Character.Impaired);
+    }
+    
+    private bool CanAffordAll()
+    {
+        return Character.Might.Current >= GetMightTotalCost() && 
+               Character.Speed.Current >= RollCalc.CalculateSpeedCost(Character.Speed.Edge, Character.Impaired) && 
+               Character.Intellect.Current >= RollCalc.CalculateIntellectCost(Character.Intellect.Edge, Character.Impaired);
+    }
+    
+    private Color GetCostColor()
+    {
+        if (RollCalc.TotalEffort > Character.Effort || !CanAffordAll())
+            return Color.Error;
+        return Color.Success;
+    }
+}

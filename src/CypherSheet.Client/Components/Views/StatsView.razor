@@ -1,0 +1,261 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject ICharacterRepository Repository
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@if (Character == null)
+{
+    <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+}
+else
+{
+    <MudStack Spacing="2">
+        <MudCard Elevation="3">
+            <MudCardContent>
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.h5">@Character.Name</MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="EditStats" />
+                </div>
+                <MudText Typo="Typo.body2">é um @Character.Descriptor @Character.Type que @Character.Focus</MudText>
+                <div class="d-flex justify-space-between align-center">
+                    <MudText Typo="Typo.body2">Tier @Character.Tier</MudText>
+                    <MudButton Variant="Variant.Text" 
+                             Color="Color.Primary" 
+                             Size="Size.Small"
+                             OnClick="OpenXPDialog"
+                             Class="pa-1">
+                        XP: @Character.XP
+                    </MudButton>
+                </div>
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Roll Button -->
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Casino"
+                   FullWidth="true"
+                   Size="Size.Large"
+                   OnClick="OpenRollDialog"
+                   Class="mb-3">
+            Fazer Rolagem
+        </MudButton>
+
+        <PoolComponent Pool="@Character.Might" OnChange="SaveCharacter" />
+        <PoolComponent Pool="@Character.Speed" OnChange="SaveCharacter" />
+        <PoolComponent Pool="@Character.Intellect" OnChange="SaveCharacter" />
+        
+        <MudCard Elevation="3" Class="pa-2">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Recovery</MudText>
+                
+                <!-- Recovery Checkboxes in Grid Layout -->
+                <MudGrid Spacing="2">
+                    <MudItem xs="6">
+                        <MudCheckBox T="bool" 
+                                   Value="@Character.Recovery.OneActionUsed" 
+                                   ValueChanged="@((v) => OpenRecoveryDialog(v, "1 Action"))" 
+                                   Label="1 Action" 
+                                   Dense="true" 
+                                   Color="Color.Success" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudCheckBox T="bool" 
+                                   Value="@Character.Recovery.TenMinutesUsed" 
+                                   ValueChanged="@((v) => OpenRecoveryDialog(v, "10 Mins"))" 
+                                   Label="10 Mins" 
+                                   Dense="true" 
+                                   Color="Color.Success" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudCheckBox T="bool" 
+                                   Value="@Character.Recovery.OneHourUsed" 
+                                   ValueChanged="@((v) => OpenRecoveryDialog(v, "1 Hour"))" 
+                                   Label="1 Hour" 
+                                   Dense="true" 
+                                   Color="Color.Success" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudCheckBox T="bool" 
+                                   Value="@Character.Recovery.TenHoursUsed" 
+                                   ValueChanged="@((v) => OpenRecoveryDialog(v, "10 Hours"))" 
+                                   Label="10 Hours" 
+                                   Dense="true" 
+                                   Color="Color.Success" />
+                    </MudItem>
+                </MudGrid>
+                
+                <!-- Custom Roll Bonus Field -->
+                <div class="d-flex align-center gap-2 mt-3">
+                    <MudText Typo="Typo.body1" Style="white-space: nowrap;">1D6 +</MudText>
+                    <MudNumericField @bind-Value="Character.Recovery.CustomRollBonus" 
+                                   Variant="Variant.Outlined" 
+                                   Min="0" 
+                                   T="int" 
+                                   OnBlur="SaveCharacter" 
+                                   Placeholder="0"
+                                   Style="width: 60px;" />
+                </div>
+            </MudCardContent>
+        </MudCard>
+
+
+        <MudCard Elevation="3" Class="pa-2">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-2">Atributos Adicionais</MudText>
+                <MudStack Row="true" Spacing="2">
+                    <MudNumericField @bind-Value="Character.Effort" Label="Effort" Variant="Variant.Outlined" Min="0" T="int" OnBlur="SaveCharacter" FullWidth="true" />
+                    <MudNumericField @bind-Value="Character.Armor" Label="Armor" Variant="Variant.Outlined" Min="0" T="int" OnBlur="SaveCharacter" FullWidth="true" />
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+
+        <MudCard Elevation="3" Class="pa-3">
+            <MudCardContent>
+                <MudText Typo="Typo.h6" Class="mb-3">Marcador de Dano</MudText>
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="6">
+                        <MudCheckBox Value="@Character.Impaired" Label="Enfraquecido" Dense="true" Color="Color.Warning" T="bool" ValueChanged="@((v) => UpdateDamageTrack(v, true))" />
+                        <MudText Typo="Typo.caption" Class="ml-8">
+                            +1 Effort per level<br/>
+                            Ignore minor and major effect results on rolls<br/>
+                            Combat roll of 17-20 deals only +1 damage
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudCheckBox Value="@Character.Debilitated" Label="Debilitado" Dense="true" Color="Color.Error" T="bool" ValueChanged="@((v) => UpdateDamageTrack(v, false))" />
+                        <MudText Typo="Typo.caption" Class="ml-8">
+                            Can move only an immediate distance<br/>
+                            Cannot move if Speed Pool is 0
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudCardContent>
+        </MudCard>
+
+    </MudStack>
+}
+
+@code {
+    [Parameter] public Character Character { get; set; } = null!;
+    [Parameter] public EventCallback<Character> CharacterChanged { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+
+
+
+    private async Task EditStats()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var dialog = await DialogService.ShowAsync<EditCharacterDialog>("Editar Personagem", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await SaveCharacter();
+        }
+    }
+
+    private async Task SaveCharacter()
+    {
+        await OnSave.InvokeAsync();
+    }
+    
+    
+    private async Task OpenRecoveryDialog(bool value, string recoveryType)
+    {
+        // If unchecking, just toggle it off
+        if (!value)
+        {
+            switch (recoveryType)
+            {
+                case "1 Action": Character.Recovery.OneActionUsed = false; break;
+                case "10 Mins": Character.Recovery.TenMinutesUsed = false; break;
+                case "1 Hour": Character.Recovery.OneHourUsed = false; break;
+                case "10 Hours": Character.Recovery.TenHoursUsed = false; break;
+            }
+            await SaveCharacter();
+            return;
+        }
+
+        // If checking, open the recovery dialog
+        var parameters = new DialogParameters 
+        { 
+            ["Character"] = Character,
+            ["RecoveryType"] = recoveryType
+        };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var dialog = await DialogService.ShowAsync<RecoveryDialog>("Recovery", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await SaveCharacter();
+        }
+        else
+        {
+            // If dialog was canceled, don't mark as used
+            StateHasChanged();
+        }
+    }
+    
+    
+    
+    private async Task UpdateDamageTrack(bool value, bool isImpaired)
+    {
+        if (isImpaired)
+        {
+            Character.Impaired = value;
+        }
+        else
+        {
+            Character.Debilitated = value;
+        }
+        await SaveCharacter();
+    }
+    
+    private async Task OpenRollDialog()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions 
+        { 
+            CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<RollDialog>("Calculadora de Rolagem", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await SaveCharacter();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenXPDialog()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions 
+        { 
+            CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<XPDialog>("Gerenciar XP", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await SaveCharacter();
+            StateHasChanged();
+        }
+    }
+}

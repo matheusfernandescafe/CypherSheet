@@ -1,0 +1,74 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject IDialogService DialogService
+@inject ICharacterRepository Repository
+
+<MudStack Spacing="2">
+    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddItem">Adicionar Item</MudButton>
+    
+    @if (!Character.Equipment.Any())
+    {
+        <div style="position: relative; min-height: 300px;">
+            <EmptyStateWatermark Icon="@Icons.Material.Filled.Backpack" />
+            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">Mochila vazia.</MudText>
+        </div>
+    }
+    else
+    {
+        @foreach (var item in Character.Equipment.OrderBy(e => e.Name))
+        {
+            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditItem(item))">
+                <div class="d-flex align-center justify-space-between width-100">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudText Typo="Typo.subtitle1">@item.Name</MudText>
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small">Qtd: @item.Quantity</MudChip>
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveItem(item))" />
+                    </MudStack>
+                </div>
+            </MudPaper>
+        }
+    }
+</MudStack>
+
+@code {
+    [Parameter] public required Character Character { get; set; }
+
+    private async Task AddItem()
+    {
+        await OpenItemDialog(null);
+    }
+    
+    private async Task EditItem(Item item)
+    {
+        await OpenItemDialog(item);
+    }
+
+    private async Task OpenItemDialog(Item? item)
+    {
+        var parameters = new DialogParameters { ["Character"] = Character, ["ItemToEdit"] = item };
+        var title = item == null ? "Novo Item" : "Editar Item";
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var result = await DialogService.ShowAsync<AddItemDialog>(title, parameters, options);
+        var dialogResult = await result.Result;
+        
+        if (dialogResult != null && !dialogResult.Canceled)
+        {
+             await SaveCharacter();
+             StateHasChanged();
+        }
+    }
+
+    private async Task RemoveItem(Item item)
+    {
+        Character.Equipment.Remove(item);
+        await SaveCharacter();
+    }
+    
+    private async Task SaveCharacter()
+    {
+        await Repository.SaveCharacterAsync(Character);
+    }
+}

@@ -1,0 +1,145 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6" Class="mb-4">Recover</MudText>
+        
+        <MudStack Spacing="3">
+            <!-- Pool Status Display -->
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.subtitle1"><strong>Might</strong></MudText>
+                <MudText Typo="Typo.subtitle1"><strong>Speed</strong></MudText>
+                <MudText Typo="Typo.subtitle1"><strong>Intellect</strong></MudText>
+            </MudStack>
+            
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudChip T="string" Size="Size.Large" Color="Color.Default">@Character.Might.Current/@Character.Might.Max</MudChip>
+                <MudChip T="string" Size="Size.Large" Color="Color.Default">@Character.Speed.Current/@Character.Speed.Max</MudChip>
+                <MudChip T="string" Size="Size.Large" Color="Color.Default">@Character.Intellect.Current/@Character.Intellect.Max</MudChip>
+            </MudStack>
+
+            <!-- Reset All Button -->
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Default" 
+                       FullWidth="true" 
+                       OnClick="ResetAllToCap"
+                       Class="mt-2">
+                Reset all to Cap
+            </MudButton>
+
+            <!-- Recovery Amount Inputs -->
+            <MudText Typo="Typo.subtitle2" Class="mt-3">Add</MudText>
+            
+            <MudStack Row="true" Justify="Justify.SpaceBetween" Spacing="2">
+                <MudPaper Class="pa-3 flex-grow-1" Elevation="2">
+                    <MudNumericField @bind-Value="mightRecovery" 
+                                   Min="0" 
+                                   Max="@GetMaxRecovery(Character.Might)"
+                                   HideSpinButtons="false"
+                                   Variant="Variant.Outlined"
+                                   T="int" />
+                </MudPaper>
+                
+                <MudPaper Class="pa-3 flex-grow-1" Elevation="2">
+                    <MudNumericField @bind-Value="speedRecovery" 
+                                   Min="0" 
+                                   Max="@GetMaxRecovery(Character.Speed)"
+                                   HideSpinButtons="false"
+                                   Variant="Variant.Outlined"
+                                   T="int" />
+                </MudPaper>
+                
+                <MudPaper Class="pa-3 flex-grow-1" Elevation="2">
+                    <MudNumericField @bind-Value="intellectRecovery" 
+                                   Min="0" 
+                                   Max="@GetMaxRecovery(Character.Intellect)"
+                                   HideSpinButtons="false"
+                                   Variant="Variant.Outlined"
+                                   T="int" />
+                </MudPaper>
+            </MudStack>
+
+            <!-- Info Text -->
+            <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-2">
+                Set how many points should be added to
+            </MudText>
+
+            <!-- Recover Button -->
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       FullWidth="true" 
+                       Size="Size.Large"
+                       OnClick="ApplyRecovery"
+                       Class="mt-2">
+                Recover @TotalRecoveryPoints points
+            </MudButton>
+        </MudStack>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Character Character { get; set; }
+    [Parameter] public string RecoveryType { get; set; }
+
+    private int mightRecovery = 0;
+    private int speedRecovery = 0;
+    private int intellectRecovery = 0;
+
+    private int TotalRecoveryPoints => mightRecovery + speedRecovery + intellectRecovery;
+
+    protected override void OnInitialized()
+    {
+        
+    }
+
+    private int GetMaxRecovery(Pool pool)
+    {
+        return pool.Max - pool.Current;
+    }
+
+    private void ResetAllToCap()
+    {
+        Character.Might.Current = Character.Might.Max;
+        Character.Speed.Current = Character.Speed.Max;
+        Character.Intellect.Current = Character.Intellect.Max;
+        
+        mightRecovery = 0;
+        speedRecovery = 0;
+        intellectRecovery = 0;
+        
+        StateHasChanged();
+    }
+
+    private void ApplyRecovery()
+    {
+        Character.Might.Current = Math.Min(Character.Might.Current + mightRecovery, Character.Might.Max);
+        Character.Speed.Current = Math.Min(Character.Speed.Current + speedRecovery, Character.Speed.Max);
+        Character.Intellect.Current = Math.Min(Character.Intellect.Current + intellectRecovery, Character.Intellect.Max);
+        
+        // Mark the recovery as used
+        MarkRecoveryUsed();
+        
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void MarkRecoveryUsed()
+    {
+        switch (RecoveryType)
+        {
+            case "1 Action":
+                Character.Recovery.OneActionUsed = true;
+                break;
+            case "10 Mins":
+                Character.Recovery.TenMinutesUsed = true;
+                break;
+            case "1 Hour":
+                Character.Recovery.OneHourUsed = true;
+                break;
+            case "10 Hours":
+                Character.Recovery.TenHoursUsed = true;
+                break;
+        }
+    }
+}

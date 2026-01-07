@@ -1,0 +1,109 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@using MudBlazor
+@inject ICharacterRepository Repository
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudStack Spacing="4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h4">Meus Personagens</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="AddCharacter">Novo Personagem</MudButton>
+        </MudStack>
+
+        @if (isLoading)
+        {
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Class="align-self-center" />
+        }
+        else if (!characters.Any())
+        {
+            <div style="position: relative; min-height: 300px;">
+                <EmptyStateWatermark Icon="@Icons.Material.Filled.Groups" />
+                <MudAlert Severity="Severity.Info" style="position: relative; z-index: 1;">Nenhum personagem encontrado. Crie o seu primeiro!</MudAlert>
+            </div>
+        }
+        else
+        {
+            <MudGrid>
+                @foreach (var character in characters.OrderBy(c => c.Name))
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Elevation="3" Class="cursor-pointer hover-card" @onclick="() => OpenCharacter(character.Id)">
+                            <MudCardHeader>
+                                <CardHeaderAvatar>
+                                    <MudAvatar Color="Color.Secondary">@character.Name.FirstOrDefault()</MudAvatar>
+                                </CardHeaderAvatar>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6">@character.Name</MudText>
+                                    <MudText Typo="Typo.caption">@character.Descriptor @character.Type que @character.Focus</MudText>
+                                </CardHeaderContent>
+                                <CardHeaderActions>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="@(() => DeleteCharacter(character))" />
+                                </CardHeaderActions>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudStack Row="true" Spacing="4" Justify="Justify.Center">
+                                    <MudText Align="Align.Center"><b>M:</b> @character.Might.Current/@character.Might.Max</MudText>
+                                    <MudText Align="Align.Center"><b>S:</b> @character.Speed.Current/@character.Speed.Max</MudText>
+                                    <MudText Align="Align.Center"><b>I:</b> @character.Intellect.Current/@character.Intellect.Max</MudText>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </MudStack>
+</MudContainer>
+
+@code {
+    private List<Character> characters = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCharacters();
+    }
+
+    private async Task LoadCharacters()
+    {
+        isLoading = true;
+        characters = await Repository.GetAllCharactersAsync();
+        isLoading = false;
+    }
+
+    private void OpenCharacter(Guid id)
+    {
+        Navigation.NavigateTo($"/character/{id}");
+    }
+
+    private async Task AddCharacter()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AddCharacterDialog>("Novo Personagem", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled && result.Data is Character newCharacter)
+        {
+            await Repository.SaveCharacterAsync(newCharacter);
+            await LoadCharacters(); 
+        }
+    }
+
+    private async Task DeleteCharacter(Character character)
+    {
+        // Show confirmation dialog
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirmar Exclusão", 
+            $"Tem certeza que deseja excluir o personagem '{character.Name}'? Esta ação não pode ser desfeita.",
+            yesText: "Excluir", 
+            cancelText: "Cancelar");
+
+        if (result == true)
+        {
+            await Repository.DeleteCharacterAsync(character.Id);
+            await LoadCharacters();
+        }
+    }
+}

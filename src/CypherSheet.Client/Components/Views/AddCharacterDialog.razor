@@ -1,0 +1,46 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="characterName" Label="Nome" AutoFocus="true" />
+        <MudTextField @bind-Value="characterDescriptor" Label="Descritor" HelperText="Ex: Resiliente, Charmoso" />
+        <MudTextField @bind-Value="characterType" Label="Tipo" HelperText="Ex: Glaive, Jack, Nano" />
+        <MudTextField @bind-Value="characterFocus" Label="Foco" HelperText="Ex: Domina Bestas, Controla Gravidade" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Criar Personagem</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
+
+    private string characterName;
+    private string characterDescriptor;
+    private string characterType;
+    private string characterFocus;
+
+    void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(characterName))
+        {
+            Snackbar.Add("O personagem precisa de um nome.", Severity.Warning);
+            return;
+        }
+        
+        var newCharacter = new Character 
+        { 
+            Name = characterName,
+            Descriptor = characterDescriptor,
+            Type = characterType,
+            Focus = characterFocus
+        };
+        
+        MudDialog.Close(DialogResult.Ok(newCharacter));
+    }
+    void Cancel() => MudDialog.Cancel();
+}

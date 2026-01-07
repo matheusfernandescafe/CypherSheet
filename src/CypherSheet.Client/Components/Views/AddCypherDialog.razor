@@ -1,0 +1,93 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="name" Label="Nome" AutoFocus="true" />
+        <MudTextField @bind-Value="level" Label="Nível" />
+        <MudTextField @bind-Value="depletion" Label="Depletion" />
+        <MudSelect @bind-Value="type" Label="Tipo">
+            <MudSelectItem Value="@CypherType.Cypher">Cypher</MudSelectItem>
+            <MudSelectItem Value="@CypherType.Artifact">Artefato</MudSelectItem>
+        </MudSelect>
+        <MudSwitch T="bool" @bind-Value="isActive" Label="Ativo" Color="Color.Primary" />
+        <MudTextField @bind-Value="description" Label="Descrição" Lines="3" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Character Character { get; set; }
+    [Parameter] public Cypher CypherToEdit { get; set; }
+
+    private string name = "";
+    private string level = "";
+    private string depletion = "";
+    private string description = "";
+    private bool isActive = true;
+    private CypherType type = CypherType.Cypher;
+
+    protected override void OnInitialized()
+    {
+        LoadCypherData();
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadCypherData();
+    }
+
+    private void LoadCypherData()
+    {
+        if (CypherToEdit != null)
+        {
+            name = CypherToEdit.Name;
+            level = CypherToEdit.Level;
+            depletion = CypherToEdit.Depletion;
+            description = CypherToEdit.Description;
+            isActive = CypherToEdit.IsActive;
+            type = CypherToEdit.Type;
+            
+            StateHasChanged();
+        }
+    }
+
+    void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Snackbar.Add("Nome é obrigatório", Severity.Warning);
+            return;
+        }
+        
+        if (CypherToEdit != null)
+        {
+            CypherToEdit.Name = name;
+            CypherToEdit.Level = level;
+            CypherToEdit.Depletion = depletion;
+            CypherToEdit.Description = description;
+            CypherToEdit.IsActive = isActive;
+            CypherToEdit.Type = type;
+        }
+        else
+        {
+            Character.Cyphers.Add(new Cypher { 
+                Name = name, 
+                Level = level, 
+                Depletion = depletion,
+                Description = description,
+                IsActive = isActive,
+                Type = type
+            });
+        }
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}

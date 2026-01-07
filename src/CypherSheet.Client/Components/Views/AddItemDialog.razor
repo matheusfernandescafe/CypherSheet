@@ -1,0 +1,59 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudTextField @bind-Value="name" Label="Nome" AutoFocus="true" />
+        <MudNumericField @bind-Value="quantity" Label="Quantidade" Min="1" />
+        <MudTextField @bind-Value="description" Label="Descrição" Lines="2" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">Salvar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public Character Character { get; set; }
+    [Parameter] public Item ItemToEdit { get; set; }
+
+    private string name;
+    private int quantity = 1;
+    private string description;
+
+    protected override void OnInitialized()
+    {
+        if (ItemToEdit != null)
+        {
+            name = ItemToEdit.Name;
+            quantity = ItemToEdit.Quantity;
+            description = ItemToEdit.Description;
+        }
+    }
+
+    void Submit()
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Snackbar.Add("Nome é obrigatório", Severity.Warning);
+            return;
+        }
+        
+        if (ItemToEdit != null)
+        {
+            ItemToEdit.Name = name;
+            ItemToEdit.Quantity = quantity;
+            ItemToEdit.Description = description;
+        }
+        else
+        {
+            Character.Equipment.Add(new Item { Name = name, Quantity = quantity, Description = description });
+        }
+        
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+    void Cancel() => MudDialog.Cancel();
+}
