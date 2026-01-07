@@ -487,8 +487,3 @@ $RECYCLE.BIN/
 ## Kiro IDE
 ##
 .kiro/
-
-##
-## Publish
-##
-.dist/
