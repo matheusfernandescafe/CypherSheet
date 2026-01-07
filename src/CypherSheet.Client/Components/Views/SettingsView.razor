@@ -1,6 +1,8 @@
 @using MudBlazor
 @using CypherSheet.Domain
+@using CypherSheet.Client.Services
 @inject IDialogService DialogService
+@inject IThemeService ThemeService
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4">
     <MudStack Spacing="4">
@@ -35,7 +37,7 @@
                             <MudIcon Icon="@Icons.Material.Filled.DarkMode" />
                             <MudText>Modo Escuro</MudText>
                         </MudStack>
-                        <MudSwitch T="bool" @bind-Value="isDarkMode" Color="Color.Primary" />
+                        <MudSwitch T="bool" Value="@ThemeService.IsDarkMode" ValueChanged="@OnDarkModeChanged" Color="Color.Primary" />
                     </div>
                 </MudListItem>
             </MudStack>
@@ -105,7 +107,10 @@
 </style>
 
 @code {
-    private bool isDarkMode = false;
+    private async Task OnDarkModeChanged(bool value)
+    {
+        await ThemeService.SetDarkModeAsync(value);
+    }
 
     private async Task OpenLanguageDialog()
     {

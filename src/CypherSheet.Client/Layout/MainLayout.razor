@@ -1,6 +1,9 @@
-﻿@inherits LayoutComponentBase
+﻿@using CypherSheet.Client.Services
+@inherits LayoutComponentBase
+@inject IThemeService ThemeService
+@implements IDisposable
 
-<MudThemeProvider Theme="_theme" />
+<MudThemeProvider Theme="_theme" IsDarkMode="@ThemeService.IsDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -33,4 +36,15 @@
             Error = new MudBlazor.Utilities.MudColor("#BD4949")
         }
     };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ThemeService.InitializeAsync();
+        ThemeService.OnThemeChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        ThemeService.OnThemeChanged -= StateHasChanged;
+    }
 }
