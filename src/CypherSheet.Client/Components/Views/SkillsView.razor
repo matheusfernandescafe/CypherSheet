@@ -36,7 +36,7 @@
         <MudList T="Skill" ReadOnly="false">
             @foreach (var skill in FilteredSkills)
             {
-                 <MudListItem Dense="false">
+                 <MudListItem Dense="false" OnClick="@(() => EditSkill(skill))" Style="cursor: pointer;">
                       <div class="d-flex flex-column width-100">
                           <div class="d-flex align-center justify-space-between width-100 mb-2">
                               <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
@@ -45,8 +45,7 @@
                                   <MudChip T="string" Color="@GetLevelColor(skill.Level)" Size="Size.Small" OnClick="@(() => ToggleLevel(skill))">@GetLevelLabel(skill.Level)</MudChip>
                               </MudStack>
                               <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                  <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditSkill(skill))" />
-                                  <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => ConfirmRemoveSkill(skill))" />
+                                  <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async (e) => await ConfirmRemoveSkill(skill))" />
                               </MudStack>
                           </div>
                           @if (!string.IsNullOrWhiteSpace(skill.Description))
