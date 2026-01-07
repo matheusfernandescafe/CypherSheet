@@ -3,6 +3,7 @@
 @using CypherSheet.Client.Services
 @inject IDialogService DialogService
 @inject IThemeService ThemeService
+@inject ISnackbar Snackbar
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4">
     <MudStack Spacing="4">
@@ -20,6 +21,7 @@
                         </MudStack>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                             <MudText Typo="Typo.body2" Class="text-muted">Português</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text" Class="ml-2">Em breve</MudChip>
                             <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
                         </MudStack>
                     </div>
@@ -54,7 +56,10 @@
                             <MudIcon Icon="@Icons.Material.Filled.FileDownload" />
                             <MudText>Exportar Personagem</MudText>
                         </MudStack>
-                        <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">Em breve</MudChip>
+                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                        </MudStack>
                     </div>
                 </MudListItem>
                 
@@ -64,7 +69,10 @@
                             <MudIcon Icon="@Icons.Material.Filled.FileUpload" />
                             <MudText>Importar Personagem</MudText>
                         </MudStack>
-                        <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">Em breve</MudChip>
+                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                        </MudStack>
                     </div>
                 </MudListItem>
                 
@@ -76,7 +84,10 @@
                             <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" />
                             <MudText Color="Color.Error">Deletar Todas as Informações</MudText>
                         </MudStack>
-                        <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Error" />
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">Em breve</MudChip>
+                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Error" />
+                        </MudStack>
                     </div>
                 </MudListItem>
             </MudStack>
@@ -114,25 +125,41 @@
 
     private async Task OpenLanguageDialog()
     {
-        // TODO: Implementar modal de seleção de idioma
+        Snackbar.Add("Funcionalidade de idioma ainda não implementada. Em breve!", Severity.Info, config =>
+        {
+            config.Icon = Icons.Material.Filled.Language;
+            config.VisibleStateDuration = 3000;
+        });
         await Task.CompletedTask;
     }
 
     private async Task ExportCharacter()
     {
-        // TODO: Implementar exportação de personagem
+        Snackbar.Add("Funcionalidade de exportação ainda não implementada. Em breve!", Severity.Info, config =>
+        {
+            config.Icon = Icons.Material.Filled.FileDownload;
+            config.VisibleStateDuration = 3000;
+        });
         await Task.CompletedTask;
     }
 
     private async Task ImportCharacter()
     {
-        // TODO: Implementar importação de personagem
+        Snackbar.Add("Funcionalidade de importação ainda não implementada. Em breve!", Severity.Info, config =>
+        {
+            config.Icon = Icons.Material.Filled.FileUpload;
+            config.VisibleStateDuration = 3000;
+        });
         await Task.CompletedTask;
     }
 
     private async Task DeleteAllData()
     {
-        // TODO: Implementar confirmação e exclusão de todos os dados
+        Snackbar.Add("Funcionalidade de exclusão de dados ainda não implementada. Em breve!", Severity.Info, config =>
+        {
+            config.Icon = Icons.Material.Filled.DeleteForever;
+            config.VisibleStateDuration = 3000;
+        });
         await Task.CompletedTask;
     }
 }
