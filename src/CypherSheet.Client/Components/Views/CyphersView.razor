@@ -31,30 +31,27 @@
     }
     else
     {
-        <MudList T="Cypher" ReadOnly="false">
-            @foreach (var cypher in FilteredCyphers)
-            {
-                <MudListItem Dense="false" OnClick="@(() => EditCypher(cypher))" Style="cursor: pointer;">
-                    <div class="d-flex flex-column width-100">
-                        <div class="d-flex align-center justify-space-between width-100 mb-2">
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                <MudText Typo="Typo.subtitle1">@cypher.Name</MudText>
-                                <MudChip T="string" Color="@GetTypeColor(cypher.Type)" Size="Size.Small">@GetTypeLabel(cypher.Type)</MudChip>
-                                <MudChip T="string" Color="@(cypher.IsActive ? Color.Success : Color.Default)" Size="Size.Small">@(cypher.IsActive ? "Ativo" : "Inativo")</MudChip>
-                            </MudStack>
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async (e) => await ConfirmRemoveCypher(cypher))" />
-                            </MudStack>
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(cypher.Description))
-                        {
-                            <MudText Typo="Typo.body2" Class="text-muted ml-0">@cypher.Description</MudText>
-                        }
+        @foreach (var cypher in FilteredCyphers)
+        {
+            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditCypher(cypher))">
+                <div class="d-flex flex-column width-100">
+                    <div class="d-flex align-center justify-space-between width-100 mb-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.subtitle1">@cypher.Name</MudText>
+                            <MudChip T="string" Color="@GetTypeColor(cypher.Type)" Size="Size.Small">@GetTypeLabel(cypher.Type)</MudChip>
+                            <MudChip T="string" Color="@(cypher.IsActive ? Color.Success : Color.Default)" Size="Size.Small">@(cypher.IsActive ? "Ativo" : "Inativo")</MudChip>
+                        </MudStack>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async () => await ConfirmRemoveCypher(cypher))" />
+                        </MudStack>
                     </div>
-                </MudListItem>
-                <MudDivider />
-            }
-        </MudList>
+                    @if (!string.IsNullOrWhiteSpace(cypher.Description))
+                    {
+                        <MudText Typo="Typo.body2" Class="text-muted ml-0">@cypher.Description</MudText>
+                    }
+                </div>
+            </MudPaper>
+        }
     }
 </MudStack>
 

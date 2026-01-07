@@ -33,31 +33,28 @@
     }
     else
     {
-        <MudList T="Skill" ReadOnly="false">
-            @foreach (var skill in FilteredSkills)
-            {
-                 <MudListItem Dense="false" OnClick="@(() => EditSkill(skill))" Style="cursor: pointer;">
-                      <div class="d-flex flex-column width-100">
-                          <div class="d-flex align-center justify-space-between width-100 mb-2">
-                              <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                  <MudText Typo="Typo.subtitle1">@skill.Name</MudText>
-                                  <MudChip T="string" Color="@GetTypeColor(skill.Type)" Size="Size.Small">@GetTypeLabel(skill.Type)</MudChip>
-                                  <MudChip T="string" Color="@GetLevelColor(skill.Level)" Size="Size.Small" OnClick="@(() => ToggleLevel(skill))">@GetLevelLabel(skill.Level)</MudChip>
-                              </MudStack>
-                              <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                  <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async (e) => await ConfirmRemoveSkill(skill))" />
-                              </MudStack>
-                          </div>
-                          @if (!string.IsNullOrWhiteSpace(skill.Description))
-                          {
-                              <MudText Typo="Typo.body2" Class="text-muted ml-0">@skill.Description</MudText>
-                          }
-                      </div>
-                 </MudListItem>
-                 <MudDivider />
-             }
-         </MudList>
-     }
+        @foreach (var skill in FilteredSkills)
+        {
+            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditSkill(skill))">
+                <div class="d-flex flex-column width-100">
+                    <div class="d-flex align-center justify-space-between width-100 mb-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.subtitle1">@skill.Name</MudText>
+                            <MudChip T="string" Color="@GetTypeColor(skill.Type)" Size="Size.Small">@GetTypeLabel(skill.Type)</MudChip>
+                            <MudChip T="string" Color="@GetLevelColor(skill.Level)" Size="Size.Small" @onclick="@(() => ToggleLevel(skill))">@GetLevelLabel(skill.Level)</MudChip>
+                        </MudStack>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async () => await ConfirmRemoveSkill(skill))" />
+                        </MudStack>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(skill.Description))
+                    {
+                        <MudText Typo="Typo.body2" Class="text-muted ml-0">@skill.Description</MudText>
+                    }
+                </div>
+            </MudPaper>
+        }
+    }
  </MudStack>
  
  @code {

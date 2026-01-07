@@ -32,38 +32,35 @@
     }
     else
     {
-        <MudList T="Ability" ReadOnly="false">
-            @foreach (var ability in FilteredAbilities)
-            {
-                 <MudListItem Dense="false" OnClick="@(() => EditAbility(ability))" Style="cursor: pointer;">
-                      <div class="d-flex flex-column width-100">
-                          <div class="d-flex align-center justify-space-between width-100 mb-2">
-                              <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                  <MudText Typo="Typo.subtitle1">@ability.Name</MudText>
-                                  <MudChip T="string" Color="@GetTypeColor(ability.Type)" Size="Size.Small">@GetTypeLabel(ability.Type)</MudChip>
-                                  @if (!string.IsNullOrWhiteSpace(ability.Cost))
-                                  {
-                                      <MudChip T="string" Color="Color.Info" Size="Size.Small">@ability.Cost</MudChip>
-                                  }
-                                  @if (!string.IsNullOrWhiteSpace(ability.Page))
-                                  {
-                                      <MudChip T="string" Color="Color.Default" Size="Size.Small">p. @ability.Page</MudChip>
-                                  }
-                              </MudStack>
-                              <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                  <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async (e) => await ConfirmRemoveAbility(ability))" />
-                              </MudStack>
-                          </div>
-                          @if (!string.IsNullOrWhiteSpace(ability.Description))
-                          {
-                              <MudText Typo="Typo.body2" Class="text-muted ml-0">@ability.Description</MudText>
-                          }
-                      </div>
-                 </MudListItem>
-                 <MudDivider />
-             }
-         </MudList>
-     }
+        @foreach (var ability in FilteredAbilities)
+        {
+            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditAbility(ability))">
+                <div class="d-flex flex-column width-100">
+                    <div class="d-flex align-center justify-space-between width-100 mb-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.subtitle1">@ability.Name</MudText>
+                            <MudChip T="string" Color="@GetTypeColor(ability.Type)" Size="Size.Small">@GetTypeLabel(ability.Type)</MudChip>
+                            @if (!string.IsNullOrWhiteSpace(ability.Cost))
+                            {
+                                <MudChip T="string" Color="Color.Info" Size="Size.Small">@ability.Cost</MudChip>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(ability.Page))
+                            {
+                                <MudChip T="string" Color="Color.Default" Size="Size.Small">p. @ability.Page</MudChip>
+                            }
+                        </MudStack>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async () => await ConfirmRemoveAbility(ability))" />
+                        </MudStack>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(ability.Description))
+                    {
+                        <MudText Typo="Typo.body2" Class="text-muted ml-0">@ability.Description</MudText>
+                    }
+                </div>
+            </MudPaper>
+        }
+    }
  </MudStack>
  
  @code {

@@ -15,26 +15,25 @@
     }
     else
     {
-        <MudTable Items="@Character.Equipment.OrderBy(e => e.Name)" Hover="true" Dense="true" Elevation="0">
-            <HeaderContent>
-                <MudTh>Nome</MudTh>
-                <MudTh>Qtd</MudTh>
-                <MudTh></MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Nome">@context.Name</MudTd>
-                <MudTd DataLabel="Qtd">@context.Quantity</MudTd>
-                <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary" OnClick="@(() => EditItem(context))" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveItem(context))" />
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
+        @foreach (var item in Character.Equipment.OrderBy(e => e.Name))
+        {
+            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditItem(item))">
+                <div class="d-flex align-center justify-space-between width-100">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudText Typo="Typo.subtitle1">@item.Name</MudText>
+                        <MudChip T="string" Color="Color.Info" Size="Size.Small">Qtd: @item.Quantity</MudChip>
+                    </MudStack>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveItem(item))" />
+                    </MudStack>
+                </div>
+            </MudPaper>
+        }
     }
 </MudStack>
 
 @code {
-    [Parameter] public Character Character { get; set; }
+    [Parameter] public required Character Character { get; set; }
 
     private async Task AddItem()
     {
@@ -46,15 +45,16 @@
         await OpenItemDialog(item);
     }
 
-    private async Task OpenItemDialog(Item item)
+    private async Task OpenItemDialog(Item? item)
     {
         var parameters = new DialogParameters { ["Character"] = Character, ["ItemToEdit"] = item };
         var title = item == null ? "Novo Item" : "Editar Item";
         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
         
-        var result = await DialogService.Show<AddItemDialog>(title, parameters, options).Result;
+        var result = await DialogService.ShowAsync<AddItemDialog>(title, parameters, options);
+        var dialogResult = await result.Result;
         
-        if (!result.Canceled)
+        if (dialogResult != null && !dialogResult.Canceled)
         {
              await SaveCharacter();
              StateHasChanged();
