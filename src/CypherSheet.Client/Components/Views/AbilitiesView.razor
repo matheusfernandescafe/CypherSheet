@@ -4,77 +4,135 @@
 @inject ICharacterRepository Repository
 
 <MudStack Spacing="2">
-    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddAbility">Adicionar Habilidade</MudButton>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddAbility">Adicionar Habilidade</MudButton>
+        <MudSelect @bind-Value="selectedFilterString" Label="Filtrar por Tipo" Clearable="true" Style="min-width: 150px;">
+            <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+            <MudSelectItem Value="@nameof(SkillType.Might)">Might</MudSelectItem>
+            <MudSelectItem Value="@nameof(SkillType.Speed)">Speed</MudSelectItem>
+            <MudSelectItem Value="@nameof(SkillType.Intellect)">Intellect</MudSelectItem>
+        </MudSelect>
+    </MudStack>
     
-    @if (!Character.Abilities.Any())
+    @if (!FilteredAbilities.Any())
     {
         <div style="position: relative; min-height: 300px;">
             <EmptyStateWatermark Icon="@Icons.Material.Filled.AutoAwesome" />
-            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">Nenhuma habilidade adicionada.</MudText>
+            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">
+                @if (!Character.Abilities.Any())
+                {
+                    <text>Nenhuma habilidade adicionada.</text>
+                }
+                else
+                {
+                    <text>Nenhuma habilidade encontrada para o filtro selecionado.</text>
+                }
+            </MudText>
         </div>
     }
     else
     {
-        <MudExpansionPanels MultiExpansion="true">
-            @foreach (var ability in Character.Abilities)
+        <MudList T="Ability" ReadOnly="false">
+            @foreach (var ability in FilteredAbilities)
             {
-                <MudExpansionPanel Text="@ability.Name">
-                    <TitleContent>
-                        <div class="d-flex justify-space-between flex-grow-1 gap-4">
-                            <MudText Typo="Typo.body1">@ability.Name</MudText>
-                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@ability.Cost</MudText>
-                        </div>
-                    </TitleContent>
-                    <ChildContent>
-                        <MudText Typo="Typo.body2">@ability.Description</MudText>
-                        <MudDivider Class="my-2"/>
-                        <MudStack Row="true" Justify="Justify.FlexEnd">
-                             <MudButton Size="Size.Small" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="@(() => EditAbility(ability))">Editar</MudButton>
-                             <MudButton Size="Size.Small" Color="Color.Error" StartIcon="@Icons.Material.Filled.Delete" OnClick="@(() => RemoveAbility(ability))">Remover</MudButton>
-                        </MudStack>
-                    </ChildContent>
-                </MudExpansionPanel>
-            }
-        </MudExpansionPanels>
-    }
-</MudStack>
+                 <MudListItem Dense="false" OnClick="@(() => EditAbility(ability))" Style="cursor: pointer;">
+                      <div class="d-flex flex-column width-100">
+                          <div class="d-flex align-center justify-space-between width-100 mb-2">
+                              <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                  <MudText Typo="Typo.subtitle1">@ability.Name</MudText>
+                                  <MudChip T="string" Color="@GetTypeColor(ability.Type)" Size="Size.Small">@GetTypeLabel(ability.Type)</MudChip>
+                                  @if (!string.IsNullOrWhiteSpace(ability.Cost))
+                                  {
+                                      <MudChip T="string" Color="Color.Info" Size="Size.Small">@ability.Cost</MudChip>
+                                  }
+                                  @if (!string.IsNullOrWhiteSpace(ability.Page))
+                                  {
+                                      <MudChip T="string" Color="Color.Default" Size="Size.Small">p. @ability.Page</MudChip>
+                                  }
+                              </MudStack>
+                              <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                  <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(async (e) => await ConfirmRemoveAbility(ability))" />
+                              </MudStack>
+                          </div>
+                          @if (!string.IsNullOrWhiteSpace(ability.Description))
+                          {
+                              <MudText Typo="Typo.body2" Class="text-muted ml-0">@ability.Description</MudText>
+                          }
+                      </div>
+                 </MudListItem>
+                 <MudDivider />
+             }
+         </MudList>
+     }
+ </MudStack>
+ 
+ @code {
+     [Parameter] public Character Character { get; set; } = null!;
 
-@code {
-    [Parameter] public Character Character { get; set; }
+     private string selectedFilterString = string.Empty;
 
-    private async Task AddAbility()
-    {
-        await OpenAbilityDialog(null);
-    }
-    
-    private async Task EditAbility(Ability ability)
-    {
-        await OpenAbilityDialog(ability);
-    }
-
-    private async Task OpenAbilityDialog(Ability ability)
-    {
-        var parameters = new DialogParameters { ["Character"] = Character, ["AbilityToEdit"] = ability };
-        var title = ability == null ? "Nova Habilidade" : "Editar Habilidade";
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        
-        var result = await DialogService.Show<AddAbilityDialog>(title, parameters, options).Result;
-        
-        if (!result.Canceled)
-        {
-             await SaveCharacter();
-             StateHasChanged();
-        }
-    }
+     private IEnumerable<Ability> FilteredAbilities => 
+         string.IsNullOrEmpty(selectedFilterString) 
+             ? Character.Abilities
+             : Character.Abilities.Where(a => a.Type.ToString() == selectedFilterString);
+ 
+     private async Task AddAbility()
+     {
+         await OpenAbilityDialog(null);
+     }
+     
+     private async Task EditAbility(Ability ability)
+     {
+         await OpenAbilityDialog(ability);
+     }
+ 
+     private async Task OpenAbilityDialog(Ability? ability)
+     {
+         var parameters = new DialogParameters { ["Character"] = Character, ["AbilityToEdit"] = ability };
+         var title = ability == null ? "Nova Habilidade" : "Editar Habilidade";
+         var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+         
+         var dialogReference = await DialogService.ShowAsync<AddAbilityDialog>(title, parameters, options);
+         var result = await dialogReference.Result;
+         
+         if (result != null && !result.Canceled)
+         {
+              await SaveCharacter();
+              StateHasChanged();
+         }
+     }
 
     private async Task RemoveAbility(Ability ability)
     {
         Character.Abilities.Remove(ability);
         await SaveCharacter();
     }
+
+    private async Task ConfirmRemoveAbility(Ability ability)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirmar Remoção", 
+            $"Tem certeza que deseja remover a habilidade '{ability.Name}'?",
+            yesText:"Remover", cancelText:"Cancelar");
+
+        if (result == true)
+        {
+            await RemoveAbility(ability);
+        }
+    }
     
     private async Task SaveCharacter()
     {
         await Repository.SaveCharacterAsync(Character);
     }
+
+    private Color GetTypeColor(SkillType type) => Color.Default;
+
+    private string GetTypeLabel(SkillType type) => type switch
+    {
+        SkillType.Might => "Might",
+        SkillType.Speed => "Speed",
+        SkillType.Intellect => "Intellect",
+        _ => ""
+    };
 }

@@ -6,7 +6,13 @@
 <MudDialog>
     <DialogContent>
         <MudTextField @bind-Value="name" Label="Nome" AutoFocus="true" />
-        <MudTextField @bind-Value="cost" Label="Custo" />
+        <MudTextField @bind-Value="cost" Label="Custo" MaxLength="3" />
+        <MudSelect @bind-Value="type" Label="Tipo">
+            <MudSelectItem Value="@SkillType.Might">Might</MudSelectItem>
+            <MudSelectItem Value="@SkillType.Speed">Speed</MudSelectItem>
+            <MudSelectItem Value="@SkillType.Intellect">Intellect</MudSelectItem>
+        </MudSelect>
+        <MudTextField @bind-Value="page" Label="Página" MaxLength="3" />
         <MudTextField @bind-Value="description" Label="Descrição" Lines="3" />
     </DialogContent>
     <DialogActions>
@@ -23,6 +29,8 @@
     private string name;
     private string cost;
     private string description;
+    private SkillType type = SkillType.Might;
+    private string page;
 
     protected override void OnInitialized()
     {
@@ -31,6 +39,8 @@
             name = AbilityToEdit.Name;
             cost = AbilityToEdit.Cost;
             description = AbilityToEdit.Description;
+            type = AbilityToEdit.Type;
+            page = AbilityToEdit.Page;
         }
     }
 
@@ -47,10 +57,18 @@
             AbilityToEdit.Name = name;
             AbilityToEdit.Cost = cost;
             AbilityToEdit.Description = description;
+            AbilityToEdit.Type = type;
+            AbilityToEdit.Page = page;
         }
         else
         {
-            Character.Abilities.Add(new Ability { Name = name, Cost = cost, Description = description });
+            Character.Abilities.Add(new Ability { 
+                Name = name, 
+                Cost = cost, 
+                Description = description,
+                Type = type,
+                Page = page
+            });
         }
 
         MudDialog.Close(DialogResult.Ok(true));
