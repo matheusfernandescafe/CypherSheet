@@ -35,29 +35,13 @@ jobs:
         if: github.ref == 'refs/heads/main'
         run: dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release -o dist
 
-      - name: Configure GitHub Pages paths
+      - name: Configure GitHub Pages
         if: github.ref == 'refs/heads/main'
         run: |
-          REPO_NAME=${GITHUB_REPOSITORY#*/}
-          
-          # Update base href in index.html
-          sed -i "s|<base href=.*>|<base href=\"/$REPO_NAME/\" />|g" dist/wwwroot/index.html
-          
-          # Update service worker base path
-          sed -i "s|const base = \"/\";|const base = \"/$REPO_NAME/\";|g" dist/wwwroot/service-worker.js
-          
-          # Update manifest start_url if needed
-          if [ -f dist/wwwroot/manifest.webmanifest ]; then
-            sed -i "s|\"start_url\": \"/\"|\"start_url\": \"/$REPO_NAME/\"|g" dist/wwwroot/manifest.webmanifest
-          fi
-          
-          # Recalculate integrity hash for index.html in service-worker-assets.js
-          if [ -f dist/wwwroot/service-worker-assets.js ]; then
-            INDEX_HASH=$(openssl dgst -sha256 -binary dist/wwwroot/index.html | openssl base64 -A)
-            sed -i "s|\"url\":\"index\.html\",\"hash\":\"sha256-[^\"]*\"|\"url\":\"index.html\",\"hash\":\"sha256-$INDEX_HASH\"|g" dist/wwwroot/service-worker-assets.js
-          fi
-          
+          # Copy index.html to 404.html for SPA routing
           cp dist/wwwroot/index.html dist/wwwroot/404.html
+          
+          # Add .nojekyll to prevent Jekyll processing
           touch dist/wwwroot/.nojekyll
 
       - name: Upload Pages artifact
