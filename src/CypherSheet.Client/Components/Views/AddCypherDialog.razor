@@ -7,7 +7,13 @@
     <DialogContent>
         <MudTextField @bind-Value="name" Label="Nome" AutoFocus="true" />
         <MudTextField @bind-Value="level" Label="Nível" />
-        <MudTextField @bind-Value="effect" Label="Efeito" Lines="3" />
+        <MudTextField @bind-Value="depletion" Label="Depletion" />
+        <MudSelect @bind-Value="type" Label="Tipo">
+            <MudSelectItem Value="@CypherType.Cypher">Cypher</MudSelectItem>
+            <MudSelectItem Value="@CypherType.Artifact">Artefato</MudSelectItem>
+        </MudSelect>
+        <MudSwitch T="bool" @bind-Value="isActive" Label="Ativo" Color="Color.Primary" />
+        <MudTextField @bind-Value="description" Label="Descrição" Lines="3" />
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancelar</MudButton>
@@ -20,17 +26,35 @@
     [Parameter] public Character Character { get; set; }
     [Parameter] public Cypher CypherToEdit { get; set; }
 
-    private string name;
-    private string level;
-    private string effect;
+    private string name = "";
+    private string level = "";
+    private string depletion = "";
+    private string description = "";
+    private bool isActive = true;
+    private CypherType type = CypherType.Cypher;
 
     protected override void OnInitialized()
+    {
+        LoadCypherData();
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadCypherData();
+    }
+
+    private void LoadCypherData()
     {
         if (CypherToEdit != null)
         {
             name = CypherToEdit.Name;
             level = CypherToEdit.Level;
-            effect = CypherToEdit.Effect;
+            depletion = CypherToEdit.Depletion;
+            description = CypherToEdit.Description;
+            isActive = CypherToEdit.IsActive;
+            type = CypherToEdit.Type;
+            
+            StateHasChanged();
         }
     }
 
@@ -46,11 +70,21 @@
         {
             CypherToEdit.Name = name;
             CypherToEdit.Level = level;
-            CypherToEdit.Effect = effect;
+            CypherToEdit.Depletion = depletion;
+            CypherToEdit.Description = description;
+            CypherToEdit.IsActive = isActive;
+            CypherToEdit.Type = type;
         }
         else
         {
-            Character.Cyphers.Add(new Cypher { Name = name, Level = level, Effect = effect });
+            Character.Cyphers.Add(new Cypher { 
+                Name = name, 
+                Level = level, 
+                Depletion = depletion,
+                Description = description,
+                IsActive = isActive,
+                Type = type
+            });
         }
 
         MudDialog.Close(DialogResult.Ok(true));

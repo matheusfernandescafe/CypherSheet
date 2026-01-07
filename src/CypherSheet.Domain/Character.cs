@@ -168,11 +168,20 @@ namespace CypherSheet.Domain
         public string Source { get; set; } = "";
     }
 
+    public enum CypherType
+    {
+        Cypher,
+        Artifact
+    }
+
     public class Cypher
     {
         public string Name { get; set; } = "";
         public string Level { get; set; } = "";
-        public string Effect { get; set; } = "";
+        public string Depletion { get; set; } = "";
+        public string Description { get; set; } = "";
+        public bool IsActive { get; set; } = true;
+        public CypherType Type { get; set; } = CypherType.Cypher;
         public string Source { get; set; } = "";
     }
 
