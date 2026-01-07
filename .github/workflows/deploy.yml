@@ -33,7 +33,14 @@ jobs:
 
       - name: Publish (main only)
         if: github.ref == 'refs/heads/main'
-        run: dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release -o dist
+        run: |
+          dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release -o dist --verbosity normal
+          
+          echo "=== Published files in _framework ==="
+          ls -la dist/wwwroot/_framework/ | head -20
+          
+          echo "=== Checking for dotnet.js ==="
+          find dist/wwwroot/_framework/ -name "*dotnet*" -type f
 
       - name: Configure GitHub Pages
         if: github.ref == 'refs/heads/main'
