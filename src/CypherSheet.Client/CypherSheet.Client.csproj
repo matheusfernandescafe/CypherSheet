@@ -9,7 +9,7 @@
 
   <!-- GitHub Pages Configuration -->
   <PropertyGroup Condition="'$(PublishProfile)' == 'GitHubPages'">
-    <BaseHref>/CypherSheet/</BaseHref>
+    <BaseHref>https://matheusfernandescafe.github.io/CypherSheet/</BaseHref>
     <StaticWebAssetBasePath>CypherSheet</StaticWebAssetBasePath>
   </PropertyGroup>
 
