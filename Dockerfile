@@ -23,7 +23,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 # Copia config customizada
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copia o site para a raiz (Docker padrão)
-COPY --from=build /app/publish/wwwroot /usr/share/nginx/html
+# Copia o site para simular estrutura do GitHub Pages
+COPY --from=build /app/publish/wwwroot /usr/share/nginx/html/CypherSheet
 
 EXPOSE 80
