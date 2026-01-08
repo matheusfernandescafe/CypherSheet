@@ -36,8 +36,20 @@ jobs:
       - name: Configure GitHub Pages
         if: github.ref == 'refs/heads/main'
         run: |
+          # List contents to debug
+          echo "Contents of dist directory:"
+          ls -la dist/
+          echo "Contents of dist/wwwroot directory:"
+          ls -la dist/wwwroot/ || echo "wwwroot directory not found"
+          
           # Copy index.html to 404.html for SPA routing
-          cp dist/wwwroot/index.html dist/wwwroot/404.html
+          if [ -f "dist/wwwroot/index.html" ]; then
+            cp dist/wwwroot/index.html dist/wwwroot/404.html
+            echo "Successfully copied index.html to 404.html"
+          else
+            echo "Error: index.html not found in dist/wwwroot/"
+            exit 1
+          fi
           
           # Add .nojekyll to prevent Jekyll processing
           touch dist/wwwroot/.nojekyll
