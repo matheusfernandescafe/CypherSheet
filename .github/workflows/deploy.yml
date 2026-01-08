@@ -33,7 +33,7 @@ jobs:
 
       - name: Publish for GitHub Pages
         if: github.ref == 'refs/heads/main'
-        run: dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release -o dist -p:BasePath=/CypherSheet/
+        run: dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release -o dist -p:PublishProfile=GitHubPages
 
       - name: Configure GitHub Pages
         if: github.ref == 'refs/heads/main'
