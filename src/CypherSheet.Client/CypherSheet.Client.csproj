@@ -10,6 +10,12 @@
   <!-- GitHub Pages Configuration -->
   <PropertyGroup Condition="'$(PublishProfile)' == 'GitHubPages'">
     <BaseHref>/CypherSheet/</BaseHref>
+    <StaticWebAssetBasePath>CypherSheet</StaticWebAssetBasePath>
+  </PropertyGroup>
+
+  <!-- GitHub Pages Configuration -->
+  <PropertyGroup Condition="'$(PublishProfile)' == 'GitHubPages'">
+    <BaseHref>/CypherSheet/</BaseHref>
   </PropertyGroup>
 
   <ItemGroup>
