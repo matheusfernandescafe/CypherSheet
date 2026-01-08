@@ -23,9 +23,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install jq for JSON parsing
-        run: sudo apt-get update && sudo apt-get install -y jq
-
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
@@ -34,24 +31,9 @@ jobs:
 
       - run: dotnet test --configuration Release
 
-      - name: Publish (main only)
+      - name: Publish for GitHub Pages
         if: github.ref == 'refs/heads/main'
-        run: |
-          dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release -o dist --verbosity normal
-          
-          echo "=== Published files in _framework ==="
-          ls -la dist/wwwroot/_framework/ | head -20
-          
-          echo "=== Checking for dotnet files ==="
-          find dist/wwwroot/_framework/ -name "*dotnet*" -type f
-          
-          echo "=== Checking blazor.boot.json ==="
-          if [ -f dist/wwwroot/_framework/blazor.boot.json ]; then
-            cat dist/wwwroot/_framework/blazor.boot.json | jq '.resources.runtime' || cat dist/wwwroot/_framework/blazor.boot.json
-          fi
-          
-          echo "=== All .js files in _framework ==="
-          find dist/wwwroot/_framework/ -name "*.js" -type f
+        run: dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release -o dist -p:BasePath=/CypherSheet/
 
       - name: Configure GitHub Pages
         if: github.ref == 'refs/heads/main'

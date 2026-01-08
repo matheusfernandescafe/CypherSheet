@@ -1,0 +1,9 @@
+services:
+  cyphersheet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cyphersheet-pwa
+    ports:
+      - "5041:80"
+    restart: unless-stopped

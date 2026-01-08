@@ -2,7 +2,7 @@
   "name": "Cypher Sheet",
   "short_name": "Cypher Sheet",
   "id": "./",
-  "start_url": "/CypherSheet/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#03173d",
