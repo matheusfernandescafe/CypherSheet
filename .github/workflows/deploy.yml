@@ -37,7 +37,7 @@ jobs:
         run: dotnet build -c Release --no-restore
 
       - name: Publish
-        run: dotnet publish BlazorDeploy.csproj -c Release -o docs
+        run: dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release -o docs
 
       - name: Disable Jekyll
         run: touch docs/wwwroot/.nojekyll
