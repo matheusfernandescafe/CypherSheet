@@ -1,4 +1,4 @@
-name: Deploy Blazor PWA to GitHub Pages
+name: Deploy
 
 on:
   push:
@@ -11,64 +11,45 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
+  group: "pages"
   cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-
-      - run: dotnet restore
-
-      - run: dotnet test --configuration Release
-
-      - name: Publish for GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        run: dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release -o dist -p:PublishProfile=GitHubPages
-
-      - name: Configure GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        run: |
-          # List contents to debug
-          echo "Contents of dist directory:"
-          ls -la dist/
-          echo "Contents of dist/wwwroot directory:"
-          ls -la dist/wwwroot/ || echo "wwwroot directory not found"
-          
-          # Copy index.html to 404.html for SPA routing
-          if [ -f "dist/wwwroot/index.html" ]; then
-            cp dist/wwwroot/index.html dist/wwwroot/404.html
-            echo "Successfully copied index.html to 404.html"
-          else
-            echo "Error: index.html not found in dist/wwwroot/"
-            exit 1
-          fi
-          
-          # Add .nojekyll to prevent Jekyll processing
-          touch dist/wwwroot/.nojekyll
-
-      - name: Upload Pages artifact
-        if: github.ref == 'refs/heads/main'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist/wwwroot
-
   deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-latest
-
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
 
     steps:
-      - id: deployment
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build -c Release --no-restore
+
+      - name: Publish
+        run: dotnet publish BlazorDeploy.csproj -c Release -o docs
+
+      - name: Disable Jekyll
+        run: touch docs/wwwroot/.nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/wwwroot
+
+      - name: Deploy
+        id: deployment
         uses: actions/deploy-pages@v4
