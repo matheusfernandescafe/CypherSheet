@@ -138,7 +138,7 @@ else if (character == null)
                     <div class="d-flex justify-center align-center pa-4">
                         <MudStack Spacing="3" AlignItems="AlignItems.Center">
                             <MudAlert Severity="Severity.Info">Personagem não encontrado.</MudAlert>
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/"))">Selecionar Personagem</MudButton>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo(""))">Selecionar Personagem</MudButton>
                         </MudStack>
                     </div>
                     break;
@@ -220,7 +220,7 @@ else
                     break;
                 case TabType.Characters:
                     <div class="d-flex justify-center align-center pa-4">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo("/"))">Trocar Personagem</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo(""))">Trocar Personagem</MudButton>
                     </div>
                     break;
                 case TabType.Settings:
