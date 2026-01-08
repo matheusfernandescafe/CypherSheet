@@ -37,13 +37,25 @@ jobs:
 
       - name: Publish for GitHub Pages
         if: github.ref == 'refs/heads/main'
-        run: dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release --no-build -o dist -p:PublishProfile=GitHubPages --nologo
+        run: |
+          echo "Publishing with BaseHref and StaticWebAssetBasePath"
+          dotnet publish src/CypherSheet.Client/CypherSheet.Client.csproj -c Release --no-build -o dist -p:BaseHref="/CypherSheet/" -p:StaticWebAssetBasePath="CypherSheet" --nologo
+          
+          echo "=== Checking if files were generated ==="
+          ls -la dist/ || echo "dist folder not found"
+          ls -la dist/wwwroot/ || echo "wwwroot folder not found"
 
       - name: Configure GitHub Pages
         if: github.ref == 'refs/heads/main'
         run: |
-          # Copy index.html to 404.html for SPA routing
-          cp dist/wwwroot/index.html dist/wwwroot/404.html
+          # Verify files exist before copying
+          if [ -f "dist/wwwroot/index.html" ]; then
+            echo "index.html found, copying to 404.html"
+            cp dist/wwwroot/index.html dist/wwwroot/404.html
+          else
+            echo "ERROR: index.html not found in dist/wwwroot/"
+            exit 1
+          fi
           
           # Add .nojekyll to prevent Jekyll processing
           touch dist/wwwroot/.nojekyll
