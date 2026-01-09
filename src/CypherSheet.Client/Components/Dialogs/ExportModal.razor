@@ -1,0 +1,348 @@
+@using CypherSheet.Domain
+@using CypherSheet.Shared
+@using MudBlazor
+@inject ILoadingService LoadingService
+@inject INotificationService NotificationService
+@inject IDataManagementService DataManagementService
+@inject IJSRuntime JSRuntime
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-width: 600px;">
+            <MudStack Spacing="4">
+                @if (!showExportResult)
+                {
+                    <!-- Tela de Seleção de Personagens -->
+                    <MudText Typo="Typo.h6" Class="mb-2">Exportar Personagens</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Selecione os personagens que deseja exportar. Os dados serão gerados em formato JSON para backup ou compartilhamento.
+                    </MudText>
+
+                    @if (isLoading)
+                    {
+                        <MudProgressCircular Indeterminate="true" />
+                        <MudText Typo="Typo.body2" Align="Align.Center">Carregando personagens...</MudText>
+                    }
+                    else if (!characters.Any())
+                    {
+                        <MudAlert Severity="Severity.Info">
+                            Nenhum personagem encontrado para exportação.
+                        </MudAlert>
+                    }
+                    else
+                    {
+                        <MudCard Elevation="2">
+                            <MudCardContent>
+                                <div class="d-flex justify-space-between align-center mb-3">
+                                    <MudText Typo="Typo.subtitle1">
+                                        <strong>Personagens Disponíveis (@characters.Count)</strong>
+                                    </MudText>
+                                    <MudCheckBox @bind-Checked="selectAll" 
+                                               Label="Selecionar Todos" 
+                                               Color="Color.Primary"
+                                               T="bool" />
+                                </div>
+                                
+                                <MudDivider Class="mb-3" />
+                                
+                                <MudStack Spacing="2">
+                                    @foreach (var character in characters)
+                                    {
+                                        <MudPaper Class="pa-2" Elevation="1">
+                                            <div class="d-flex align-center">
+                                                <MudCheckBox Checked="@GetCharacterSelected(character.Id)"
+                                                           CheckedChanged="@((bool value) => OnCharacterSelectionChanged(character.Id, value))"
+                                                           Color="Color.Primary"
+                                                           T="bool" />
+                                                <div class="ml-3 flex-grow-1">
+                                                    <MudText Typo="Typo.subtitle2">@character.Name</MudText>
+                                                    <MudText Typo="Typo.caption" Class="text-muted">
+                                                        @GetCharacterDescription(character)
+                                                    </MudText>
+                                                </div>
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                                    Tier @character.Tier
+                                                </MudChip>
+                                            </div>
+                                        </MudPaper>
+                                    }
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+
+                        @if (selectedCharacterIds.Any())
+                        {
+                            <MudAlert Severity="Severity.Success">
+                                <strong>@selectedCharacterIds.Count personagem(ns) selecionado(s)</strong><br/>
+                                @string.Join(", ", characters.Where(c => selectedCharacterIds.Contains(c.Id)).Select(c => c.Name))
+                            </MudAlert>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Warning">
+                                Selecione pelo menos um personagem para exportar.
+                            </MudAlert>
+                        }
+                    }
+                }
+                else
+                {
+                    <!-- Tela de Resultado da Exportação -->
+                    <MudText Typo="Typo.h6" Class="mb-2">Dados Exportados</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Seus dados foram exportados com sucesso! Copie o conteúdo abaixo para fazer backup ou compartilhar.
+                    </MudText>
+
+                    @if (isExporting)
+                    {
+                        <MudProgressCircular Indeterminate="true" />
+                        <MudText Typo="Typo.body2" Align="Align.Center">Gerando dados de exportação...</MudText>
+                    }
+                    else
+                    {
+                        <MudCard Elevation="2">
+                            <MudCardContent>
+                                <div class="d-flex justify-space-between align-center mb-3">
+                                    <MudText Typo="Typo.subtitle1">
+                                        <strong>Dados JSON</strong>
+                                    </MudText>
+                                    <MudButton Variant="Variant.Filled" 
+                                             Color="Color.Primary"
+                                             StartIcon="@Icons.Material.Filled.ContentCopy"
+                                             OnClick="CopyToClipboard"
+                                             Size="Size.Small">
+                                        Copiar
+                                    </MudButton>
+                                </div>
+                                
+                                <MudTextField @bind-Value="exportData"
+                                            Label="Dados Exportados"
+                                            Variant="Variant.Outlined"
+                                            Lines="15"
+                                            ReadOnly="true"
+                                            FullWidth="true"
+                                            Class="export-data-field" />
+                            </MudCardContent>
+                        </MudCard>
+
+                        <MudAlert Severity="Severity.Success">
+                            <strong>Exportação concluída!</strong><br/>
+                            @selectedCharacterIds.Count personagem(ns) exportado(s) com sucesso.
+                        </MudAlert>
+
+                        <MudAlert Severity="Severity.Info">
+                            <strong>Como usar:</strong><br/>
+                            • Copie os dados acima usando o botão "Copiar"<br/>
+                            • Salve em um arquivo de texto (.txt ou .json) para backup<br/>
+                            • Compartilhe com outros jogadores para importar os personagens<br/>
+                            • Use a função "Importar" para restaurar estes dados
+                        </MudAlert>
+                    }
+                }
+            </MudStack>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        @if (!showExportResult)
+        {
+            <MudButton OnClick="Cancel" Variant="Variant.Text">
+                Cancelar
+            </MudButton>
+            <MudButton OnClick="ConfirmExport" 
+                     Variant="Variant.Filled" 
+                     Color="Color.Primary"
+                     StartIcon="@Icons.Material.Filled.Upload"
+                     Disabled="@(!selectedCharacterIds.Any() || isLoading || isExporting || LoadingService.IsLoading)">
+                @if (isExporting)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Exportando...</span>
+                }
+                else
+                {
+                    <span>Confirmar Exportação</span>
+                }
+            </MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="GoBack" 
+                     Variant="Variant.Text"
+                     StartIcon="@Icons.Material.Filled.ArrowBack">
+                Voltar
+            </MudButton>
+            <MudButton OnClick="Close" 
+                     Variant="Variant.Filled" 
+                     Color="Color.Primary">
+                Fechar
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public EventCallback<List<Guid>> OnExport { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private List<Character> characters = new();
+    private HashSet<Guid> selectedCharacterIds = new();
+    private bool isLoading = true;
+    private bool selectAll = false;
+    private bool showExportResult = false;
+    private string exportData = string.Empty;
+    private bool isExporting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCharacters();
+    }
+
+    private async Task LoadCharacters()
+    {
+        try
+        {
+            isLoading = true;
+            characters = await DataManagementService.GetAllCharactersAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError($"Erro ao carregar personagens: {ex.Message}", "Erro no Carregamento");
+            characters = new List<Character>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool GetCharacterSelected(Guid characterId)
+    {
+        return selectedCharacterIds.Contains(characterId);
+    }
+
+    private void OnCharacterSelectionChanged(Guid characterId, bool isSelected)
+    {
+        if (isSelected)
+        {
+            selectedCharacterIds.Add(characterId);
+        }
+        else
+        {
+            selectedCharacterIds.Remove(characterId);
+        }
+
+        selectAll = selectedCharacterIds.Count == characters.Count;
+        StateHasChanged();
+    }
+
+    private void OnSelectAllChanged(bool value)
+    {
+        selectAll = value;
+        
+        if (selectAll)
+        {
+            selectedCharacterIds = characters.Select(c => c.Id).ToHashSet();
+        }
+        else
+        {
+            selectedCharacterIds.Clear();
+        }
+        
+        StateHasChanged();
+    }
+
+    private string GetCharacterDescription(Character character)
+    {
+        var parts = new List<string>();
+        
+        if (!string.IsNullOrWhiteSpace(character.Descriptor))
+            parts.Add(character.Descriptor);
+        if (!string.IsNullOrWhiteSpace(character.Type))
+            parts.Add(character.Type);
+        if (!string.IsNullOrWhiteSpace(character.Focus))
+            parts.Add($"who {character.Focus}");
+
+        return parts.Any() ? string.Join(" ", parts) : "Personagem sem descrição";
+    }
+
+    private async Task ConfirmExport()
+    {
+        if (!selectedCharacterIds.Any())
+        {
+            NotificationService.ShowWarning("Selecione pelo menos um personagem para exportar.", "Seleção Necessária");
+            return;
+        }
+
+        if (isExporting || LoadingService.IsLoading) return;
+
+        try
+        {
+            isExporting = true;
+            StateHasChanged();
+
+            exportData = await DataManagementService.ExportCharactersAsync(selectedCharacterIds.ToList());
+            showExportResult = true;
+            
+            NotificationService.ShowSuccess($"{selectedCharacterIds.Count} personagem(ns) exportado(s) com sucesso!", "Exportação Concluída");
+            
+            await OnExport.InvokeAsync(selectedCharacterIds.ToList());
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError($"Erro durante a exportação: {ex.Message}", "Erro na Exportação");
+        }
+        finally
+        {
+            isExporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CopyToClipboard()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", exportData);
+            NotificationService.ShowSuccess("Dados copiados para a área de transferência!", "Copiado");
+        }
+        catch (Exception)
+        {
+            // Fallback para navegadores que não suportam clipboard API
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("copyToClipboardFallback", exportData);
+                NotificationService.ShowSuccess("Dados copiados para a área de transferência!", "Copiado");
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowWarning($"Erro ao copiar: {ex.Message}. Selecione e copie manualmente.", "Erro na Cópia");
+            }
+        }
+    }
+
+    private void GoBack()
+    {
+        showExportResult = false;
+        exportData = string.Empty;
+        StateHasChanged();
+    }
+
+    private void Close()
+    {
+        MudDialog.Close(DialogResult.Ok(selectedCharacterIds.ToList()));
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+        MudDialog.Cancel();
+    }
+}
+<style>
+    .export-data-field .mud-input-control-input-container textarea {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+</style>

@@ -1,0 +1,62 @@
+@inherits MudComponentBase
+
+<MudButton Variant="@Variant"
+           Color="@Color"
+           Size="@Size"
+           StartIcon="@(IsLoading ? null : StartIcon)"
+           EndIcon="@(IsLoading ? null : EndIcon)"
+           Disabled="@(Disabled || IsLoading)"
+           OnClick="@HandleClick"
+           Class="@Class"
+           Style="@Style"
+           FullWidth="@FullWidth">
+    @if (IsLoading)
+    {
+        <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+        @LoadingText
+    }
+    else
+    {
+        @ChildContent
+    }
+</MudButton>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public Variant Variant { get; set; } = Variant.Text;
+    [Parameter] public Color Color { get; set; } = Color.Default;
+    [Parameter] public Size Size { get; set; } = Size.Medium;
+    [Parameter] public string? StartIcon { get; set; }
+    [Parameter] public string? EndIcon { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool FullWidth { get; set; }
+    [Parameter] public string? LoadingText { get; set; } = "Carregando...";
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public Func<Task>? OnClickAsync { get; set; }
+
+    private async Task HandleClick()
+    {
+        if (IsLoading) return;
+
+        if (OnClickAsync != null)
+        {
+            IsLoading = true;
+            StateHasChanged();
+            
+            try
+            {
+                await OnClickAsync();
+            }
+            finally
+            {
+                IsLoading = false;
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            await OnClick.InvokeAsync();
+        }
+    }
+}

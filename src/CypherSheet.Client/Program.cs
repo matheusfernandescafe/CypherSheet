@@ -16,5 +16,9 @@ builder.Services.AddMudServices();
 builder.Services.AddIndexedDB(CypherSheetDb.Configure);
 builder.Services.AddScoped<ICharacterRepository, CharacterRepository>();
 builder.Services.AddScoped<IThemeService, ThemeService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ILoadingService, LoadingService>();
+builder.Services.AddScoped<CypherSheet.Shared.IDataManagementService, DataManagementService>();
+builder.Services.AddScoped<CypherSheet.Shared.ICacheService, CacheService>();
 
 await builder.Build().RunAsync();

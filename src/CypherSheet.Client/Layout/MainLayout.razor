@@ -1,4 +1,5 @@
 ﻿@using CypherSheet.Client.Services
+@using CypherSheet.Client.Components.Shared
 @inherits LayoutComponentBase
 @inject IThemeService ThemeService
 @implements IDisposable
@@ -19,6 +20,8 @@
         </MudContainer>
     </MudMainContent>
 </MudLayout>
+
+<LoadingOverlay />
 
 @code {
     private MudTheme _theme = new MudTheme()

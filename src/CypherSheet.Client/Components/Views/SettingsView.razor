@@ -1,9 +1,14 @@
 @using MudBlazor
 @using CypherSheet.Domain
 @using CypherSheet.Client.Services
+@using CypherSheet.Client.Components.Dialogs
+@using CypherSheet.Shared
 @inject IDialogService DialogService
 @inject IThemeService ThemeService
-@inject ISnackbar Snackbar
+@inject ILoadingService LoadingService
+@inject INotificationService NotificationService
+@inject IDataManagementService DataManagementService
+@inject ICacheService CacheService
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4">
     <MudStack Spacing="4">
@@ -50,43 +55,80 @@
             <MudStack Spacing="3">
                 <MudText Typo="Typo.h6">Gerenciar Dados</MudText>
                 
-                <MudListItem T="string" Dense="false" OnClick="ExportCharacter" Style="cursor: pointer; border-radius: 8px;" Class="hover-item">
+                <MudListItem T="string" Dense="false" OnClick="ExportCharacter" Style="cursor: pointer; border-radius: 8px;" Class="hover-item" Disabled="LoadingService.IsLoading">
                     <div class="d-flex align-center justify-space-between width-100">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                            <MudIcon Icon="@Icons.Material.Filled.FileDownload" />
+                            <MudIcon Icon="@Icons.Material.Filled.Upload" />
                             <MudText>Exportar Personagem</MudText>
                         </MudStack>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">Em breve</MudChip>
-                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                            @if (LoadingService.IsLoading)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                            }
                         </MudStack>
                     </div>
                 </MudListItem>
                 
-                <MudListItem T="string" Dense="false" OnClick="ImportCharacter" Style="cursor: pointer; border-radius: 8px;" Class="hover-item">
+                <MudListItem T="string" Dense="false" OnClick="ImportCharacter" Style="cursor: pointer; border-radius: 8px;" Class="hover-item" Disabled="LoadingService.IsLoading">
                     <div class="d-flex align-center justify-space-between width-100">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                            <MudIcon Icon="@Icons.Material.Filled.FileUpload" />
+                            <MudIcon Icon="@Icons.Material.Filled.Download" />
                             <MudText>Importar Personagem</MudText>
                         </MudStack>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">Em breve</MudChip>
-                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                            @if (LoadingService.IsLoading)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" />
+                            }
                         </MudStack>
                     </div>
                 </MudListItem>
                 
                 <MudDivider />
                 
-                <MudListItem T="string" Dense="false" OnClick="DeleteAllData" Style="cursor: pointer; border-radius: 8px;" Class="hover-item">
+                <MudListItem T="string" Dense="false" OnClick="ClearCache" Style="cursor: pointer; border-radius: 8px;" Class="hover-item" Disabled="LoadingService.IsLoading">
+                    <div class="d-flex align-center justify-space-between width-100">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.ClearAll" Color="Color.Warning" />
+                            <MudText Color="Color.Warning">Deletar Cache</MudText>
+                        </MudStack>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            @if (LoadingService.IsLoading)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Warning" />
+                            }
+                        </MudStack>
+                    </div>
+                </MudListItem>
+                
+                <MudListItem T="string" Dense="false" OnClick="DeleteAllData" Style="cursor: pointer; border-radius: 8px;" Class="hover-item" Disabled="LoadingService.IsLoading">
                     <div class="d-flex align-center justify-space-between width-100">
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                             <MudIcon Icon="@Icons.Material.Filled.DeleteForever" Color="Color.Error" />
                             <MudText Color="Color.Error">Deletar Todas as Informações</MudText>
                         </MudStack>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                            <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Text">Em breve</MudChip>
-                            <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Error" />
+                            @if (LoadingService.IsLoading)
+                            {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Color="Color.Error" />
+                            }
                         </MudStack>
                     </div>
                 </MudListItem>
@@ -125,41 +167,121 @@
 
     private async Task OpenLanguageDialog()
     {
-        Snackbar.Add("Funcionalidade de idioma ainda não implementada. Em breve!", Severity.Info, config =>
-        {
-            config.Icon = Icons.Material.Filled.Language;
-            config.VisibleStateDuration = 3000;
-        });
+        NotificationService.ShowInfo("Funcionalidade de idioma ainda não implementada. Em breve!", "Idioma");
         await Task.CompletedTask;
     }
 
     private async Task ExportCharacter()
     {
-        Snackbar.Add("Funcionalidade de exportação ainda não implementada. Em breve!", Severity.Info, config =>
+        if (LoadingService.IsLoading) return;
+
+        await LoadingService.ExecuteWithLoadingAsync(async () =>
         {
-            config.Icon = Icons.Material.Filled.FileDownload;
-            config.VisibleStateDuration = 3000;
-        });
-        await Task.CompletedTask;
+            var parameters = new DialogParameters();
+            var options = new DialogOptions() 
+            { 
+                CloseButton = true, 
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
+            };
+
+            var dialog = await DialogService.ShowAsync<ExportModal>("Exportar Personagens", parameters, options);
+            var result = await dialog.Result;
+
+            if (result?.Canceled == false)
+            {
+                NotificationService.ShowSuccess("Exportação realizada com sucesso!", "Exportação Concluída");
+            }
+        }, "Preparando exportação...");
     }
 
     private async Task ImportCharacter()
     {
-        Snackbar.Add("Funcionalidade de importação ainda não implementada. Em breve!", Severity.Info, config =>
+        if (LoadingService.IsLoading) return;
+
+        await LoadingService.ExecuteWithLoadingAsync(async () =>
         {
-            config.Icon = Icons.Material.Filled.FileUpload;
-            config.VisibleStateDuration = 3000;
-        });
-        await Task.CompletedTask;
+            var parameters = new DialogParameters();
+            var options = new DialogOptions() 
+            { 
+                CloseButton = true, 
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
+            };
+
+            var dialog = await DialogService.ShowAsync<ImportModal>("Importar Personagens", parameters, options);
+            var result = await dialog.Result;
+
+            if (result?.Canceled == false)
+            {
+                NotificationService.ShowSuccess("Importação realizada com sucesso!", "Importação Concluída");
+            }
+        }, "Preparando importação...");
+    }
+
+    private async Task ClearCache()
+    {
+        if (LoadingService.IsLoading) return;
+
+        var result = await DialogService.ShowMessageBox(
+            "Confirmar Limpeza de Cache",
+            "Tem certeza que deseja limpar o cache da aplicação? Isso pode melhorar a performance, mas os dados dos personagens serão preservados.",
+            yesText: "Confirmar", 
+            cancelText: "Cancelar");
+
+        if (result == true)
+        {
+            await LoadingService.ExecuteWithLoadingAsync(async () =>
+            {
+                LoadingService.UpdateLoadingMessage("Limpando cache da aplicação...");
+                LoadingService.UpdateProgress(25);
+
+                await CacheService.ClearApplicationCacheAsync();
+                
+                LoadingService.UpdateProgress(75);
+                LoadingService.UpdateLoadingMessage("Finalizando limpeza...");
+
+                NotificationService.ShowCriticalSuccess("Cache limpo com sucesso! A aplicação será recarregada.", "Cache Limpo");
+
+                LoadingService.UpdateProgress(100);
+                
+                // Recarregar a aplicação após limpar o cache
+                await Task.Delay(1500);
+            }, "Iniciando limpeza de cache...");
+        }
     }
 
     private async Task DeleteAllData()
     {
-        Snackbar.Add("Funcionalidade de exclusão de dados ainda não implementada. Em breve!", Severity.Info, config =>
+        if (LoadingService.IsLoading) return;
+
+        var parameters = new DialogParameters();
+        var options = new DialogOptions() 
+        { 
+            CloseButton = true, 
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<DeleteAllDataDialog>("Deletar Todas as Informações", parameters, options);
+        var result = await dialog.Result;
+
+        if (result?.Canceled == false && result.Data is bool success && success)
         {
-            config.Icon = Icons.Material.Filled.DeleteForever;
-            config.VisibleStateDuration = 3000;
-        });
-        await Task.CompletedTask;
+            await LoadingService.ExecuteWithLoadingAsync(async () =>
+            {
+                LoadingService.UpdateLoadingMessage("Deletando todos os dados...");
+                LoadingService.UpdateProgress(25);
+
+                await DataManagementService.DeleteAllDataAsync();
+                
+                LoadingService.UpdateProgress(75);
+                LoadingService.UpdateLoadingMessage("Finalizando exclusão...");
+
+                NotificationService.ShowCriticalSuccess("Todos os dados foram deletados com sucesso!", "Dados Deletados");
+
+                LoadingService.UpdateProgress(100);
+            }, "Iniciando exclusão de dados...");
+        }
     }
 }

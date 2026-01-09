@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CypherSheet.Domain\CypherSheet.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
