@@ -1,0 +1,221 @@
+@using CypherSheet.Client.Components.Shared
+@inherits MudComponentBase
+
+<div class="character-image-display @GetSizeClass()" style="@Style">
+    @if (IsLoading)
+    {
+        <div class="image-loading">
+            <MudProgressCircular Size="@GetProgressSize()" Indeterminate="true" />
+        </div>
+    }
+    else if (HasImage && !HasError)
+    {
+        <img src="@GetImageDataUrl()" 
+             alt="@GetAltText()" 
+             class="character-image"
+             @onload="@(() => OnImageLoad())"
+             @onerror="@(() => OnImageError())" />
+    }
+    else
+    {
+        <div class="character-avatar-fallback">
+            @if (!string.IsNullOrEmpty(CharacterName))
+            {
+                <MudAvatar Size="@GetAvatarSize()" 
+                          Color="@AvatarColor" 
+                          Class="character-avatar">
+                    @GetInitials()
+                </MudAvatar>
+            }
+            else
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Person" 
+                        Size="@GetIconSize()" 
+                        Class="default-character-icon" />
+            }
+        </div>
+    }
+    
+    @if (ShowRetryButton && HasError)
+    {
+        <div class="retry-overlay">
+            <MudIconButton Icon="@Icons.Material.Filled.Refresh" 
+                          Size="MudBlazor.Size.Small" 
+                          Color="Color.Primary"
+                          OnClick="@(() => RetryLoad())"
+                          Class="retry-button" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public byte[]? ImageData { get; set; }
+    [Parameter] public string? CharacterName { get; set; }
+    [Parameter] public ImageDisplaySize Size { get; set; } = ImageDisplaySize.Medium;
+    [Parameter] public Color AvatarColor { get; set; } = Color.Primary;
+    [Parameter] public bool ShowRetryButton { get; set; } = true;
+    [Parameter] public EventCallback OnImageLoadError { get; set; }
+    [Parameter] public EventCallback OnRetryClicked { get; set; }
+
+    private bool IsLoading = false;
+    private bool HasError = false;
+    private int RetryCount = 0;
+    private const int MaxRetries = 3;
+
+    private bool HasImage => ImageData != null && ImageData.Length > 0;
+
+    protected override void OnParametersSet()
+    {
+        if (ImageData != null)
+        {
+            HasError = false;
+            RetryCount = 0;
+        }
+    }
+
+    private string GetSizeClass()
+    {
+        return Size switch
+        {
+            ImageDisplaySize.Thumbnail => "size-thumbnail",
+            ImageDisplaySize.Small => "size-small",
+            ImageDisplaySize.Medium => "size-medium",
+            ImageDisplaySize.Large => "size-large",
+            ImageDisplaySize.ExtraLarge => "size-extra-large",
+            _ => "size-medium"
+        };
+    }
+
+    private MudBlazor.Size GetProgressSize()
+    {
+        return Size switch
+        {
+            ImageDisplaySize.Thumbnail => MudBlazor.Size.Small,
+            ImageDisplaySize.Small => MudBlazor.Size.Small,
+            ImageDisplaySize.Medium => MudBlazor.Size.Medium,
+            ImageDisplaySize.Large => MudBlazor.Size.Medium,
+            ImageDisplaySize.ExtraLarge => MudBlazor.Size.Large,
+            _ => MudBlazor.Size.Medium
+        };
+    }
+
+    private MudBlazor.Size GetAvatarSize()
+    {
+        return Size switch
+        {
+            ImageDisplaySize.Thumbnail => MudBlazor.Size.Small,
+            ImageDisplaySize.Small => MudBlazor.Size.Medium,
+            ImageDisplaySize.Medium => MudBlazor.Size.Large,
+            ImageDisplaySize.Large => MudBlazor.Size.Large,
+            ImageDisplaySize.ExtraLarge => MudBlazor.Size.Large,
+            _ => MudBlazor.Size.Large
+        };
+    }
+
+    private MudBlazor.Size GetIconSize()
+    {
+        return Size switch
+        {
+            ImageDisplaySize.Thumbnail => MudBlazor.Size.Small,
+            ImageDisplaySize.Small => MudBlazor.Size.Medium,
+            ImageDisplaySize.Medium => MudBlazor.Size.Large,
+            ImageDisplaySize.Large => MudBlazor.Size.Large,
+            ImageDisplaySize.ExtraLarge => MudBlazor.Size.Large,
+            _ => MudBlazor.Size.Large
+        };
+    }
+
+    private string GetImageDataUrl()
+    {
+        if (ImageData == null || ImageData.Length == 0) return "";
+        
+        var base64 = Convert.ToBase64String(ImageData);
+        return $"data:image/jpeg;base64,{base64}";
+    }
+
+    private string GetAltText()
+    {
+        return !string.IsNullOrEmpty(CharacterName) 
+            ? $"Imagem do personagem {CharacterName}" 
+            : "Imagem do personagem";
+    }
+
+    private string GetInitials()
+    {
+        if (string.IsNullOrEmpty(CharacterName)) return "?";
+        
+        var words = CharacterName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return "?";
+        
+        if (words.Length == 1)
+        {
+            return words[0].Substring(0, Math.Min(2, words[0].Length)).ToUpper();
+        }
+        
+        return (words[0][0].ToString() + words[^1][0].ToString()).ToUpper();
+    }
+
+    private void OnImageLoad()
+    {
+        IsLoading = false;
+        HasError = false;
+        StateHasChanged();
+    }
+
+    private async Task OnImageError()
+    {
+        HasError = true;
+        IsLoading = false;
+        
+        await OnImageLoadError.InvokeAsync();
+        
+        // Implementar retry automático com backoff exponencial
+        if (RetryCount < MaxRetries)
+        {
+            RetryCount++;
+            
+            // Calcular delay com backoff exponencial (1s, 2s, 4s)
+            var delay = (int)Math.Pow(2, RetryCount - 1) * 1000;
+            
+            await Task.Delay(delay);
+            
+            // Tentar recarregar automaticamente
+            await RetryLoadInternal();
+        }
+        else
+        {
+            // Após esgotar tentativas, mostrar fallback permanente
+            StateHasChanged();
+        }
+    }
+
+    private async Task RetryLoad()
+    {
+        if (RetryCount >= MaxRetries) 
+        {
+            // Reset para permitir retry manual
+            RetryCount = 0;
+        }
+        
+        await RetryLoadInternal();
+    }
+
+    private async Task RetryLoadInternal()
+    {
+        HasError = false;
+        IsLoading = true;
+        StateHasChanged();
+        
+        await OnRetryClicked.InvokeAsync();
+        
+        // Pequeno delay para permitir que a UI atualize
+        await Task.Delay(100);
+        
+        // Se ainda tiver erro após o delay, mostrar fallback
+        if (HasError)
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+}
