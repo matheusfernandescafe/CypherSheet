@@ -176,48 +176,42 @@
     {
         if (LoadingService.IsLoading) return;
 
-        await LoadingService.ExecuteWithLoadingAsync(async () =>
+        var parameters = new DialogParameters();
+        var options = new DialogOptions() 
+        { 
+            CloseButton = true, 
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ExportModal>("Exportar Personagens", parameters, options);
+        var result = await dialog.Result;
+
+        if (result?.Canceled == false)
         {
-            var parameters = new DialogParameters();
-            var options = new DialogOptions() 
-            { 
-                CloseButton = true, 
-                MaxWidth = MaxWidth.Medium,
-                FullWidth = true
-            };
-
-            var dialog = await DialogService.ShowAsync<ExportModal>("Exportar Personagens", parameters, options);
-            var result = await dialog.Result;
-
-            if (result?.Canceled == false)
-            {
-                NotificationService.ShowSuccess("Exportação realizada com sucesso!", "Exportação Concluída");
-            }
-        }, "Preparando exportação...");
+            NotificationService.ShowSuccess("Exportação realizada com sucesso!", "Exportação Concluída");
+        }
     }
 
     private async Task ImportCharacter()
     {
         if (LoadingService.IsLoading) return;
 
-        await LoadingService.ExecuteWithLoadingAsync(async () =>
+        var parameters = new DialogParameters();
+        var options = new DialogOptions() 
+        { 
+            CloseButton = true, 
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<ImportModal>("Importar Personagens", parameters, options);
+        var result = await dialog.Result;
+
+        if (result?.Canceled == false)
         {
-            var parameters = new DialogParameters();
-            var options = new DialogOptions() 
-            { 
-                CloseButton = true, 
-                MaxWidth = MaxWidth.Medium,
-                FullWidth = true
-            };
-
-            var dialog = await DialogService.ShowAsync<ImportModal>("Importar Personagens", parameters, options);
-            var result = await dialog.Result;
-
-            if (result?.Canceled == false)
-            {
-                NotificationService.ShowSuccess("Importação realizada com sucesso!", "Importação Concluída");
-            }
-        }, "Preparando importação...");
+            NotificationService.ShowSuccess("Importação realizada com sucesso!", "Importação Concluída");
+        }
     }
 
     private async Task ClearCache()

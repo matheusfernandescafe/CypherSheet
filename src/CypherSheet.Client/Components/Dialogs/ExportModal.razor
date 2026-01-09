@@ -1,3 +1,4 @@
+@using System
 @using CypherSheet.Domain
 @using CypherSheet.Shared
 @using MudBlazor
@@ -37,7 +38,7 @@
                                     <MudText Typo="Typo.subtitle1">
                                         <strong>Personagens Disponíveis (@characters.Count)</strong>
                                     </MudText>
-                                    <MudCheckBox @bind-Checked="selectAll" 
+                                    <MudCheckBox @bind-Value="selectAll"
                                                Label="Selecionar Todos" 
                                                Color="Color.Primary"
                                                T="bool" />
@@ -50,8 +51,8 @@
                                     {
                                         <MudPaper Class="pa-2" Elevation="1">
                                             <div class="d-flex align-center">
-                                                <MudCheckBox Checked="@GetCharacterSelected(character.Id)"
-                                                           CheckedChanged="@((bool value) => OnCharacterSelectionChanged(character.Id, value))"
+                                                <MudCheckBox Value="@GetCharacterSelected(character.Id)"
+                                                           ValueChanged="@((bool value) => OnCharacterSelectionChanged(character.Id, value))"
                                                            Color="Color.Primary"
                                                            T="bool" />
                                                 <div class="ml-3 flex-grow-1">
@@ -152,7 +153,7 @@
                      Variant="Variant.Filled" 
                      Color="Color.Primary"
                      StartIcon="@Icons.Material.Filled.Upload"
-                     Disabled="@(!selectedCharacterIds.Any() || isLoading || isExporting || LoadingService.IsLoading)">
+                     Disabled="@GetButtonDisabled()">
                 @if (isExporting)
                 {
                     <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
@@ -187,7 +188,22 @@
     private List<Character> characters = new();
     private HashSet<Guid> selectedCharacterIds = new();
     private bool isLoading = true;
-    private bool selectAll = false;
+    private bool selectAll 
+    { 
+        get => characters.Count > 0 && selectedCharacterIds.Count == characters.Count;
+        set 
+        {
+            if (value)
+            {
+                selectedCharacterIds = characters.Select(c => c.Id).ToHashSet();
+            }
+            else
+            {
+                selectedCharacterIds.Clear();
+            }
+            StateHasChanged();
+        }
+    }
     private bool showExportResult = false;
     private string exportData = string.Empty;
     private bool isExporting = false;
@@ -202,7 +218,11 @@
         try
         {
             isLoading = true;
-            characters = await DataManagementService.GetAllCharactersAsync();
+            StateHasChanged();
+            
+            var allCharacters = await DataManagementService.GetAllCharactersAsync();
+            // Ordenar por ordem alfabética
+            characters = allCharacters.OrderBy(c => c.Name).ToList();
         }
         catch (Exception ex)
         {
@@ -212,7 +232,7 @@
         finally
         {
             isLoading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -221,8 +241,10 @@
         return selectedCharacterIds.Contains(characterId);
     }
 
-    private void OnCharacterSelectionChanged(Guid characterId, bool isSelected)
+    private async Task OnCharacterSelectionChanged(Guid characterId, bool isSelected)
     {
+        Console.WriteLine($"OnCharacterSelectionChanged: {characterId}, isSelected: {isSelected}");
+        
         if (isSelected)
         {
             selectedCharacterIds.Add(characterId);
@@ -232,24 +254,11 @@
             selectedCharacterIds.Remove(characterId);
         }
 
-        selectAll = selectedCharacterIds.Count == characters.Count;
-        StateHasChanged();
-    }
+        Console.WriteLine($"selectedCharacterIds.Count: {selectedCharacterIds.Count}");
+        Console.WriteLine($"CanExport(): {CanExport()}");
 
-    private void OnSelectAllChanged(bool value)
-    {
-        selectAll = value;
-        
-        if (selectAll)
-        {
-            selectedCharacterIds = characters.Select(c => c.Id).ToHashSet();
-        }
-        else
-        {
-            selectedCharacterIds.Clear();
-        }
-        
-        StateHasChanged();
+        // Forçar atualização da UI
+        await InvokeAsync(StateHasChanged);
     }
 
     private string GetCharacterDescription(Character character)
@@ -266,6 +275,16 @@
         return parts.Any() ? string.Join(" ", parts) : "Personagem sem descrição";
     }
 
+    private bool CanExport()
+    {
+        return selectedCharacterIds.Any() && !isLoading && !isExporting;
+    }
+
+    private bool GetButtonDisabled()
+    {
+        return !selectedCharacterIds.Any() || isLoading || isExporting;
+    }
+
     private async Task ConfirmExport()
     {
         if (!selectedCharacterIds.Any())
@@ -279,7 +298,7 @@
         try
         {
             isExporting = true;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
 
             exportData = await DataManagementService.ExportCharactersAsync(selectedCharacterIds.ToList());
             showExportResult = true;
@@ -295,7 +314,7 @@
         finally
         {
             isExporting = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -321,11 +340,11 @@
         }
     }
 
-    private void GoBack()
+    private async Task GoBack()
     {
         showExportResult = false;
         exportData = string.Empty;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private void Close()
