@@ -3,37 +3,191 @@
 @inject IDialogService DialogService
 @inject ICharacterRepository Repository
 
-<MudStack Spacing="2">
-    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddItem">Adicionar Item</MudButton>
-    
-    @if (!Character.Equipment.Any())
+<MudStack Spacing="3">
+    <!-- Seção de Dinheiro -->
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h6">Dinheiro</MudText>
+            <MudButton StartIcon="@Icons.Material.Filled.AttachMoney" 
+                      Variant="Variant.Text" 
+                      Color="Color.Primary" 
+                      OnClick="OpenMoneyDialog"
+                      Class="text-decoration-none">
+                @Character.Money.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+
+    <!-- Controles -->
+    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+        <MudButton StartIcon="@Icons.Material.Filled.Add" 
+                  Variant="Variant.Filled" 
+                  Color="Color.Primary" 
+                  OnClick="AddItem">
+            Adicionar Item
+        </MudButton>
+        
+        <MudSelect T="ItemType?" @bind-Value="selectedTypeFilter" 
+                  Label="Filtrar por tipo" 
+                  AnchorOrigin="Origin.BottomCenter"
+                  Style="min-width: 150px;">
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)null)">Todos os tipos</MudSelectItem>
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Armadura)">Armadura</MudSelectItem>
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Arma)">Arma</MudSelectItem>
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Roupa)">Roupa</MudSelectItem>
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Ferramenta)">Ferramenta</MudSelectItem>
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Estranheza)">Estranheza</MudSelectItem>
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Material)">Material</MudSelectItem>
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Municao)">Munição</MudSelectItem>
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Plano)">Plano</MudSelectItem>
+            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Outro)">Outro</MudSelectItem>
+        </MudSelect>
+    </MudStack>
+
+    @if (!GetFilteredItems().Any())
     {
         <div style="position: relative; min-height: 300px;">
             <EmptyStateWatermark Icon="@Icons.Material.Filled.Backpack" />
-            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">Mochila vazia.</MudText>
+            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">
+                @(selectedTypeFilter.HasValue ? "Nenhum item encontrado para este filtro." : "Mochila vazia.")
+            </MudText>
         </div>
     }
     else
     {
-        @foreach (var item in Character.Equipment.OrderBy(e => e.Name))
+        @foreach (var locationGroup in GetGroupedItems())
         {
-            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditItem(item))">
-                <div class="d-flex align-center justify-space-between width-100">
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                        <MudText Typo="Typo.subtitle1">@item.Name</MudText>
-                        <MudChip T="string" Color="Color.Info" Size="Size.Small">Qtd: @item.Quantity</MudChip>
-                    </MudStack>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveItem(item))" />
-                    </MudStack>
-                </div>
-            </MudPaper>
+            <MudStack Spacing="2">
+                <MudText Typo="Typo.h6" Color="Color.Primary">
+                    @GetLocationDisplayName(locationGroup.Key) (@locationGroup.Count() @(locationGroup.Count() == 1 ? "item" : "itens"))
+                </MudText>
+                
+                @foreach (var item in locationGroup.OrderBy(i => i.Name))
+                {
+                    <MudPaper Class="pa-3" Elevation="1" Style="cursor: pointer;" @onclick="@(() => EditItem(item))">
+                        <MudStack Spacing="2">
+                            <div class="d-flex align-center justify-space-between">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                    <MudText Typo="Typo.subtitle1"><strong>@item.Name</strong></MudText>
+                                    <MudChip T="string" Color="@GetTypeColor(item.Type)" Size="Size.Small">
+                                        @GetTypeDisplayName(item.Type)
+                                    </MudChip>
+                                </MudStack>
+                                <div @onclick:stopPropagation="true">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                 Size="Size.Small" 
+                                                 Color="Color.Error" 
+                                                 OnClick="@(() => ConfirmRemoveItem(item))" />
+                                </div>
+                            </div>
+                            
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+                                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                    <strong>Qtd:</strong> @item.Quantity
+                                </MudText>
+                                @if (item.Value > 0)
+                                {
+                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                        <strong>Valor:</strong> @item.Value.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+                                    </MudText>
+                                }
+                            </MudStack>
+                            
+                            @if (!string.IsNullOrWhiteSpace(item.Description))
+                            {
+                                <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@item.Description</MudText>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
         }
     }
 </MudStack>
 
 @code {
     [Parameter] public required Character Character { get; set; }
+
+    private ItemType? selectedTypeFilter = null;
+
+    private IEnumerable<Item> GetFilteredItems()
+    {
+        var items = Character.Equipment.AsEnumerable();
+        
+        if (selectedTypeFilter.HasValue)
+        {
+            items = items.Where(i => i.Type == selectedTypeFilter.Value);
+        }
+        
+        return items;
+    }
+
+    private IEnumerable<IGrouping<ItemLocation, Item>> GetGroupedItems()
+    {
+        return GetFilteredItems()
+            .GroupBy(i => i.Location)
+            .OrderBy(g => g.Key);
+    }
+
+    private string GetLocationDisplayName(ItemLocation location)
+    {
+        return location switch
+        {
+            ItemLocation.Consigo => "Consigo",
+            ItemLocation.Mochila => "Mochila",
+            ItemLocation.Casa => "Casa",
+            _ => "Desconhecido"
+        };
+    }
+
+    private string GetTypeDisplayName(ItemType type)
+    {
+        return type switch
+        {
+            ItemType.Armadura => "Armadura",
+            ItemType.Arma => "Arma",
+            ItemType.Roupa => "Roupa",
+            ItemType.Ferramenta => "Ferramenta",
+            ItemType.Estranheza => "Estranheza",
+            ItemType.Material => "Material",
+            ItemType.Municao => "Munição",
+            ItemType.Plano => "Plano",
+            ItemType.Outro => "Outro",
+            _ => "Desconhecido"
+        };
+    }
+
+    private Color GetTypeColor(ItemType type)
+    {
+        return type switch
+        {
+            ItemType.Armadura => Color.Primary,
+            ItemType.Arma => Color.Error,
+            ItemType.Roupa => Color.Info,
+            ItemType.Ferramenta => Color.Default,
+            ItemType.Estranheza => Color.Default,
+            ItemType.Material => Color.Default,
+            ItemType.Municao => Color.Default,
+            ItemType.Plano => Color.Default,
+            ItemType.Outro => Color.Default,
+            _ => Color.Default
+        };
+    }
+
+    private async Task OpenMoneyDialog()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        
+        var result = await DialogService.ShowAsync<MoneyDialog>("Gerenciar Dinheiro", parameters, options);
+        var dialogResult = await result.Result;
+        
+        if (dialogResult != null && !dialogResult.Canceled)
+        {
+            await SaveCharacter();
+            StateHasChanged();
+        }
+    }
 
     private async Task AddItem()
     {
@@ -58,6 +212,20 @@
         {
              await SaveCharacter();
              StateHasChanged();
+        }
+    }
+
+    private async Task ConfirmRemoveItem(Item item)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Confirmar Exclusão",
+            $"Tem certeza que deseja remover o item \"{item.Name}\"?",
+            yesText: "Sim", 
+            cancelText: "Cancelar");
+
+        if (result == true)
+        {
+            await RemoveItem(item);
         }
     }
 

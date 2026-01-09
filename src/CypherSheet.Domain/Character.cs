@@ -115,6 +115,8 @@ namespace CypherSheet.Domain
         private List<Note> _notes = new();
         public List<Note> Notes { get => _notes; set => _notes = value ?? new(); }
         
+        public decimal Money { get; set; } = 0;
+        
         public Recovery Recovery { get; set; } = new Recovery();
         
         public Character() 
@@ -185,11 +187,34 @@ namespace CypherSheet.Domain
         public string Source { get; set; } = "";
     }
 
+    public enum ItemType
+    {
+        Armadura,
+        Arma,
+        Roupa,
+        Ferramenta,
+        Estranheza,
+        Material,
+        Municao,
+        Plano,
+        Outro
+    }
+
+    public enum ItemLocation
+    {
+        Consigo,
+        Mochila,
+        Casa
+    }
+
     public class Item
     {
         public string Name { get; set; } = "";
         public string Description { get; set; } = "";
+        public ItemType Type { get; set; } = ItemType.Outro;
         public int Quantity { get; set; } = 1;
+        public decimal Value { get; set; } = 0;
+        public ItemLocation Location { get; set; } = ItemLocation.Mochila;
     }
 
     public class Note
