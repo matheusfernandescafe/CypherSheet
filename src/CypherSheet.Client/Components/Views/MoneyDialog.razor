@@ -1,0 +1,101 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.h6">Gerenciar Dinheiro</MudText>
+            
+            <MudText Typo="Typo.body1">
+                <strong>Valor atual:</strong> @Character.Money.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+            </MudText>
+            
+            <MudRadioGroup @bind-Value="operationType" T="string">
+                <MudRadio Value="@("add")" Color="Color.Success">Adicionar dinheiro</MudRadio>
+                <MudRadio Value="@("remove")" Color="Color.Error">Remover dinheiro</MudRadio>
+                <MudRadio Value="@("set")" Color="Color.Info">Definir valor exato</MudRadio>
+            </MudRadioGroup>
+            
+            <MudNumericField @bind-Value="amount" 
+                           Label="@GetAmountLabel()" 
+                           Min="0" 
+                           Step="0.01m"
+                           Format="C"
+                           Culture="@System.Globalization.CultureInfo.GetCultureInfo("en-US")"
+                           AutoFocus="true" />
+            
+            @if (operationType != "set")
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">
+                    <strong>Novo valor:</strong> @GetNewValue().ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+                </MudText>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@(amount <= 0 && operationType != "set")">Confirmar</MudButton>
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] public required IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public required Character Character { get; set; }
+
+    private string operationType = "add";
+    private decimal amount = 0;
+
+    private string GetAmountLabel()
+    {
+        return operationType switch
+        {
+            "add" => "Valor a adicionar",
+            "remove" => "Valor a remover",
+            "set" => "Novo valor total",
+            _ => "Valor"
+        };
+    }
+
+    private decimal GetNewValue()
+    {
+        return operationType switch
+        {
+            "add" => Character.Money + amount,
+            "remove" => Math.Max(0, Character.Money - amount),
+            "set" => amount,
+            _ => Character.Money
+        };
+    }
+
+    void Submit()
+    {
+        if (operationType != "set" && amount <= 0)
+        {
+            Snackbar.Add("Valor deve ser maior que zero", Severity.Warning);
+            return;
+        }
+
+        if (operationType == "remove" && amount > Character.Money)
+        {
+            Snackbar.Add("Não é possível remover mais dinheiro do que o personagem possui", Severity.Warning);
+            return;
+        }
+
+        var oldValue = Character.Money;
+        Character.Money = GetNewValue();
+
+        var message = operationType switch
+        {
+            "add" => $"Adicionado {amount.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))}. Total: {Character.Money.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))}",
+            "remove" => $"Removido {amount.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))}. Total: {Character.Money.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))}",
+            "set" => $"Valor definido para {Character.Money.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))}",
+            _ => "Dinheiro atualizado"
+        };
+
+        Snackbar.Add(message, Severity.Success);
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

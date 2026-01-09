@@ -1,0 +1,212 @@
+@using CypherSheet.Client.Services
+@using Microsoft.AspNetCore.Components
+@inject IJSRuntime JSRuntime
+@inject IImageCacheService ImageCacheService
+@implements IAsyncDisposable
+
+<div @ref="containerRef" class="lazy-image-container">
+    @if (isVisible)
+    {
+        <CharacterImageDisplay ImageData="@imageData" 
+                             CharacterName="@CharacterName" 
+                             Size="@Size"
+                             AvatarColor="@AvatarColor"
+                             ShowRetryButton="@ShowRetryButton"
+                             OnImageLoadError="@OnImageLoadError"
+                             OnRetryClicked="@HandleRetryClicked" />
+    }
+    else
+    {
+        <div class="image-placeholder @GetSizeClass()">
+            <div class="placeholder-content">
+                @if (!string.IsNullOrEmpty(CharacterName))
+                {
+                    <MudAvatar Size="@GetAvatarSize()" 
+                              Color="@AvatarColor" 
+                              Class="character-avatar">
+                        @GetInitials()
+                    </MudAvatar>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.Person" 
+                            Size="@GetIconSize()" 
+                            Class="default-character-icon" />
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid CharacterId { get; set; }
+    [Parameter] public string? CharacterName { get; set; }
+    [Parameter] public ImageDisplaySize Size { get; set; } = ImageDisplaySize.Medium;
+    [Parameter] public Color AvatarColor { get; set; } = Color.Primary;
+    [Parameter] public bool ShowRetryButton { get; set; } = true;
+    [Parameter] public EventCallback OnImageLoadError { get; set; }
+    [Parameter] public EventCallback OnRetryClicked { get; set; }
+
+    private ElementReference containerRef;
+    private IJSObjectReference? intersectionObserver;
+    private bool isVisible = false;
+    private byte[]? imageData;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await SetupIntersectionObserver();
+        }
+    }
+
+    private async Task SetupIntersectionObserver()
+    {
+        try
+        {
+            intersectionObserver = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                "createIntersectionObserver", 
+                DotNetObjectReference.Create(this),
+                containerRef);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error setting up intersection observer: {ex.Message}");
+            // Fallback: mostrar imagem imediatamente se o observer falhar
+            isVisible = true;
+            await LoadImage();
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnIntersection(bool isIntersecting)
+    {
+        if (isIntersecting && !isVisible)
+        {
+            isVisible = true;
+            await LoadImage();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadImage()
+    {
+        const int maxRetries = 3;
+        var retryCount = 0;
+        
+        while (retryCount < maxRetries)
+        {
+            try
+            {
+                imageData = await ImageCacheService.GetImageAsync(CharacterId);
+                return; // Sucesso, sair do loop
+            }
+            catch (Exception ex) when (retryCount < maxRetries - 1)
+            {
+                retryCount++;
+                Console.WriteLine($"Attempt {retryCount} failed loading image for character {CharacterId}: {ex.Message}");
+                
+                // Aguardar com backoff exponencial
+                var delay = (int)Math.Pow(2, retryCount - 1) * 1000;
+                await Task.Delay(delay);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Final attempt failed loading image for character {CharacterId}: {ex.Message}");
+                await OnImageLoadError.InvokeAsync();
+                
+                // Manter imageData como null para mostrar fallback
+                imageData = null;
+                return;
+            }
+        }
+        
+        // Se chegou aqui, todas as tentativas falharam
+        Console.WriteLine($"All retry attempts failed for character {CharacterId}");
+        await OnImageLoadError.InvokeAsync();
+        imageData = null;
+    }
+
+    private async Task HandleRetryClicked()
+    {
+        // Limpar cache para forçar reload
+        ImageCacheService.RemoveFromCache(CharacterId);
+        
+        // Recarregar imagem
+        await LoadImage();
+        StateHasChanged();
+        
+        await OnRetryClicked.InvokeAsync();
+    }
+
+    private string GetSizeClass()
+    {
+        return Size switch
+        {
+            ImageDisplaySize.Thumbnail => "size-thumbnail",
+            ImageDisplaySize.Small => "size-small",
+            ImageDisplaySize.Medium => "size-medium",
+            ImageDisplaySize.Large => "size-large",
+            ImageDisplaySize.ExtraLarge => "size-extra-large",
+            _ => "size-medium"
+        };
+    }
+
+    private MudBlazor.Size GetAvatarSize()
+    {
+        return Size switch
+        {
+            ImageDisplaySize.Thumbnail => MudBlazor.Size.Small,
+            ImageDisplaySize.Small => MudBlazor.Size.Medium,
+            ImageDisplaySize.Medium => MudBlazor.Size.Large,
+            ImageDisplaySize.Large => MudBlazor.Size.Large,
+            ImageDisplaySize.ExtraLarge => MudBlazor.Size.Large,
+            _ => MudBlazor.Size.Large
+        };
+    }
+
+    private MudBlazor.Size GetIconSize()
+    {
+        return Size switch
+        {
+            ImageDisplaySize.Thumbnail => MudBlazor.Size.Small,
+            ImageDisplaySize.Small => MudBlazor.Size.Medium,
+            ImageDisplaySize.Medium => MudBlazor.Size.Large,
+            ImageDisplaySize.Large => MudBlazor.Size.Large,
+            ImageDisplaySize.ExtraLarge => MudBlazor.Size.Large,
+            _ => MudBlazor.Size.Large
+        };
+    }
+
+    private string GetInitials()
+    {
+        if (string.IsNullOrEmpty(CharacterName)) return "?";
+        
+        var words = CharacterName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return "?";
+        
+        if (words.Length == 1)
+        {
+            return words[0].Substring(0, Math.Min(2, words[0].Length)).ToUpper();
+        }
+        
+        return (words[0][0].ToString() + words[^1][0].ToString()).ToUpper();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (intersectionObserver != null)
+        {
+            try
+            {
+                await intersectionObserver.InvokeVoidAsync("disconnect");
+                await intersectionObserver.DisposeAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error disposing intersection observer: {ex.Message}");
+            }
+        }
+    }
+}

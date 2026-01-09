@@ -1,0 +1,111 @@
+.character-image-display {
+    position: relative;
+    display: inline-block;
+    border-radius: 50%;
+    overflow: hidden;
+    background-color: var(--mud-palette-surface);
+}
+
+.character-image-display.size-thumbnail {
+    width: 32px;
+    height: 32px;
+}
+
+.character-image-display.size-small {
+    width: 48px;
+    height: 48px;
+}
+
+.character-image-display.size-medium {
+    width: 64px;
+    height: 64px;
+}
+
+.character-image-display.size-large {
+    width: 96px;
+    height: 96px;
+}
+
+.character-image-display.size-extra-large {
+    width: 128px;
+    height: 128px;
+}
+
+.character-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.character-avatar-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.character-avatar {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.default-character-icon {
+    color: var(--mud-palette-text-secondary);
+}
+
+.image-loading {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--mud-palette-surface-variant);
+}
+
+.retry-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+}
+
+.retry-button {
+    background-color: var(--mud-palette-primary);
+    color: var(--mud-palette-primary-text);
+}
+
+.retry-button:hover {
+    background-color: var(--mud-palette-primary-darken);
+}
+
+/* Otimizações para performance */
+.character-image-display {
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.character-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 599px) {
+    .character-image-display.size-small {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .character-image-display.size-medium {
+        width: 56px;
+        height: 56px;
+    }
+}

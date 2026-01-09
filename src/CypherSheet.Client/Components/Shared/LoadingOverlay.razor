@@ -1,0 +1,69 @@
+@using CypherSheet.Client.Services
+@inject ILoadingService LoadingService
+@implements IDisposable
+
+@if (LoadingService.IsLoading)
+{
+    <div class="loading-overlay">
+        <div class="loading-content">
+            <MudProgressCircular Indeterminate="true" Size="Size.Large" Color="Color.Primary" />
+            
+            @if (!string.IsNullOrEmpty(LoadingService.LoadingMessage))
+            {
+                <MudText Typo="Typo.h6" Class="mt-4 text-center">
+                    @LoadingService.LoadingMessage
+                </MudText>
+            }
+            
+            @if (LoadingService.Progress > 0)
+            {
+                <MudProgressLinear Value="@LoadingService.Progress" 
+                                 Color="Color.Primary" 
+                                 Class="mt-4" 
+                                 Style="width: 300px;" />
+                <MudText Typo="Typo.body2" Class="mt-2 text-center">
+                    @LoadingService.Progress%
+                </MudText>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        LoadingService.LoadingStateChanged += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        LoadingService.LoadingStateChanged -= StateHasChanged;
+    }
+}
+
+<style>
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+    }
+
+    .loading-content {
+        background-color: var(--mud-palette-surface);
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 200px;
+    }
+</style>

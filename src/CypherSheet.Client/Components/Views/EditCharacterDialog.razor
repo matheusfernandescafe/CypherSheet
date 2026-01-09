@@ -1,33 +1,168 @@
 @using CypherSheet.Domain
+@using CypherSheet.Client.Components.Shared
+@using CypherSheet.Storage
+@using CypherSheet.Shared
 @using MudBlazor
+@inject ICharacterRepository CharacterRepository
+@inject CypherSheet.Client.Services.INotificationService NotificationService
 
 <MudDialog>
     <DialogContent>
-        <MudTextField @bind-Value="Character.Name" Label="Nome" AutoFocus="true" />
-        <MudTextField @bind-Value="Character.Descriptor" Label="Descritor" HelperText="Ex: Resiliente, Charmoso" />
-        <MudTextField @bind-Value="Character.Type" Label="Tipo" HelperText="Ex: Glaive, Jack, Nano" />
-        <MudTextField @bind-Value="Character.Focus" Label="Foco" HelperText="Ex: Domina Bestas, Controla Gravidade" />
-        <MudNumericField @bind-Value="Character.Tier" Label="Tier" Min="1" Max="6" />
-        <MudNumericField @bind-Value="Character.XP" Label="XP" Min="0" />
+        <MudGrid>
+            <MudItem xs="12" md="8">
+                <MudStack Spacing="3">
+                    <MudTextField @bind-Value="Character.Name" Label="Nome" AutoFocus="true" />
+                    <MudTextField @bind-Value="Character.Descriptor" Label="Descritor" HelperText="Ex: Resiliente, Charmoso" />
+                    <MudTextField @bind-Value="Character.Type" Label="Tipo" HelperText="Ex: Glaive, Jack, Nano" />
+                    <MudTextField @bind-Value="Character.Focus" Label="Foco" HelperText="Ex: Domina Bestas, Controla Gravidade" />
+                    <MudNumericField @bind-Value="Character.Tier" Label="Tier" Min="1" Max="6" />
+                    <MudNumericField @bind-Value="Character.XP" Label="XP" Min="0" />
+                </MudStack>
+            </MudItem>
+            <MudItem xs="12" md="4">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">Imagem do Personagem</MudText>
+                    
+                    @if (HasExistingImage)
+                    {
+                        <CharacterImageDisplay ImageData="@CurrentImageData" 
+                                             CharacterName="@Character.Name" 
+                                             Size="ImageDisplaySize.Large" />
+                        
+                        <MudStack Row="true" Spacing="1" Justify="Justify.Center">
+                            <MudButton StartIcon="@Icons.Material.Filled.Edit" 
+                                      Size="Size.Small" 
+                                      Variant="Variant.Outlined"
+                                      OnClick="@(() => ShowImageUpload = true)">
+                                Alterar
+                            </MudButton>
+                            <MudButton StartIcon="@Icons.Material.Filled.Delete" 
+                                      Size="Size.Small" 
+                                      Variant="Variant.Outlined" 
+                                      Color="Color.Error"
+                                      OnClick="@RemoveImage">
+                                Remover
+                            </MudButton>
+                        </MudStack>
+                    }
+                    
+                    @if (!HasExistingImage || ShowImageUpload)
+                    {
+                        <ImageUploadComponent ImageData="@NewImageData" 
+                                            ImageDataChanged="@OnImageDataChanged" />
+                        
+                        @if (HasExistingImage && ShowImageUpload)
+                        {
+                            <MudButton StartIcon="@Icons.Material.Filled.Cancel" 
+                                      Size="Size.Small" 
+                                      Variant="Variant.Text"
+                                      OnClick="@(() => { ShowImageUpload = false; NewImageData = null; })">
+                                Cancelar Alteração
+                            </MudButton>
+                        }
+                    }
+                </MudStack>
+            </MudItem>
+        </MudGrid>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancelar</MudButton>
-        <MudButton Color="Color.Primary" OnClick="Submit">Salvar</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit" Disabled="@IsSaving">
+            @if (IsSaving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ml-2">Salvando...</MudText>
+            }
+            else
+            {
+                <MudText>Salvar</MudText>
+            }
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
-    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
-    [Parameter] public Character Character { get; set; }
+    [CascadingParameter] public required IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public required Character Character { get; set; }
 
-    void Submit()
+    private byte[]? CurrentImageData;
+    private byte[]? NewImageData;
+    private bool ShowImageUpload = false;
+    private bool IsSaving = false;
+
+    private bool HasExistingImage => CurrentImageData != null && CurrentImageData.Length > 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Carregar imagem existente se houver
+        if (Character.ImageFileName != null)
+        {
+            CurrentImageData = await CharacterRepository.GetCharacterImageAsync(Character.Id);
+        }
+    }
+
+    private void OnImageDataChanged(byte[]? imageData)
+    {
+        NewImageData = imageData;
+    }
+
+    private async Task RemoveImage()
+    {
+        try
+        {
+            await CharacterRepository.DeleteCharacterImageAsync(Character.Id);
+            CurrentImageData = null;
+            NewImageData = null;
+            ShowImageUpload = false;
+            
+            NotificationService.ShowSuccess("Imagem removida com sucesso!");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError($"Erro ao remover imagem: {ex.Message}");
+        }
+    }
+
+    private async Task Submit()
     {
         if (string.IsNullOrWhiteSpace(Character.Name))
         {
-             // Basic validation
-             return;
+            NotificationService.ShowError("O nome do personagem é obrigatório");
+            return;
         }
-        MudDialog.Close(DialogResult.Ok(true));
+
+        IsSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            // Salvar dados do personagem
+            await CharacterRepository.SaveCharacterAsync(Character);
+
+            // Salvar nova imagem se houver
+            if (NewImageData != null && NewImageData.Length > 0)
+            {
+                var fileName = $"{Character.Name}_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+                await CharacterRepository.SaveCharacterImageAsync(
+                    Character.Id, 
+                    NewImageData, 
+                    fileName, 
+                    "image/jpeg");
+            }
+
+            NotificationService.ShowSuccess("Personagem salvo com sucesso!");
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            NotificationService.ShowError($"Erro ao salvar personagem: {ex.Message}");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
     }
+
     void Cancel() => MudDialog.Cancel();
 }

@@ -1,0 +1,84 @@
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="4">
+            <MudAlert Severity="Severity.Error" Icon="@Icons.Material.Filled.Warning">
+                <MudText Typo="Typo.h6" Class="mb-2">⚠️ ATENÇÃO: Ação Irreversível</MudText>
+                <MudText>Esta ação irá deletar PERMANENTEMENTE todos os seus dados, incluindo:</MudText>
+                <MudList T="string" Dense="true" Class="mt-2">
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Person">Todos os personagens criados</MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Settings">Todas as configurações</MudListItem>
+                    <MudListItem T="string" Icon="@Icons.Material.Filled.Storage">Todo o cache da aplicação</MudListItem>
+                </MudList>
+            </MudAlert>
+
+            <MudText Typo="Typo.body1" Class="text-center">
+                Para confirmar esta ação, digite <strong>CONFIRMAR</strong> no campo abaixo:
+            </MudText>
+
+            <MudTextField @bind-Value="confirmationText" 
+                         Label="Digite CONFIRMAR para prosseguir" 
+                         Variant="Variant.Outlined"
+                         FullWidth="true"
+                         Immediate="true"
+                         Class="text-center" />
+
+            @if (isDeleting)
+            {
+                <MudProgressLinear Color="Color.Error" Indeterminate="true" />
+                <MudText Typo="Typo.body2" Class="text-center">Deletando todos os dados...</MudText>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="isDeleting">Cancelar</MudButton>
+        <MudButton Color="Color.Error" 
+                   Variant="Variant.Filled" 
+                   OnClick="Confirm" 
+                   Disabled="@(!IsConfirmationValid || isDeleting)"
+                   StartIcon="@Icons.Material.Filled.DeleteForever">
+            @if (isDeleting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                <span class="ml-2">Deletando...</span>
+            }
+            else
+            {
+                <span>Deletar Tudo</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private string confirmationText = string.Empty;
+    private bool isDeleting = false;
+
+    private bool IsConfirmationValid => confirmationText.Trim().Equals("CONFIRMAR", StringComparison.OrdinalIgnoreCase);
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Confirm()
+    {
+        if (!IsConfirmationValid) return;
+
+        isDeleting = true;
+        StateHasChanged();
+
+        try
+        {
+            // Simular delay para mostrar o progresso
+            await Task.Delay(2000);
+            
+            // Aqui será implementada a lógica real de exclusão quando os serviços estiverem prontos
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception)
+        {
+            isDeleting = false;
+            StateHasChanged();
+            MudDialog.Close(DialogResult.Cancel());
+        }
+    }
+}

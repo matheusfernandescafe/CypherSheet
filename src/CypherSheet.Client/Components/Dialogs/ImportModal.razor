@@ -1,0 +1,399 @@
+@using CypherSheet.Domain
+@using CypherSheet.Shared
+@using MudBlazor
+@using System.Text.Json
+@inject ILoadingService LoadingService
+@inject INotificationService NotificationService
+@inject IDataManagementService DataManagementService
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-width: 600px;">
+            <MudStack Spacing="4">
+                @if (!showImportResult)
+                {
+                    <MudText Typo="Typo.h6" Class="mb-2">Importar Personagens</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-3">
+                        Cole os dados JSON exportados anteriormente para importar personagens. Os dados serão validados antes da importação.
+                    </MudText>
+
+                    <MudCard Elevation="2">
+                        <MudCardContent>
+                            <MudTextField Value="@importData"
+                                        ValueChanged="@((string value) => OnImportDataChanged(value))"
+                                        Label="Dados para Importação"
+                                        Placeholder="Cole aqui os dados JSON exportados..."
+                                        Variant="Variant.Outlined"
+                                        Lines="12"
+                                        FullWidth="true"
+                                        Class="import-data-field"
+                                        Error="@(!string.IsNullOrEmpty(validationMessage))"
+                                        ErrorText="@validationMessage" />
+                        </MudCardContent>
+                    </MudCard>
+
+                    @if (!string.IsNullOrWhiteSpace(importData))
+                    {
+                        @if (isValidJson && parsedData != null)
+                        {
+                            <MudAlert Severity="Severity.Success">
+                                <strong>Dados válidos detectados!</strong><br/>
+                                Personagens encontrados: @parsedData.Characters.Count<br/>
+                                Versão da aplicação: @parsedData.Metadata.AppVersion<br/>
+                                Data de exportação: @parsedData.Metadata.ExportDate.ToString("dd/MM/yyyy HH:mm")
+                                
+                                @if (hasVersionMismatch)
+                                {
+                                    <br/><br/>
+                                    <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Small" />
+                                    <span><strong>Aviso:</strong> Dados de versão diferente. Verifique após importação.</span>
+                                }
+                            </MudAlert>
+                            
+                            @if (parsedData.Characters.Any())
+                            {
+                                <MudCard Elevation="1">
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.subtitle1" Class="mb-2">
+                                            <strong>Personagens a serem importados:</strong>
+                                        </MudText>
+                                        <MudStack Spacing="1">
+                                            @foreach (var character in parsedData.Characters)
+                                            {
+                                                <MudPaper Class="pa-2" Elevation="0" Style="background-color: var(--mud-palette-background-grey);">
+                                                    <div class="d-flex align-center">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" Size="Size.Small" Class="mr-2" />
+                                                        <div class="flex-grow-1">
+                                                            <MudText Typo="Typo.subtitle2">@character.Name</MudText>
+                                                            <MudText Typo="Typo.caption" Class="text-muted">
+                                                                @GetCharacterDescription(character)
+                                                            </MudText>
+                                                        </div>
+                                                        <MudChip T="string" Size="Size.Small" Color="Color.Info">
+                                                            Tier @character.Tier
+                                                        </MudChip>
+                                                    </div>
+                                                </MudPaper>
+                                            }
+                                        </MudStack>
+                                    </MudCardContent>
+                                </MudCard>
+                            }
+                        }
+                        else if (!string.IsNullOrEmpty(validationMessage))
+                        {
+                            <MudAlert Severity="Severity.Error">
+                                <strong>Erro na validação:</strong><br/>
+                                @validationMessage
+                            </MudAlert>
+                        }
+                    }
+                    else
+                    {
+                        <MudAlert Severity="Severity.Info">
+                            <strong>Como importar:</strong><br/>
+                            • Cole os dados JSON exportados na área de texto acima<br/>
+                            • Os dados serão validados automaticamente<br/>
+                            • Clique em "Confirmar Importação" para importar os personagens
+                        </MudAlert>
+                    }
+                }
+                else
+                {
+                    <MudText Typo="Typo.h6" Class="mb-2">Resultado da Importação</MudText>
+                    
+                    @if (isImporting)
+                    {
+                        <MudProgressCircular Indeterminate="true" />
+                        <MudText Typo="Typo.body2" Align="Align.Center">Importando personagens...</MudText>
+                    }
+                    else if (importResult != null)
+                    {
+                        @if (importResult.Success)
+                        {
+                            <MudAlert Severity="Severity.Success">
+                                <strong>Importação concluída com sucesso!</strong><br/>
+                                @importResult.ImportedCount personagens importados.<br/>
+                                @importResult.Message
+                            </MudAlert>
+                            
+                            @if (importResult.Warnings.Any())
+                            {
+                                <MudAlert Severity="Severity.Warning">
+                                    <strong>Avisos durante a importação:</strong>
+                                    <ul class="mt-2 mb-0">
+                                        @foreach (var warning in importResult.Warnings)
+                                        {
+                                            <li>@warning</li>
+                                        }
+                                    </ul>
+                                </MudAlert>
+                            }
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Error">
+                                <strong>Erro durante a importação:</strong><br/>
+                                @importResult.Message
+                            </MudAlert>
+                        }
+                    }
+                }
+            </MudStack>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        @if (!showImportResult)
+        {
+            <MudButton OnClick="Cancel" Variant="Variant.Text">
+                Cancelar
+            </MudButton>
+            <MudButton OnClick="ConfirmImport" 
+                     Variant="Variant.Filled" 
+                     Color="Color.Primary"
+                     StartIcon="@Icons.Material.Filled.Download"
+                     Disabled="@(!CanImport() || isImporting || LoadingService.IsLoading)">
+                @if (isImporting)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Importando...</span>
+                }
+                else
+                {
+                    <span>Confirmar Importação</span>
+                }
+            </MudButton>
+        }
+        else
+        {
+            <MudButton OnClick="Close" 
+                     Variant="Variant.Filled" 
+                     Color="Color.Primary">
+                Fechar
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public EventCallback<ImportResult> OnImport { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string importData = string.Empty;
+    private string validationMessage = string.Empty;
+    private bool isValidJson = false;
+    private bool isImporting = false;
+    private bool showImportResult = false;
+    private ExportFormat? parsedData = null;
+    private ImportResult? importResult = null;
+    private bool hasVersionMismatch = false;
+
+    private async Task OnImportDataChanged(string value)
+    {
+        importData = value ?? string.Empty;
+        await ValidateImportData();
+    }
+
+    private async Task ValidateImportData()
+    {
+        validationMessage = string.Empty;
+        isValidJson = false;
+        parsedData = null;
+        hasVersionMismatch = false;
+
+        if (string.IsNullOrWhiteSpace(importData))
+        {
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        try
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                WriteIndented = true
+            };
+
+            parsedData = JsonSerializer.Deserialize<ExportFormat>(importData, options);
+            
+            if (parsedData == null)
+            {
+                validationMessage = "Os dados não puderam ser interpretados como um formato de exportação válido.";
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (parsedData.Metadata == null)
+            {
+                validationMessage = "Os dados não contêm metadados válidos.";
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (parsedData.Characters == null)
+            {
+                validationMessage = "Os dados não contêm uma lista de personagens válida.";
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(parsedData.Metadata.AppVersion))
+            {
+                var currentVersion = Domain.AppVersion.Version;
+                if (parsedData.Metadata.AppVersion != currentVersion)
+                {
+                    hasVersionMismatch = true;
+                }
+            }
+
+            if (!parsedData.Characters.Any())
+            {
+                validationMessage = "Os dados não contêm nenhum personagem para importar.";
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            foreach (var character in parsedData.Characters)
+            {
+                if (string.IsNullOrWhiteSpace(character.Name))
+                {
+                    validationMessage = "Um ou mais personagens não possuem nome válido.";
+                    await InvokeAsync(StateHasChanged);
+                    return;
+                }
+            }
+
+            isValidJson = true;
+        }
+        catch (JsonException ex)
+        {
+            validationMessage = $"Formato JSON inválido: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            validationMessage = $"Erro ao validar os dados: {ex.Message}";
+        }
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private bool CanImport()
+    {
+        return isValidJson && parsedData != null && parsedData.Characters.Any() && !string.IsNullOrWhiteSpace(importData);
+    }
+
+    private string GetCharacterDescription(Character character)
+    {
+        var parts = new List<string>();
+        
+        if (!string.IsNullOrWhiteSpace(character.Descriptor))
+            parts.Add(character.Descriptor);
+        if (!string.IsNullOrWhiteSpace(character.Type))
+            parts.Add(character.Type);
+        if (!string.IsNullOrWhiteSpace(character.Focus))
+            parts.Add($"who {character.Focus}");
+
+        return parts.Any() ? string.Join(" ", parts) : "Personagem sem descrição";
+    }
+
+    private async Task ConfirmImport()
+    {
+        if (!CanImport())
+        {
+            NotificationService.ShowWarning("Os dados não são válidos para importação.", "Dados Inválidos");
+            return;
+        }
+
+        if (isImporting || LoadingService.IsLoading) return;
+
+        // Mostrar confirmação antes da importação
+        var confirmationMessage = $"Tem certeza que deseja importar {parsedData!.Characters.Count} personagem(ns)?";
+        if (hasVersionMismatch)
+        {
+            confirmationMessage += "\n\nATENÇÃO: Os dados são de uma versão diferente da aplicação. Isso pode causar problemas de compatibilidade.";
+        }
+
+        var confirmed = await ShowConfirmationDialog(confirmationMessage);
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            isImporting = true;
+            StateHasChanged();
+
+            importResult = await DataManagementService.ImportCharactersAsync(importData);
+            showImportResult = true;
+            
+            if (importResult.Success)
+            {
+                NotificationService.ShowCriticalSuccess($"Importação concluída! {importResult.ImportedCount} personagens importados.", "Importação Bem-Sucedida");
+                
+                if (importResult.Warnings.Any())
+                {
+                    foreach (var warning in importResult.Warnings)
+                    {
+                        NotificationService.ShowWarning(warning, "Aviso na Importação");
+                    }
+                }
+            }
+            else
+            {
+                NotificationService.ShowCriticalError($"Erro na importação: {importResult.Message}", "Falha na Importação");
+            }
+            
+            await OnImport.InvokeAsync(importResult);
+        }
+        catch (Exception ex)
+        {
+            importResult = new ImportResult
+            {
+                Success = false,
+                Message = $"Erro inesperado durante a importação: {ex.Message}",
+                ErrorCode = DataManagementError.DatabaseError
+            };
+            showImportResult = true;
+            NotificationService.ShowCriticalError($"Erro durante a importação: {ex.Message}", "Erro Inesperado");
+        }
+        finally
+        {
+            isImporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<bool> ShowConfirmationDialog(string message)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Confirmar Importação",
+            message,
+            yesText: "Sim, Importar",
+            cancelText: "Cancelar"
+        );
+        
+        return result == true;
+    }
+
+    private void Close()
+    {
+        MudDialog.Close(DialogResult.Ok(importResult));
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+        MudDialog.Cancel();
+    }
+}
+
+<style>
+    .import-data-field .mud-input-control-input-container textarea {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        line-height: 1.4;
+    }
+</style>

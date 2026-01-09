@@ -5,9 +5,38 @@
 
 <MudDialog>
     <DialogContent>
-        <MudTextField @bind-Value="name" Label="Nome" AutoFocus="true" />
-        <MudNumericField @bind-Value="quantity" Label="Quantidade" Min="1" />
-        <MudTextField @bind-Value="description" Label="Descrição" Lines="2" />
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="name" Label="Nome" AutoFocus="true" />
+            
+            <MudSelect @bind-Value="itemType" Label="Tipo">
+                <MudSelectItem Value="@ItemType.Armadura">Armadura</MudSelectItem>
+                <MudSelectItem Value="@ItemType.Arma">Arma</MudSelectItem>
+                <MudSelectItem Value="@ItemType.Roupa">Roupa</MudSelectItem>
+                <MudSelectItem Value="@ItemType.Ferramenta">Ferramenta</MudSelectItem>
+                <MudSelectItem Value="@ItemType.Estranheza">Estranheza</MudSelectItem>
+                <MudSelectItem Value="@ItemType.Material">Material</MudSelectItem>
+                <MudSelectItem Value="@ItemType.Municao">Munição</MudSelectItem>
+                <MudSelectItem Value="@ItemType.Plano">Plano</MudSelectItem>
+                <MudSelectItem Value="@ItemType.Outro">Outro</MudSelectItem>
+            </MudSelect>
+            
+            <MudSelect @bind-Value="location" Label="Localização">
+                <MudSelectItem Value="@ItemLocation.Consigo">Consigo</MudSelectItem>
+                <MudSelectItem Value="@ItemLocation.Mochila">Mochila</MudSelectItem>
+                <MudSelectItem Value="@ItemLocation.Casa">Casa</MudSelectItem>
+            </MudSelect>
+            
+            <MudNumericField @bind-Value="quantity" Label="Quantidade" Min="1" />
+            
+            <MudNumericField @bind-Value="value" 
+                           Label="Valor" 
+                           Min="0" 
+                           Step="0.01m"
+                           Format="C"
+                           Culture="@System.Globalization.CultureInfo.GetCultureInfo("en-US")" />
+            
+            <MudTextField @bind-Value="description" Label="Descrição" Lines="3" />
+        </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancelar</MudButton>
@@ -16,20 +45,26 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
-    [Parameter] public Character Character { get; set; }
-    [Parameter] public Item ItemToEdit { get; set; }
+    [CascadingParameter] public required IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public required Character Character { get; set; }
+    [Parameter] public Item? ItemToEdit { get; set; }
 
-    private string name;
+    private string name = "";
+    private ItemType itemType = ItemType.Outro;
+    private ItemLocation location = ItemLocation.Mochila;
     private int quantity = 1;
-    private string description;
+    private decimal value = 0;
+    private string description = "";
 
     protected override void OnInitialized()
     {
         if (ItemToEdit != null)
         {
             name = ItemToEdit.Name;
+            itemType = ItemToEdit.Type;
+            location = ItemToEdit.Location;
             quantity = ItemToEdit.Quantity;
+            value = ItemToEdit.Value;
             description = ItemToEdit.Description;
         }
     }
@@ -45,12 +80,23 @@
         if (ItemToEdit != null)
         {
             ItemToEdit.Name = name;
+            ItemToEdit.Type = itemType;
+            ItemToEdit.Location = location;
             ItemToEdit.Quantity = quantity;
+            ItemToEdit.Value = value;
             ItemToEdit.Description = description;
         }
         else
         {
-            Character.Equipment.Add(new Item { Name = name, Quantity = quantity, Description = description });
+            Character.Equipment.Add(new Item 
+            { 
+                Name = name, 
+                Type = itemType,
+                Location = location,
+                Quantity = quantity, 
+                Value = value,
+                Description = description 
+            });
         }
         
         MudDialog.Close(DialogResult.Ok(true));

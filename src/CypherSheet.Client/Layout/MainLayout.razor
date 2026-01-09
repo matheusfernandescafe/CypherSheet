@@ -1,4 +1,5 @@
 ﻿@using CypherSheet.Client.Services
+@using CypherSheet.Client.Components.Shared
 @inherits LayoutComponentBase
 @inject IThemeService ThemeService
 @implements IDisposable
@@ -10,7 +11,7 @@
 
 <MudLayout>
     <MudAppBar Elevation="1">
-        <MudText Typo="Typo.h5" Class="ml-3">Cypher Sheet</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3" Style="color: white;">Cypher Sheet</MudText>
         <MudSpacer />
     </MudAppBar>
     <MudMainContent>
@@ -20,20 +21,62 @@
     </MudMainContent>
 </MudLayout>
 
+<LoadingOverlay />
+
 @code {
     private MudTheme _theme = new MudTheme()
     {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#8B5CF6", // Roxo vibrante
+            Secondary = "#A78BFA", // Lilás claro
+            Tertiary = "#C4B5FD", // Lilás mais claro
+            Surface = "#FFFFFF", // Branco puro para superfícies
+            Background = "#FFFFFF", // Fundo branco
+            AppbarBackground = "#8B5CF6", // Roxo vibrante para melhor contraste
+            DrawerBackground = "#FFFFFF", // Branco para drawer
+            ActionDefault = "#6B46C1", // Roxo médio para ações
+            ActionDisabled = "#E5E7EB", // Cinza claro para ações desabilitadas
+            TextPrimary = "#1F2937", // Cinza escuro para texto principal
+            TextSecondary = "#6B7280", // Cinza médio para texto secundário
+            TextDisabled = "#9CA3AF", // Cinza claro para texto desabilitado
+            Divider = "#E5E7EB", // Cinza claro para divisores
+            DividerLight = "#F3F4F6", // Cinza muito claro
+            TableLines = "#E5E7EB", // Cinza claro para linhas de tabela
+            TableStriped = "#F9FAFB", // Cinza muito claro para listras de tabela
+            TableHover = "#F3F4F6", // Cinza claro para hover em tabelas
+            Error = "#EF4444", // Vermelho para erros
+            Success = "#10B981", // Verde para sucesso
+            Warning = "#F59E0B", // Amarelo para avisos
+            Info = "#8B5CF6", // Roxo para informações
+            Dark = "#1F2937", // Cinza escuro
+            DarkLighten = "#374151", // Cinza escuro clareado
+            DarkContrastText = "#FFFFFF", // Branco para contraste
+            GrayDefault = "#6B7280", // Cinza padrão
+            GrayLight = "#9CA3AF", // Cinza claro
+            GrayLighter = "#D1D5DB", // Cinza mais claro
+            GrayDark = "#4B5563", // Cinza escuro
+            GrayDarker = "#374151", // Cinza mais escuro
+            OverlayDark = "rgba(33,33,33,0.4980392156862745)", // Overlay escuro
+            OverlayLight = "rgba(255,255,255,0.4980392156862745)" // Overlay claro
+        },
         PaletteDark = new PaletteDark()
         {
-            Primary = new MudBlazor.Utilities.MudColor("#4B95EC"),
-            Surface = new MudBlazor.Utilities.MudColor("#343434"),
-            Background = new MudBlazor.Utilities.MudColor("#191919"),
-            AppbarBackground = new MudBlazor.Utilities.MudColor("#191919"), 
-            DrawerBackground = new MudBlazor.Utilities.MudColor("#191919"), 
-            ActionDefault = Colors.Gray.Lighten3,
-            TextPrimary = Colors.Shades.White,
-            TextSecondary = Colors.Gray.Lighten3,
-            Error = new MudBlazor.Utilities.MudColor("#BD4949")
+            Primary = "#8B5CF6", // Roxo vibrante
+            Secondary = "#A78BFA", // Lilás claro
+            Surface = "#1E1B2E", // Roxo escuro para superfícies
+            Background = "#0F0D1A", // Roxo muito escuro, quase preto
+            AppbarBackground = "#1E1B2E", // Roxo escuro para app bar
+            DrawerBackground = "#1E1B2E", // Roxo escuro para drawer
+            ActionDefault = "#6B46C1", // Roxo médio para ações
+            TextPrimary = "#F8FAFC", // Branco suave
+            TextSecondary = "#C1C7D0", // Cinza claro
+            TextDisabled = "#64748B", // Cinza médio
+            Divider = "#2D2438", // Roxo escuro para divisores
+            Error = "#EF4444", // Vermelho para erros
+            Success = "#10B981", // Verde para sucesso
+            Warning = "#F59E0B", // Amarelo para avisos
+            Info = "#8B5CF6" // Roxo para informações
         }
     };
 
