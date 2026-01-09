@@ -1,0 +1,207 @@
+@inherits MudComponentBase
+@inject IImageService ImageService
+@inject CypherSheet.Client.Services.INotificationService NotificationService
+@inject IJSRuntime JSRuntime
+
+<div class="image-upload-container">
+    <MudPaper Class="@($"image-upload-dropzone {(isDragOver ? "drag-over" : "")}")" 
+              Style="@(PreviewImageData != null ? "min-height: 200px;" : "")"
+              @ondragover="@OnDragOver"
+              @ondragleave="@OnDragLeave"
+              @ondrop="@OnDrop"
+              @onclick="@OpenFileDialog">
+        
+        @if (IsUploading)
+        {
+            <div class="upload-loading">
+                <MudProgressCircular Size="Size.Large" Indeterminate="true" />
+                <MudText Typo="Typo.body1" Class="mt-2">Processando imagem...</MudText>
+            </div>
+        }
+        else if (PreviewImageData != null)
+        {
+            <div class="image-preview">
+                <img src="@GetPreviewDataUrl()" alt="Preview da imagem" class="preview-image" />
+                <div class="preview-overlay">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                   Color="Color.Primary" 
+                                   Size="Size.Large"
+                                   Class="preview-edit-btn" />
+                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                   Color="Color.Error" 
+                                   Size="Size.Large"
+                                   Class="preview-delete-btn"
+                                   OnClick="@ClearImage" />
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="upload-placeholder">
+                <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Size="Size.Large" Class="upload-icon" />
+                <MudText Typo="Typo.h6" Class="mt-2">Clique ou arraste uma imagem</MudText>
+                <MudText Typo="Typo.body2" Class="upload-hint">
+                    Formatos suportados: JPEG, PNG, WebP<br/>
+                    Tamanho máximo: 5MB
+                </MudText>
+            </div>
+        }
+    </MudPaper>
+
+    <InputFile @ref="fileInput" 
+               OnChange="@OnFileSelected" 
+               accept="image/jpeg,image/png,image/webp" 
+               style="display: none;" />
+
+    @if (ValidationErrors.Any())
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-2">
+            @foreach (var error in ValidationErrors)
+            {
+                <div>@error</div>
+            }
+        </MudAlert>
+    }
+</div>
+
+@code {
+    [Parameter] public byte[]? ImageData { get; set; }
+    [Parameter] public EventCallback<byte[]?> ImageDataChanged { get; set; }
+    [Parameter] public string? AcceptedFormats { get; set; } = "image/jpeg,image/png,image/webp";
+    [Parameter] public long MaxFileSize { get; set; } = 5 * 1024 * 1024; // 5MB
+    [Parameter] public int MaxWidth { get; set; } = 800;
+    [Parameter] public int MaxHeight { get; set; } = 800;
+    [Parameter] public double Quality { get; set; } = 0.85;
+
+    private InputFile? fileInput;
+    private bool isDragOver = false;
+    private bool IsUploading = false;
+    private byte[]? PreviewImageData;
+    private List<string> ValidationErrors = new();
+
+    protected override void OnParametersSet()
+    {
+        PreviewImageData = ImageData;
+    }
+
+    private string GetPreviewDataUrl()
+    {
+        if (PreviewImageData == null) return "";
+        
+        var base64 = Convert.ToBase64String(PreviewImageData);
+        return $"data:image/jpeg;base64,{base64}";
+    }
+
+    private void OnDragOver(DragEventArgs e)
+    {
+        isDragOver = true;
+    }
+
+    private void OnDragLeave(DragEventArgs e)
+    {
+        isDragOver = false;
+    }
+
+    private async Task OnDrop(DragEventArgs e)
+    {
+        isDragOver = false;
+        
+        if (e.DataTransfer?.Files?.Length > 0)
+        {
+            // Para drag & drop, precisamos usar JavaScript para obter o arquivo
+            // Por enquanto, vamos apenas indicar que o usuário deve usar o seletor de arquivo
+            ValidationErrors.Clear();
+            ValidationErrors.Add("Use o seletor de arquivo para fazer upload da imagem");
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenFileDialog()
+    {
+        if (IsUploading) return;
+        await JSRuntime.InvokeVoidAsync("eval", "document.querySelector('input[type=file]').click()");
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        if (e.File != null)
+        {
+            await ProcessFile(e.File);
+        }
+    }
+
+    private async Task ProcessFile(IBrowserFile file)
+    {
+        ValidationErrors.Clear();
+        IsUploading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Primeira validação: metadados do arquivo
+            var metadataValidation = ImageService.ValidateImage(file.Name, file.ContentType, file.Size);
+            
+            if (!metadataValidation.IsValid)
+            {
+                ValidationErrors = metadataValidation.Errors;
+                return;
+            }
+
+            // Ler dados do arquivo
+            var buffer = new byte[file.Size];
+            using var stream = file.OpenReadStream(MaxFileSize);
+            await stream.ReadAsync(buffer);
+
+            // Segunda validação: conteúdo do arquivo
+            var contentValidation = ImageService.ValidateImageContent(buffer, file.Name, file.ContentType);
+            
+            if (!contentValidation.IsValid)
+            {
+                ValidationErrors = contentValidation.Errors;
+                return;
+            }
+
+            // Processar imagem se todas as validações passaram
+            var processedImageData = await ImageService.ProcessImageAsync(
+                buffer, MaxWidth, MaxHeight, Quality);
+
+            PreviewImageData = processedImageData;
+            await ImageDataChanged.InvokeAsync(processedImageData);
+
+            NotificationService.ShowSuccess("Imagem carregada com sucesso!");
+        }
+        catch (InvalidDataException ex)
+        {
+            ValidationErrors.Add($"Arquivo de imagem corrompido: {ex.Message}");
+            NotificationService.ShowError("Arquivo de imagem inválido");
+        }
+        catch (NotSupportedException ex)
+        {
+            ValidationErrors.Add($"Formato de imagem não suportado: {ex.Message}");
+            NotificationService.ShowError("Formato não suportado");
+        }
+        catch (OutOfMemoryException)
+        {
+            ValidationErrors.Add("Imagem muito grande para processar. Tente uma imagem menor.");
+            NotificationService.ShowError("Imagem muito grande");
+        }
+        catch (Exception ex)
+        {
+            ValidationErrors.Add($"Erro inesperado ao processar imagem: {ex.Message}");
+            NotificationService.ShowError("Erro ao carregar imagem");
+        }
+        finally
+        {
+            IsUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ClearImage()
+    {
+        PreviewImageData = null;
+        await ImageDataChanged.InvokeAsync(null);
+        ValidationErrors.Clear();
+        StateHasChanged();
+    }
+}

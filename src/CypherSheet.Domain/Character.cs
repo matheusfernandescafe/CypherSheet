@@ -117,6 +117,11 @@ namespace CypherSheet.Domain
         
         public decimal Money { get; set; } = 0;
         
+        // Image properties
+        public string? ImageFileName { get; set; }
+        public string? ImageContentType { get; set; }
+        public DateTime? ImageUploadDate { get; set; }
+        
         public Recovery Recovery { get; set; } = new Recovery();
         
         public Character() 

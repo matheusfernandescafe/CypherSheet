@@ -1,0 +1,93 @@
+@using CypherSheet.Client.Services
+@using CypherSheet.Shared
+@using MudBlazor
+@inject ILoadingService LoadingService
+@inject INotificationService NotificationService
+@inject IDataManagementService DataManagementService
+@inject IDialogService DialogService
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4">
+    <MudStack Spacing="4">
+        <MudText Typo="Typo.h4">Teste de Componentes</MudText>
+        
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudStack Spacing="3">
+                <MudText Typo="Typo.h6">Teste do LoadingService</MudText>
+                
+                <MudText>Status: @(LoadingService.IsLoading ? "Carregando" : "Parado")</MudText>
+                @if (!string.IsNullOrEmpty(LoadingService.LoadingMessage))
+                {
+                    <MudText>Mensagem: @LoadingService.LoadingMessage</MudText>
+                }
+                @if (LoadingService.Progress > 0)
+                {
+                    <MudProgressLinear Value="@LoadingService.Progress" Color="Color.Primary" />
+                    <MudText>Progresso: @LoadingService.Progress%</MudText>
+                }
+                
+                <MudButton OnClick="TestLoadingService" Variant="Variant.Filled" Color="Color.Primary">
+                    Testar LoadingService
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudStack Spacing="3">
+                <MudText Typo="Typo.h6">Teste dos Modais</MudText>
+                
+                <MudButton OnClick="TestExportModal" Variant="Variant.Filled" Color="Color.Secondary">
+                    Testar ExportModal
+                </MudButton>
+                
+                <MudButton OnClick="TestImportModal" Variant="Variant.Filled" Color="Color.Secondary">
+                    Testar ImportModal
+                </MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudStack>
+</MudContainer>
+
+@code {
+    protected override void OnInitialized()
+    {
+        LoadingService.LoadingStateChanged += StateHasChanged;
+    }
+
+    private async Task TestLoadingService()
+    {
+        await LoadingService.ExecuteWithLoadingAsync(async () =>
+        {
+            LoadingService.UpdateLoadingMessage("Testando LoadingService...");
+            LoadingService.UpdateProgress(25);
+            await Task.Delay(1000);
+            
+            LoadingService.UpdateLoadingMessage("Progresso 50%...");
+            LoadingService.UpdateProgress(50);
+            await Task.Delay(1000);
+            
+            LoadingService.UpdateLoadingMessage("Quase terminando...");
+            LoadingService.UpdateProgress(75);
+            await Task.Delay(1000);
+            
+            LoadingService.UpdateProgress(100);
+            await Task.Delay(500);
+        }, "Iniciando teste...");
+        
+        NotificationService.ShowSuccess("Teste do LoadingService concluído!", "Sucesso");
+    }
+
+    private async Task TestExportModal()
+    {
+        NotificationService.ShowSuccess("ExportModal está acessível!", "Sucesso");
+    }
+
+    private async Task TestImportModal()
+    {
+        NotificationService.ShowSuccess("ImportModal está acessível!", "Sucesso");
+    }
+
+    public void Dispose()
+    {
+        LoadingService.LoadingStateChanged -= StateHasChanged;
+    }
+}

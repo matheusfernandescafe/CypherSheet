@@ -184,7 +184,7 @@
             FullWidth = true
         };
 
-        var dialog = await DialogService.ShowAsync<ExportModal>("Exportar Personagens", parameters, options);
+        var dialog = await DialogService.ShowAsync<CypherSheet.Client.Components.Dialogs.ExportModal>("Exportar Personagens", parameters, options);
         var result = await dialog.Result;
 
         if (result?.Canceled == false)
@@ -205,7 +205,7 @@
             FullWidth = true
         };
 
-        var dialog = await DialogService.ShowAsync<ImportModal>("Importar Personagens", parameters, options);
+        var dialog = await DialogService.ShowAsync<CypherSheet.Client.Components.Dialogs.ImportModal>("Importar Personagens", parameters, options);
         var result = await dialog.Result;
 
         if (result?.Canceled == false)
@@ -259,7 +259,7 @@
             FullWidth = true
         };
 
-        var dialog = await DialogService.ShowAsync<DeleteAllDataDialog>("Deletar Todas as Informações", parameters, options);
+        var dialog = await DialogService.ShowAsync<CypherSheet.Client.Components.Dialogs.DeleteAllDataDialog>("Deletar Todas as Informações", parameters, options);
         var result = await dialog.Result;
 
         if (result?.Canceled == false && result.Data is bool success && success)
