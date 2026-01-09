@@ -217,10 +217,20 @@ namespace CypherSheet.Domain
         public ItemLocation Location { get; set; } = ItemLocation.Mochila;
     }
 
+    public enum NoteType
+    {
+        Local,
+        Personagem,
+        Item,
+        Missao,
+        Outro
+    }
+
     public class Note
     {
         public string Title { get; set; } = "";
         public string Content { get; set; } = "";
+        public NoteType Type { get; set; } = NoteType.Outro;
     }
 
     public class Recovery

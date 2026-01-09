@@ -5,8 +5,17 @@
 
 <MudDialog>
     <DialogContent>
-        <MudTextField @bind-Value="title" Label="Título" AutoFocus="true" />
-        <MudTextField @bind-Value="content" Label="Conteúdo" Lines="5" />
+        <MudStack Spacing="3">
+            <MudTextField @bind-Value="title" Label="Título" AutoFocus="true" />
+            <MudSelect @bind-Value="selectedType" Label="Tipo">
+                <MudSelectItem Value="@NoteType.Local">Local</MudSelectItem>
+                <MudSelectItem Value="@NoteType.Personagem">Personagem</MudSelectItem>
+                <MudSelectItem Value="@NoteType.Item">Item</MudSelectItem>
+                <MudSelectItem Value="@NoteType.Missao">Missão</MudSelectItem>
+                <MudSelectItem Value="@NoteType.Outro">Outro</MudSelectItem>
+            </MudSelect>
+            <MudTextField @bind-Value="content" Label="Descrição" Lines="5" />
+        </MudStack>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancelar</MudButton>
@@ -15,12 +24,13 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
-    [Parameter] public Character Character { get; set; }
-    [Parameter] public Note NoteToEdit { get; set; }
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Character Character { get; set; } = null!;
+    [Parameter] public Note? NoteToEdit { get; set; }
 
-    private string title;
-    private string content;
+    private string title = "";
+    private string content = "";
+    private NoteType selectedType = NoteType.Outro;
 
     protected override void OnInitialized()
     {
@@ -28,6 +38,7 @@
         {
             title = NoteToEdit.Title;
             content = NoteToEdit.Content;
+            selectedType = NoteToEdit.Type;
         }
     }
 
@@ -43,10 +54,11 @@
         {
             NoteToEdit.Title = title;
             NoteToEdit.Content = content;
+            NoteToEdit.Type = selectedType;
         }
         else
         {
-            Character.Notes.Add(new Note { Title = title, Content = content });
+            Character.Notes.Add(new Note { Title = title, Content = content, Type = selectedType });
         }
         
         MudDialog.Close(DialogResult.Ok(true));

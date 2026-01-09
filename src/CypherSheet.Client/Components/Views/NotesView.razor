@@ -4,24 +4,48 @@
 @inject ICharacterRepository Repository
 
 <MudStack Spacing="2">
-    <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddNote">Adicionar Nota</MudButton>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="AddNote">Adicionar Nota</MudButton>
+        
+        <MudSelect @bind-Value="selectedTypeFilterString" Label="Filtrar por Tipo" Clearable="true" Style="min-width: 150px;">
+            <MudSelectItem Value="@string.Empty">Todos</MudSelectItem>
+            <MudSelectItem Value="@nameof(NoteType.Local)">Local</MudSelectItem>
+            <MudSelectItem Value="@nameof(NoteType.Personagem)">Personagem</MudSelectItem>
+            <MudSelectItem Value="@nameof(NoteType.Item)">Item</MudSelectItem>
+            <MudSelectItem Value="@nameof(NoteType.Missao)">Missão</MudSelectItem>
+            <MudSelectItem Value="@nameof(NoteType.Outro)">Outro</MudSelectItem>
+        </MudSelect>
+    </MudStack>
     
-    @if (!Character.Notes.Any())
+    @if (!FilteredNotes.Any())
     {
         <div style="position: relative; min-height: 300px;">
             <EmptyStateWatermark Icon="@Icons.Material.Filled.EditNote" />
+            <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">
+                @if (!Character.Notes.Any())
+                {
+                    <text>Nenhuma nota encontrada.</text>
+                }
+                else
+                {
+                    <text>Nenhuma nota encontrada para o filtro selecionado.</text>
+                }
+            </MudText>
         </div>
     }
     else
     {
-        @foreach (var note in Character.Notes.OrderBy(n => n.Title))
+        @foreach (var note in FilteredNotes.OrderBy(n => n.Title))
         {
             <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditNote(note))">
                 <div class="d-flex flex-column width-100">
                     <div class="d-flex align-center justify-space-between width-100 mb-2">
-                        <MudText Typo="Typo.h6">@note.Title</MudText>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                            <MudText Typo="Typo.h6">@note.Title</MudText>
+                            <MudChip T="string" Size="Size.Small" Color="GetTypeColor(note.Type)" Variant="Variant.Filled">@GetTypeDisplayName(note.Type)</MudChip>
+                        </MudStack>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => RemoveNote(note))" />
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => ConfirmRemoveNote(note))" />
                         </MudStack>
                     </div>
                     <MudText Typo="Typo.body2" Style="white-space: pre-wrap;" Class="text-muted">@note.Content</MudText>
@@ -33,6 +57,13 @@
 
 @code {
     [Parameter] public required Character Character { get; set; }
+
+    private string selectedTypeFilterString = string.Empty;
+
+    private IEnumerable<Note> FilteredNotes => 
+        string.IsNullOrEmpty(selectedTypeFilterString) 
+            ? Character.Notes
+            : Character.Notes.Where(n => n.Type.ToString() == selectedTypeFilterString);
 
     private async Task AddNote()
     {
@@ -60,14 +91,40 @@
         }
     }
 
+    private async Task ConfirmRemoveNote(Note note)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Confirmar Exclusão", 
+            $"Tem certeza que deseja excluir a nota '{note.Title}'? Esta ação não pode ser desfeita.",
+            yesText:"Excluir", cancelText:"Cancelar");
+
+        if (result == true)
+        {
+            await RemoveNote(note);
+        }
+    }
+
     private async Task RemoveNote(Note note)
     {
         Character.Notes.Remove(note);
         await SaveCharacter();
+        StateHasChanged();
     }
         
     private async Task SaveCharacter()
     {
         await Repository.SaveCharacterAsync(Character);
     }
+
+    private Color GetTypeColor(NoteType type) => Color.Default;
+
+    private string GetTypeDisplayName(NoteType type) => type switch
+    {
+        NoteType.Local => "Local",
+        NoteType.Personagem => "Personagem",
+        NoteType.Item => "Item",
+        NoteType.Missao => "Missão",
+        NoteType.Outro => "Outro",
+        _ => "Outro"
+    };
 }
