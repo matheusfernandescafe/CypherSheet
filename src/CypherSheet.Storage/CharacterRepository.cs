@@ -28,7 +28,7 @@ namespace CypherSheet.Storage
             }
         }
 
-        public async Task<Character> GetCharacterAsync(Guid id)
+        public async Task<Character?> GetCharacterAsync(Guid id)
         {
              try
             {
@@ -64,6 +64,116 @@ namespace CypherSheet.Storage
         public async Task DeleteCharacterAsync(Guid id)
         {
             await _dbManager.DeleteRecord(CypherSheetDb.StoreName, id);
+            
+            // Também remover a imagem associada, se existir
+            try
+            {
+                await DeleteCharacterImageAsync(id);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting character image for {id}: {ex.Message}");
+                // Não falhar a operação se não conseguir deletar a imagem
+            }
+        }
+
+        public async Task SaveCharacterImageAsync(Guid characterId, byte[] imageData, string fileName, string contentType)
+        {
+            try
+            {
+                var imageRecord = new CharacterImageData
+                {
+                    CharacterId = characterId,
+                    ImageData = imageData,
+                    FileName = fileName,
+                    ContentType = contentType,
+                    FileSize = imageData.Length,
+                    UploadDate = DateTime.UtcNow
+                };
+
+                var storeRecord = new StoreRecord<CharacterImageData>
+                {
+                    Storename = CypherSheetDb.ImageStoreName,
+                    Data = imageRecord
+                };
+
+                // Verificar se já existe uma imagem para este personagem
+                var existingImage = await GetCharacterImageDataAsync(characterId);
+                
+                if (existingImage != null)
+                {
+                    await _dbManager.UpdateRecord(storeRecord);
+                }
+                else
+                {
+                    await _dbManager.AddRecord(storeRecord);
+                }
+
+                // Atualizar os metadados no personagem
+                var character = await GetCharacterAsync(characterId);
+                if (character != null)
+                {
+                    character.ImageFileName = fileName;
+                    character.ImageContentType = contentType;
+                    character.ImageUploadDate = imageRecord.UploadDate;
+                    await SaveCharacterAsync(character);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saving character image for {characterId}: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task<byte[]?> GetCharacterImageAsync(Guid characterId)
+        {
+            try
+            {
+                var imageData = await GetCharacterImageDataAsync(characterId);
+                return imageData?.ImageData;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting character image for {characterId}: {ex.Message}");
+                return null;
+            }
+        }
+
+        public async Task DeleteCharacterImageAsync(Guid characterId)
+        {
+            try
+            {
+                await _dbManager.DeleteRecord(CypherSheetDb.ImageStoreName, characterId);
+                
+                // Limpar os metadados no personagem
+                var character = await GetCharacterAsync(characterId);
+                if (character != null)
+                {
+                    character.ImageFileName = null;
+                    character.ImageContentType = null;
+                    character.ImageUploadDate = null;
+                    await SaveCharacterAsync(character);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting character image for {characterId}: {ex.Message}");
+                throw;
+            }
+        }
+
+        private async Task<CharacterImageData?> GetCharacterImageDataAsync(Guid characterId)
+        {
+            try
+            {
+                return await _dbManager.GetRecordById<Guid, CharacterImageData>(CypherSheetDb.ImageStoreName, characterId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting character image data for {characterId}: {ex.Message}");
+                return null;
+            }
         }
     }
 }
