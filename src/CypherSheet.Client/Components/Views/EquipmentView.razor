@@ -27,20 +27,20 @@
             Adicionar Item
         </MudButton>
         
-        <MudSelect T="ItemType?" @bind-Value="selectedTypeFilter" 
+        <MudSelect @bind-Value="selectedTypeFilterString" 
                   Label="Filtrar por tipo" 
-                  AnchorOrigin="Origin.BottomCenter"
+                  Clearable="true"
                   Style="min-width: 150px;">
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)null)">Todos os tipos</MudSelectItem>
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Armadura)">Armadura</MudSelectItem>
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Arma)">Arma</MudSelectItem>
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Roupa)">Roupa</MudSelectItem>
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Ferramenta)">Ferramenta</MudSelectItem>
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Estranheza)">Estranheza</MudSelectItem>
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Material)">Material</MudSelectItem>
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Municao)">Munição</MudSelectItem>
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Plano)">Plano</MudSelectItem>
-            <MudSelectItem T="ItemType?" Value="@((ItemType?)ItemType.Outro)">Outro</MudSelectItem>
+            <MudSelectItem Value="@string.Empty">Todos os tipos</MudSelectItem>
+            <MudSelectItem Value="@nameof(ItemType.Armadura)">Armadura</MudSelectItem>
+            <MudSelectItem Value="@nameof(ItemType.Arma)">Arma</MudSelectItem>
+            <MudSelectItem Value="@nameof(ItemType.Roupa)">Roupa</MudSelectItem>
+            <MudSelectItem Value="@nameof(ItemType.Ferramenta)">Ferramenta</MudSelectItem>
+            <MudSelectItem Value="@nameof(ItemType.Estranheza)">Estranheza</MudSelectItem>
+            <MudSelectItem Value="@nameof(ItemType.Material)">Material</MudSelectItem>
+            <MudSelectItem Value="@nameof(ItemType.Municao)">Munição</MudSelectItem>
+            <MudSelectItem Value="@nameof(ItemType.Plano)">Plano</MudSelectItem>
+            <MudSelectItem Value="@nameof(ItemType.Outro)">Outro</MudSelectItem>
         </MudSelect>
     </MudStack>
 
@@ -49,7 +49,7 @@
         <div style="position: relative; min-height: 300px;">
             <EmptyStateWatermark Icon="@Icons.Material.Filled.Backpack" />
             <MudText Typo="Typo.body2" Class="pa-4" style="position: relative; z-index: 1;">
-                @(selectedTypeFilter.HasValue ? "Nenhum item encontrado para este filtro." : "Mochila vazia.")
+                @(!string.IsNullOrEmpty(selectedTypeFilterString) ? "Nenhum item encontrado para este filtro." : "Mochila vazia.")
             </MudText>
         </div>
     }
@@ -108,15 +108,15 @@
 @code {
     [Parameter] public required Character Character { get; set; }
 
-    private ItemType? selectedTypeFilter = null;
+    private string selectedTypeFilterString = string.Empty;
 
     private IEnumerable<Item> GetFilteredItems()
     {
         var items = Character.Equipment.AsEnumerable();
         
-        if (selectedTypeFilter.HasValue)
+        if (!string.IsNullOrEmpty(selectedTypeFilterString))
         {
-            items = items.Where(i => i.Type == selectedTypeFilter.Value);
+            items = items.Where(i => i.Type.ToString() == selectedTypeFilterString);
         }
         
         return items;
