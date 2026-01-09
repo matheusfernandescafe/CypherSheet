@@ -9,6 +9,7 @@
 @inject INotificationService NotificationService
 @inject IDataManagementService DataManagementService
 @inject ICacheService CacheService
+@inject IJSRuntime JSRuntime
 
 <MudContainer MaxWidth="MaxWidth.Medium" Class="pa-4">
     <MudStack Spacing="4">
@@ -247,6 +248,7 @@
                 
                 // Recarregar a aplicação após limpar o cache
                 await Task.Delay(1500);
+                await JSRuntime.InvokeVoidAsync("location.reload", true);
             }, "Iniciando limpeza de cache...");
         }
     }
@@ -281,6 +283,10 @@
                 NotificationService.ShowCriticalSuccess("Todos os dados foram deletados com sucesso!", "Dados Deletados");
 
                 LoadingService.UpdateProgress(100);
+                
+                // Recarregar a aplicação após deletar os dados
+                await Task.Delay(1500);
+                await JSRuntime.InvokeVoidAsync("location.reload", true);
             }, "Iniciando exclusão de dados...");
         }
     }

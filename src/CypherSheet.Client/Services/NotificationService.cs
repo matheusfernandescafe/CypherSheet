@@ -106,7 +106,7 @@ public class NotificationService : INotificationService
         if (string.IsNullOrEmpty(title))
             return message;
         
-        return $"<strong>{title}</strong><br/>{message}";
+        return $"{title}: {message}";
     }
 
     private static int GetDefaultDuration(Severity severity)
