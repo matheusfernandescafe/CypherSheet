@@ -15,27 +15,39 @@ else
         <MudCard Elevation="3">
             <MudCardContent>
                 <div class="character-header">
-                    <LazyCharacterImage CharacterId="@Character.Id"
-                                      CharacterName="@Character.Name" 
-                                      Size="ImageDisplaySize.Medium"
-                                      AvatarColor="Color.Primary" />
-                    <div class="character-info">
-                        <div class="d-flex justify-space-between align-center mb-2">
-                            <MudText Typo="Typo.h5">@Character.Name</MudText>
-                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="EditStats" />
-                        </div>
-                        <MudText Typo="Typo.body2" Class="character-description">é um @Character.Descriptor @Character.Type que @Character.Focus</MudText>
+                    <div class="character-image-section">
+                        <LazyCharacterImage CharacterId="@Character.Id"
+                                          CharacterName="@Character.Name" 
+                                          Size="ImageDisplaySize.Large"
+                                          AvatarColor="Color.Primary" />
                     </div>
-                </div>
-                <div class="character-actions">
-                    <MudText Typo="Typo.body2">Tier @Character.Tier</MudText>
-                    <MudButton Variant="Variant.Text" 
-                             Color="Color.Primary" 
-                             Size="Size.Small"
-                             OnClick="OpenXPDialog"
-                             Class="pa-1">
-                        XP: @Character.XP
-                    </MudButton>
+                    <div class="character-info">
+                        <div class="character-name" @onclick="OnNameClick" style="cursor: pointer;">
+                            <MudText Typo="Typo.h4">@Character.Name</MudText>
+                        </div>
+                        <div class="character-description" @onclick="OnDescriptionClick" style="cursor: pointer;">
+                            <div class="descriptor-type-line">
+                                <MudText Typo="Typo.body1">é um @Character.Descriptor @Character.Type</MudText>
+                            </div>
+                            <div class="focus-line">
+                                <MudText Typo="Typo.body1">que @Character.Focus</MudText>
+                            </div>
+                        </div>
+                        <div class="character-stats">
+                            <div class="tier-info" @onclick="OnTierClick" style="cursor: pointer;">
+                                <MudText Typo="Typo.body2">Tier @Character.Tier</MudText>
+                            </div>
+                            <div class="xp-info">
+                                <MudButton Variant="Variant.Text" 
+                                         Color="Color.Primary" 
+                                         Size="Size.Small"
+                                         OnClick="OnXPClick"
+                                         Class="pa-1">
+                                    XP: @Character.XP
+                                </MudButton>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </MudCardContent>
         </MudCard>
@@ -165,6 +177,27 @@ else
         {
             await SaveCharacter();
         }
+    }
+
+    // New event handlers for character header interactions
+    private async Task OnNameClick()
+    {
+        await EditStats();
+    }
+
+    private async Task OnDescriptionClick()
+    {
+        await EditStats();
+    }
+
+    private async Task OnTierClick()
+    {
+        await EditStats();
+    }
+
+    private async Task OnXPClick()
+    {
+        await OpenXPDialog();
     }
 
     private async Task SaveCharacter()
