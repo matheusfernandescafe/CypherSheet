@@ -1,5 +1,6 @@
 @using CypherSheet.Domain
 @using CypherSheet.Storage
+@using CypherSheet.Client.Components.Shared
 @inject ICharacterRepository Repository
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -13,12 +14,20 @@ else
     <MudStack Spacing="2">
         <MudCard Elevation="3">
             <MudCardContent>
-                <div class="d-flex justify-space-between align-center">
-                    <MudText Typo="Typo.h5">@Character.Name</MudText>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="EditStats" />
+                <div class="character-header">
+                    <LazyCharacterImage CharacterId="@Character.Id"
+                                      CharacterName="@Character.Name" 
+                                      Size="ImageDisplaySize.Medium"
+                                      AvatarColor="Color.Primary" />
+                    <div class="character-info">
+                        <div class="d-flex justify-space-between align-center mb-2">
+                            <MudText Typo="Typo.h5">@Character.Name</MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="EditStats" />
+                        </div>
+                        <MudText Typo="Typo.body2" Class="character-description">é um @Character.Descriptor @Character.Type que @Character.Focus</MudText>
+                    </div>
                 </div>
-                <MudText Typo="Typo.body2">é um @Character.Descriptor @Character.Type que @Character.Focus</MudText>
-                <div class="d-flex justify-space-between align-center">
+                <div class="character-actions">
                     <MudText Typo="Typo.body2">Tier @Character.Tier</MudText>
                     <MudButton Variant="Variant.Text" 
                              Color="Color.Primary" 
