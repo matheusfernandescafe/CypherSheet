@@ -1,9 +1,12 @@
 @using CypherSheet.Domain
 @using CypherSheet.Storage
 @using CypherSheet.Client.Components.Shared
+@using CypherSheet.Client.Components.Dialogs
+@using CypherSheet.Client.Services
 @inject ICharacterRepository Repository
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IImageCacheService ImageCacheService
 
 @if (Character == null)
 {
@@ -19,7 +22,8 @@ else
                         <LazyCharacterImage CharacterId="@Character.Id"
                                           CharacterName="@Character.Name" 
                                           Size="ImageDisplaySize.Large"
-                                          AvatarColor="Color.Primary" />
+                                          AvatarColor="Color.Primary"
+                                          OnImageClick="@OpenImageModal" />
                     </div>
                     <div class="character-info">
                         <div class="character-name" @onclick="OnNameClick" style="cursor: pointer;">
@@ -298,6 +302,39 @@ else
         {
             await SaveCharacter();
             StateHasChanged();
+        }
+    }
+
+    private async Task OpenImageModal()
+    {
+        // Verificar se o personagem tem imagem válida
+        if (Character?.Id == null) return;
+        
+        try
+        {
+            var imageData = await ImageCacheService.GetImageAsync(Character.Id);
+            if (imageData == null || imageData.Length == 0) return;
+            
+            var parameters = new DialogParameters 
+            { 
+                ["ImageData"] = imageData,
+                ["CharacterName"] = Character.Name
+            };
+            
+            var options = new DialogOptions 
+            { 
+                CloseOnEscapeKey = true,
+                MaxWidth = MaxWidth.Large,
+                FullWidth = true,
+                CloseButton = false
+            };
+            
+            await DialogService.ShowAsync<CharacterImageModal>("", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao abrir modal de imagem: {ex.Message}");
+            Snackbar.Add("Não foi possível carregar a imagem", Severity.Warning);
         }
     }
 }

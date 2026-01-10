@@ -5,6 +5,8 @@
 @using MudBlazor
 @inject ICharacterRepository CharacterRepository
 @inject CypherSheet.Client.Services.INotificationService NotificationService
+@inject CypherSheet.Client.Services.IImageCacheService ImageCacheService
+@inject CypherSheet.Client.Services.IImageNotificationService ImageNotificationService
 
 <MudDialog>
     <DialogContent>
@@ -111,6 +113,13 @@
         try
         {
             await CharacterRepository.DeleteCharacterImageAsync(Character.Id);
+            
+            // Limpar o cache para este personagem
+            ImageCacheService.RemoveFromCache(Character.Id);
+            
+            // Notificar outros componentes sobre a remoção
+            ImageNotificationService.NotifyImageRemoved(Character.Id);
+            
             CurrentImageData = null;
             NewImageData = null;
             ShowImageUpload = false;
@@ -148,6 +157,15 @@
                     NewImageData, 
                     fileName, 
                     "image/jpeg");
+                
+                // Atualizar o cache com a nova imagem
+                ImageCacheService.CacheImage(Character.Id, NewImageData);
+                
+                // Notificar outros componentes sobre a atualização
+                ImageNotificationService.NotifyImageUpdated(Character.Id);
+                
+                // Atualizar a imagem atual para refletir a mudança
+                CurrentImageData = NewImageData;
             }
 
             NotificationService.ShowSuccess("Personagem salvo com sucesso!");

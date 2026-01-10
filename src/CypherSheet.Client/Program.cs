@@ -30,6 +30,7 @@ builder.Services.AddScoped<CypherSheet.Client.Services.INotificationService, Not
 // Registrar serviços de imagem
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IImageCacheService, ImageCacheService>();
+builder.Services.AddScoped<IImageNotificationService, ImageNotificationService>();
 
 // Registrar serviços de gerenciamento de dados
 builder.Services.AddScoped<CypherSheet.Shared.IDataManagementService, DataManagementService>();

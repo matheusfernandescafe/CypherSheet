@@ -6,6 +6,20 @@
     background-color: var(--mud-palette-surface);
 }
 
+.character-image-display.clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.character-image-display.clickable:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.character-image-display.clickable:active {
+    transform: scale(0.98);
+}
+
 .character-image-display.size-thumbnail {
     width: 32px;
     height: 32px;
