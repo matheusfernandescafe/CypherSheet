@@ -14,7 +14,9 @@
                              AvatarColor="@AvatarColor"
                              ShowRetryButton="@ShowRetryButton"
                              OnImageLoadError="@OnImageLoadError"
-                             OnRetryClicked="@HandleRetryClicked" />
+                             OnRetryClicked="@HandleRetryClicked"
+                             OnImageClick="@OnImageClick"
+                             IsClickable="@IsImageClickable" />
     }
     else
     {
@@ -47,11 +49,14 @@
     [Parameter] public bool ShowRetryButton { get; set; } = true;
     [Parameter] public EventCallback OnImageLoadError { get; set; }
     [Parameter] public EventCallback OnRetryClicked { get; set; }
+    [Parameter] public EventCallback OnImageClick { get; set; }
 
     private ElementReference containerRef;
     private IJSObjectReference? intersectionObserver;
     private bool isVisible = false;
     private byte[]? imageData;
+
+    private bool IsImageClickable => OnImageClick.HasDelegate && imageData != null && imageData.Length > 0;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

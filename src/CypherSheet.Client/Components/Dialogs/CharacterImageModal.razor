@@ -1,0 +1,252 @@
+@using CypherSheet.Client.Components.Shared
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<MudDialog>
+    <DialogContent>
+        <div class="character-image-modal-content" 
+             role="dialog" 
+             aria-labelledby="modal-title" 
+             aria-describedby="modal-description"
+             aria-modal="true"
+             tabindex="-1">
+            
+            <!-- Título oculto para leitores de tela -->
+            <h2 id="modal-title" class="sr-only">
+                @GetModalTitle()
+            </h2>
+            
+            @if (ImageData != null && ImageData.Length > 0)
+            {
+                <img src="@GetImageDataUrl()" 
+                     alt="@GetDetailedAltText()" 
+                     class="expanded-character-image"
+                     id="modal-description"
+                     role="img"
+                     tabindex="0"
+                     @onload="@OnImageLoad"
+                     @onerror="@OnImageError"
+                     @onkeydown="@OnImageKeyDown" />
+            }
+            else
+            {
+                <div class="no-image-fallback" 
+                     id="modal-description"
+                     role="img"
+                     aria-label="@GetFallbackAriaLabel()"
+                     tabindex="0"
+                     @onkeydown="@OnFallbackKeyDown">
+                    @if (!string.IsNullOrEmpty(CharacterName))
+                    {
+                        <MudAvatar Size="Size.Large" 
+                                  Color="Color.Primary" 
+                                  Class="character-avatar-large"
+                                  aria-hidden="true">
+                            @GetInitials()
+                        </MudAvatar>
+                        <MudText Typo="Typo.h6" Class="mt-3" aria-hidden="true">@CharacterName</MudText>
+                        <MudText Typo="Typo.body2" Class="text-muted" aria-hidden="true">Nenhuma imagem disponível</MudText>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Person" 
+                                Size="Size.Large" 
+                                Class="default-character-icon-large"
+                                aria-hidden="true" />
+                        <MudText Typo="Typo.body2" Class="text-muted mt-3" aria-hidden="true">Nenhuma imagem disponível</MudText>
+                    }
+                </div>
+            }
+        </div>
+    </DialogContent>
+    <DialogActions>
+        <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                       OnClick="@CloseModal" 
+                       Class="close-button"
+                       aria-label="@GetCloseButtonAriaLabel()"
+                       title="@GetCloseButtonTitle()"
+                       Size="Size.Large"
+                       tabindex="0"
+                       @onkeydown="@OnCloseButtonKeyDown" />
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public byte[]? ImageData { get; set; }
+    [Parameter] public string? CharacterName { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private bool hasImageError = false;
+    private IJSObjectReference? escapeKeyListener;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Configurar listener para tecla ESC
+                var dotNetRef = DotNetObjectReference.Create(this);
+                escapeKeyListener = await JSRuntime.InvokeAsync<IJSObjectReference>("addEscapeKeyListener", dotNetRef);
+                
+                // Prevenir scroll da página
+                await JSRuntime.InvokeVoidAsync("preventBodyScroll", true);
+                
+                // Focar no botão de fechar para acessibilidade
+                await JSRuntime.InvokeVoidAsync("focusCloseButton", ".close-button");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao configurar acessibilidade do modal: {ex.Message}");
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            // Remover listener de ESC
+            if (escapeKeyListener != null)
+            {
+                await JSRuntime.InvokeVoidAsync("removeEscapeKeyListener", escapeKeyListener);
+                await escapeKeyListener.DisposeAsync();
+            }
+            
+            // Restaurar scroll da página
+            await JSRuntime.InvokeVoidAsync("preventBodyScroll", false);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao limpar recursos do modal: {ex.Message}");
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandleEscapeKey()
+    {
+        await CloseModal();
+    }
+
+    private string GetImageDataUrl()
+    {
+        if (ImageData == null || ImageData.Length == 0) return "";
+        
+        var base64 = Convert.ToBase64String(ImageData);
+        return $"data:image/jpeg;base64,{base64}";
+    }
+
+    private string GetAltText()
+    {
+        return !string.IsNullOrEmpty(CharacterName) 
+            ? $"Imagem expandida do personagem {CharacterName}" 
+            : "Imagem expandida do personagem";
+    }
+
+    private string GetDetailedAltText()
+    {
+        if (!string.IsNullOrEmpty(CharacterName))
+        {
+            return $"Imagem expandida do personagem {CharacterName}. Use as teclas Tab para navegar, Enter ou Espaço para interagir, e Escape para fechar o modal.";
+        }
+        return "Imagem expandida do personagem. Use as teclas Tab para navegar, Enter ou Espaço para interagir, e Escape para fechar o modal.";
+    }
+
+    private string GetModalTitle()
+    {
+        return !string.IsNullOrEmpty(CharacterName) 
+            ? $"Visualização da imagem do personagem {CharacterName}" 
+            : "Visualização da imagem do personagem";
+    }
+
+    private string GetFallbackAriaLabel()
+    {
+        if (!string.IsNullOrEmpty(CharacterName))
+        {
+            return $"Avatar do personagem {CharacterName}. Nenhuma imagem personalizada disponível. Use Tab para navegar e Escape para fechar.";
+        }
+        return "Avatar padrão do personagem. Nenhuma imagem personalizada disponível. Use Tab para navegar e Escape para fechar.";
+    }
+
+    private string GetCloseButtonAriaLabel()
+    {
+        return "Fechar modal de visualização da imagem. Pressione Enter ou Espaço para fechar, ou use a tecla Escape.";
+    }
+
+    private string GetCloseButtonTitle()
+    {
+        return "Fechar modal (Escape, Enter ou Espaço)";
+    }
+
+    private string GetInitials()
+    {
+        if (string.IsNullOrEmpty(CharacterName)) return "?";
+        
+        var words = CharacterName.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (words.Length == 0) return "?";
+        
+        if (words.Length == 1)
+        {
+            return words[0].Substring(0, Math.Min(2, words[0].Length)).ToUpper();
+        }
+        
+        return (words[0][0].ToString() + words[^1][0].ToString()).ToUpper();
+    }
+
+    private async Task CloseModal()
+    {
+        await OnClose.InvokeAsync();
+        MudDialog.Close();
+    }
+
+    private void OnImageLoad()
+    {
+        hasImageError = false;
+        StateHasChanged();
+    }
+
+    private void OnImageError()
+    {
+        hasImageError = true;
+        StateHasChanged();
+    }
+
+    // Navegação por teclado para a imagem
+    private async Task OnImageKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" || e.Key == " " || e.Key == "Escape")
+        {
+            if (e.Key == "Escape")
+            {
+                await CloseModal();
+            }
+            else if (e.Key == "Tab")
+            {
+                // Permitir navegação normal por Tab
+                return;
+            }
+        }
+    }
+
+    // Navegação por teclado para o fallback
+    private async Task OnFallbackKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" || e.Key == " " || e.Key == "Escape")
+        {
+            if (e.Key == "Escape")
+            {
+                await CloseModal();
+            }
+        }
+    }
+
+    // Navegação por teclado para o botão de fechar
+    private async Task OnCloseButtonKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" || e.Key == " ")
+        {
+            await CloseModal();
+        }
+    }
+}

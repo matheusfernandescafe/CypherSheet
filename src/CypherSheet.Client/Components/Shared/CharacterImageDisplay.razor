@@ -1,7 +1,9 @@
 @using CypherSheet.Client.Components.Shared
 @inherits MudComponentBase
 
-<div class="character-image-display @GetSizeClass()" style="@Style">
+<div class="character-image-display @GetSizeClass() @GetClickableClass()" 
+     style="@Style" 
+     @onclick="@HandleImageClick">
     @if (IsLoading)
     {
         <div class="image-loading">
@@ -56,6 +58,8 @@
     [Parameter] public bool ShowRetryButton { get; set; } = true;
     [Parameter] public EventCallback OnImageLoadError { get; set; }
     [Parameter] public EventCallback OnRetryClicked { get; set; }
+    [Parameter] public EventCallback OnImageClick { get; set; }
+    [Parameter] public bool IsClickable { get; set; } = false;
 
     private bool IsLoading = false;
     private bool HasError = false;
@@ -84,6 +88,11 @@
             ImageDisplaySize.ExtraLarge => "size-extra-large",
             _ => "size-medium"
         };
+    }
+
+    private string GetClickableClass()
+    {
+        return IsClickable && HasImage && !HasError ? "clickable" : "";
     }
 
     private MudBlazor.Size GetProgressSize()
@@ -216,6 +225,15 @@
         {
             IsLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task HandleImageClick()
+    {
+        // Só dispara o evento se a imagem for clicável e houver dados válidos
+        if (IsClickable && HasImage && !HasError)
+        {
+            await OnImageClick.InvokeAsync();
         }
     }
 }

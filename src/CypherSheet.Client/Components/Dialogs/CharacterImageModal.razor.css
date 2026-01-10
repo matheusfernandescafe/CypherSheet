@@ -1,0 +1,487 @@
+/* Container principal do modal */
+.character-image-modal-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    max-height: 80vh;
+    width: 100%;
+    padding: 1rem;
+    position: relative;
+}
+
+/* Classe para ocultar elementos visualmente mas mantê-los acessíveis para leitores de tela */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Imagem expandida */
+.expanded-character-image {
+    max-width: 90vw;
+    max-height: 80vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.3s ease-in-out;
+    cursor: default;
+}
+
+/* Estados de foco para a imagem */
+.expanded-character-image:focus {
+    outline: 3px solid var(--mud-palette-primary);
+    outline-offset: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 6px rgba(var(--mud-palette-primary-rgb), 0.2);
+}
+
+.expanded-character-image:focus-visible {
+    outline: 3px solid var(--mud-palette-primary);
+    outline-offset: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 6px rgba(var(--mud-palette-primary-rgb), 0.2);
+}
+
+/* Fallback quando não há imagem */
+.no-image-fallback {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem;
+    min-height: 200px;
+    cursor: default;
+}
+
+/* Estados de foco para o fallback */
+.no-image-fallback:focus {
+    outline: 3px solid var(--mud-palette-primary);
+    outline-offset: 4px;
+    border-radius: 8px;
+    background-color: rgba(var(--mud-palette-primary-rgb), 0.05);
+}
+
+.no-image-fallback:focus-visible {
+    outline: 3px solid var(--mud-palette-primary);
+    outline-offset: 4px;
+    border-radius: 8px;
+    background-color: rgba(var(--mud-palette-primary-rgb), 0.05);
+}
+
+.character-avatar-large {
+    width: 120px !important;
+    height: 120px !important;
+    font-size: 2.5rem !important;
+}
+
+.default-character-icon-large {
+    font-size: 4rem !important;
+    color: var(--mud-palette-text-secondary);
+    opacity: 0.6;
+}
+
+/* Botão de fechar */
+.close-button {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    color: white !important;
+    border-radius: 50%;
+    z-index: 1000;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: all 0.2s ease-in-out;
+}
+
+.close-button:hover {
+    background-color: rgba(0, 0, 0, 0.85) !important;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.close-button:active {
+    transform: scale(0.95);
+}
+
+/* Estados de foco para acessibilidade do botão de fechar */
+.close-button:focus {
+    outline: 3px solid #ffffff;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, 0.9) !important;
+}
+
+.close-button:focus-visible {
+    outline: 3px solid #ffffff;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Melhorar contraste do botão em modo claro */
+@media (prefers-color-scheme: light) {
+    .close-button:focus,
+    .close-button:focus-visible {
+        outline: 3px solid var(--mud-palette-primary);
+        box-shadow: 0 0 0 6px rgba(var(--mud-palette-primary-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* Responsividade para dispositivos móveis */
+@media (max-width: 768px) {
+    .character-image-modal-content {
+        padding: 0.5rem;
+        min-height: 150px;
+        max-height: 85vh;
+    }
+    
+    .expanded-character-image {
+        max-width: 95vw;
+        max-height: 75vh;
+        border-radius: 4px;
+    }
+    
+    .expanded-character-image:focus,
+    .expanded-character-image:focus-visible {
+        outline-offset: 2px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(var(--mud-palette-primary-rgb), 0.2);
+    }
+    
+    .no-image-fallback {
+        padding: 1.5rem;
+        min-height: 150px;
+    }
+    
+    .no-image-fallback:focus,
+    .no-image-fallback:focus-visible {
+        outline-offset: 2px;
+    }
+    
+    .character-avatar-large {
+        width: 80px !important;
+        height: 80px !important;
+        font-size: 1.8rem !important;
+    }
+    
+    .default-character-icon-large {
+        font-size: 3rem !important;
+    }
+    
+    .close-button {
+        bottom: 0.75rem;
+        right: 0.75rem;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        background-color: rgba(0, 0, 0, 0.8) !important;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .close-button:hover {
+        background-color: rgba(0, 0, 0, 0.9) !important;
+    }
+    
+    .close-button:focus,
+    .close-button:focus-visible {
+        outline-offset: 2px;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.3), 0 2px 12px rgba(0, 0, 0, 0.5);
+    }
+}
+
+/* Tablets */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .expanded-character-image {
+        max-width: 85vw;
+        max-height: 75vh;
+    }
+    
+    .character-image-modal-content {
+        max-height: 75vh;
+    }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+    .expanded-character-image {
+        max-width: 70vw;
+        max-height: 80vh;
+    }
+    
+    .character-image-modal-content {
+        max-height: 80vh;
+    }
+}
+
+/* Orientação landscape em dispositivos móveis */
+@media (max-width: 959px) and (orientation: landscape) {
+    .character-image-modal-content {
+        max-height: 90vh;
+        padding: 0.25rem;
+    }
+    
+    .expanded-character-image {
+        max-height: 85vh;
+        max-width: 90vw;
+    }
+    
+    .no-image-fallback {
+        padding: 1rem;
+        min-height: 120px;
+    }
+    
+    .character-avatar-large {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 1.4rem !important;
+    }
+    
+    .default-character-icon-large {
+        font-size: 2.5rem !important;
+    }
+    
+    .close-button {
+        bottom: 0.5rem;
+        right: 0.5rem;
+        min-width: 42px !important;
+        min-height: 42px !important;
+        background-color: rgba(0, 0, 0, 0.85) !important;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* Acessibilidade - redução de movimento */
+@media (prefers-reduced-motion: reduce) {
+    .expanded-character-image,
+    .close-button {
+        transition: none;
+    }
+    
+    .close-button:hover {
+        transform: none;
+    }
+    
+    .close-button:active {
+        transform: none;
+    }
+}
+
+/* Alto contraste */
+@media (prefers-contrast: high) {
+    .close-button {
+        background-color: rgba(0, 0, 0, 0.95) !important;
+        border: 2px solid white;
+    }
+    
+    .close-button:focus,
+    .close-button:focus-visible {
+        outline: 4px solid #ffffff;
+        outline-offset: 2px;
+        border: 3px solid white;
+    }
+    
+    .expanded-character-image {
+        border: 2px solid var(--mud-palette-divider);
+    }
+    
+    .expanded-character-image:focus,
+    .expanded-character-image:focus-visible {
+        outline: 4px solid var(--mud-palette-primary);
+        outline-offset: 2px;
+        border: 3px solid var(--mud-palette-primary);
+    }
+    
+    .no-image-fallback:focus,
+    .no-image-fallback:focus-visible {
+        outline: 4px solid var(--mud-palette-primary);
+        outline-offset: 2px;
+        border: 2px solid var(--mud-palette-primary);
+    }
+}
+
+/* Modo escuro otimizado */
+@media (prefers-color-scheme: dark) {
+    .close-button {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .close-button:hover {
+        background-color: rgba(255, 255, 255, 0.25) !important;
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .close-button:focus,
+    .close-button:focus-visible {
+        outline: 3px solid var(--mud-palette-primary);
+        box-shadow: 0 0 0 6px rgba(var(--mud-palette-primary-rgb), 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    
+    .expanded-character-image {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    }
+}
+
+/* Garantir visibilidade do botão em todas as situações */
+.close-button {
+    /* Força o botão a ficar sempre visível */
+    pointer-events: auto;
+    touch-action: manipulation;
+}
+
+/* Melhorar a área de toque em dispositivos móveis */
+@media (pointer: coarse) {
+    .close-button {
+        min-width: 48px !important;
+        min-height: 48px !important;
+        padding: 8px !important;
+    }
+    
+    .close-button::before {
+        content: '';
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        right: -8px;
+        bottom: -8px;
+        border-radius: 50%;
+        background: transparent;
+    }
+}
+
+/* Otimizações de performance */
+.expanded-character-image {
+    will-change: transform;
+    backface-visibility: hidden;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+.character-image-modal-content {
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* Garantir que o modal ocupe toda a área disponível */
+::deep .mud-dialog-content {
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+::deep .mud-dialog-actions {
+    padding: 0 !important;
+    position: relative;
+    background: transparent;
+    justify-content: flex-end;
+}
+
+/* Ajustes específicos para o MudDialog */
+::deep .mud-dialog {
+    max-width: 95vw !important;
+    max-height: 95vh !important;
+    margin: auto;
+    background: transparent;
+    box-shadow: none;
+}
+
+::deep .mud-dialog-container {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Telas muito pequenas (< 360px) */
+@media (max-width: 359px) {
+    .character-image-modal-content {
+        padding: 0.25rem;
+        min-height: 120px;
+        max-height: 90vh;
+    }
+    
+    .expanded-character-image {
+        max-width: 98vw;
+        max-height: 80vh;
+        border-radius: 2px;
+    }
+    
+    .no-image-fallback {
+        padding: 1rem;
+        min-height: 120px;
+    }
+    
+    .character-avatar-large {
+        width: 60px !important;
+        height: 60px !important;
+        font-size: 1.4rem !important;
+    }
+    
+    .default-character-icon-large {
+        font-size: 2.5rem !important;
+    }
+    
+    .close-button {
+        bottom: 0.5rem;
+        right: 0.5rem;
+        min-width: 40px !important;
+        min-height: 40px !important;
+        background-color: rgba(0, 0, 0, 0.85) !important;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+    }
+    
+    .close-button:hover {
+        background-color: rgba(0, 0, 0, 0.95) !important;
+    }
+}
+
+/* Otimizações para telas de alta densidade */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .expanded-character-image {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+    }
+}
+
+/* Suporte para navegação por teclado em dispositivos que não possuem mouse */
+@media (hover: none) {
+    .close-button:focus,
+    .close-button:focus-visible {
+        background-color: rgba(0, 0, 0, 0.9) !important;
+        transform: scale(1.05);
+    }
+    
+    .expanded-character-image:focus,
+    .expanded-character-image:focus-visible,
+    .no-image-fallback:focus,
+    .no-image-fallback:focus-visible {
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.1);
+    }
+}
+
+/* Melhorar visibilidade em telas com baixo contraste */
+@media (prefers-contrast: more) {
+    .close-button {
+        background-color: rgba(0, 0, 0, 0.9) !important;
+        border: 2px solid rgba(255, 255, 255, 0.8);
+    }
+    
+    .close-button:focus,
+    .close-button:focus-visible {
+        outline: 4px solid #ffffff;
+        border: 3px solid #ffffff;
+    }
+    
+    .expanded-character-image:focus,
+    .expanded-character-image:focus-visible {
+        outline: 4px solid var(--mud-palette-primary);
+        box-shadow: 0 0 0 8px rgba(var(--mud-palette-primary-rgb), 0.3);
+    }
+}
