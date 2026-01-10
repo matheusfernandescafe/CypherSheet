@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components
 @inject IJSRuntime JSRuntime
 @inject IImageCacheService ImageCacheService
+@inject IImageNotificationService ImageNotificationService
 @implements IAsyncDisposable
 
 <div @ref="containerRef" class="lazy-image-container">
@@ -57,6 +58,35 @@
         if (firstRender)
         {
             await SetupIntersectionObserver();
+            
+            // Inscrever-se nas notificações de imagem
+            ImageNotificationService.ImageUpdated += OnImageUpdated;
+            ImageNotificationService.ImageRemoved += OnImageRemoved;
+        }
+    }
+
+    private async void OnImageUpdated(Guid characterId)
+    {
+        if (characterId == CharacterId)
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadImage();
+                StateHasChanged();
+            });
+        }
+    }
+
+    private async void OnImageRemoved(Guid characterId)
+    {
+        if (characterId == CharacterId)
+        {
+            await InvokeAsync(() =>
+            {
+                imageData = null;
+                StateHasChanged();
+                return Task.CompletedTask;
+            });
         }
     }
 
@@ -88,6 +118,15 @@
             await LoadImage();
             StateHasChanged();
         }
+    }
+
+    [JSInvokable]
+    public async Task ForceReload()
+    {
+        // Limpar cache e recarregar imagem
+        ImageCacheService.RemoveFromCache(CharacterId);
+        await LoadImage();
+        StateHasChanged();
     }
 
     private async Task LoadImage()
@@ -196,6 +235,10 @@
 
     public async ValueTask DisposeAsync()
     {
+        // Desinscrever-se das notificações
+        ImageNotificationService.ImageUpdated -= OnImageUpdated;
+        ImageNotificationService.ImageRemoved -= OnImageRemoved;
+        
         if (intersectionObserver != null)
         {
             try
