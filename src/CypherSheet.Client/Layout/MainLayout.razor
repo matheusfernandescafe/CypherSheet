@@ -14,8 +14,8 @@
         <MudText Typo="Typo.h5" Class="ml-3" Style="color: white;">Cypher Sheet</MudText>
         <MudSpacer />
     </MudAppBar>
-    <MudMainContent Style="overflow: hidden; height: calc(100vh - var(--mud-appbar-height, 64px));">
-        <MudContainer MaxWidth="MaxWidth.Small" Style="height: 100%; padding-top: 0; padding-bottom: 0;">
+    <MudMainContent Style="height: calc(100vh - var(--mud-appbar-height, 64px)); overflow: hidden;">
+        <MudContainer MaxWidth="MaxWidth.Small" Style="height: 100%; padding-top: 0; padding-bottom: 0; overflow: hidden;">
             @Body
         </MudContainer>
     </MudMainContent>
