@@ -124,10 +124,14 @@ html, body, #app {
 
 /* Elementos internos do MudBlazor precisam propagar a altura */
 .mud-layout,
-.mud-main-content,
-.mud-container {
+.mud-main-content {
     height: 100% !important;
     overflow: hidden !important;
+}
+
+/* MudContainer não deve bloquear scroll — o scroll acontece no .content-area */
+.mud-container {
+    height: 100% !important;
 }
 
 /* Container da página com footer */
