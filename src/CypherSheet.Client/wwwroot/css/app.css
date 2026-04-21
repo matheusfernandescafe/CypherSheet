@@ -67,40 +67,6 @@ a, .btn-link {
         content: "An error has occurred."
     }
 
-.loading-progress {
-    position: absolute;
-    display: block;
-    width: 8rem;
-    height: 8rem;
-    inset: 20vh 0 auto 0;
-    margin: 0 auto 0 auto;
-}
-
-    .loading-progress circle {
-        fill: none;
-        stroke: #e0e0e0;
-        stroke-width: 0.6rem;
-        transform-origin: 50% 50%;
-        transform: rotate(-90deg);
-    }
-
-        .loading-progress circle:last-child {
-            stroke: #8B5CF6;
-            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
-            transition: stroke-dasharray 0.05s ease-in-out;
-        }
-
-.loading-progress-text {
-    position: absolute;
-    text-align: center;
-    font-weight: bold;
-    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
-}
-
-    .loading-progress-text:after {
-        content: var(--blazor-load-percentage-text, "Loading");
-    }
-
 code {
     color: #A78BFA;
 }
@@ -116,15 +82,20 @@ code {
 
 /* Layout principal com footer fixa */
 
-/* Garante que html/body ocupem toda a tela sem scroll próprio */
-html, body, #app {
-    height: 100%;
-    overflow: hidden;
+/* Garante que html/body ocupem toda a tela sem scroll próprio - APENAS após carregamento */
+body.blazor-loaded html, 
+body.blazor-loaded body, 
+body.blazor-loaded #app {
+    height: 100% !important;
+    overflow: hidden !important;
 }
 
-/* Elementos internos do MudBlazor precisam propagar a altura */
-.mud-layout,
-.mud-main-content {
+/* Durante loading, NÃO aplicar estilos que conflitem com loading-screen.css */
+/* A loading screen controla completamente o layout durante o carregamento */
+
+/* Elementos internos do MudBlazor precisam propagar a altura - APENAS após carregamento */
+body.blazor-loaded .mud-layout,
+body.blazor-loaded .mud-main-content {
     height: 100% !important;
     overflow: hidden !important;
 }

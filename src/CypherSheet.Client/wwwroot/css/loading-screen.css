@@ -1,0 +1,191 @@
+/* ===== VARIÁVEIS DE TEMA ===== */
+
+/* Fallback padrão: garante que as variáveis sempre tenham valor,
+   mesmo antes do script de tema executar */
+:root {
+    --loading-bg-color: #FFFFFF;
+    --loading-text-color: #1F2937;
+    --loading-progress-track: #E5E7EB;
+    --loading-progress-fill: #8B5CF6;
+    --loading-d20-color: #8B5CF6;
+    --loading-d20-text: #FFFFFF;
+    --loading-title-color: #8B5CF6;
+}
+
+/* Tema claro - especificidade maior para garantir aplicação */
+body.theme-light {
+    --loading-bg-color: #FFFFFF !important;
+    --loading-text-color: #1F2937 !important;
+    --loading-progress-track: #E5E7EB !important;
+    --loading-progress-fill: #8B5CF6 !important;
+    --loading-d20-color: #8B5CF6 !important;
+    --loading-d20-text: #FFFFFF !important;
+    --loading-title-color: #8B5CF6 !important;
+}
+
+/* Tema escuro - especificidade maior para garantir aplicação */
+body.theme-dark {
+    --loading-bg-color: #0F0D1A !important;
+    --loading-text-color: #F8FAFC !important;
+    --loading-progress-track: #2D2438 !important;
+    --loading-progress-fill: #8B5CF6 !important;
+    --loading-d20-color: #8B5CF6 !important;
+    --loading-d20-text: #FFFFFF !important;
+    --loading-title-color: #8B5CF6 !important;
+}
+
+/* ===== CORREÇÃO ESPECÍFICA DO BUG DO TEMA ESCURO ===== */
+
+/* Garantia adicional para o tema escuro - força aplicação da cor de fundo correta com especificidade máxima */
+html:not(.blazor-loaded) body.theme-dark:not(.blazor-loaded) #app {
+    background-color: #0F0D1A !important;
+}
+
+/* Fallback para casos onde a classe theme-dark pode não estar aplicada imediatamente */
+html:not(.blazor-loaded) body:not(.theme-light):not(.blazor-loaded) #app {
+    background-color: var(--loading-bg-color, #0F0D1A) !important;
+}
+
+/* Garantia extra para o body durante loading no tema escuro */
+html:not(.blazor-loaded) body.theme-dark:not(.blazor-loaded) {
+    background-color: #0F0D1A !important;
+}
+
+/* ===== LAYOUT PRINCIPAL ===== */
+
+/* Container principal da loading screen - especificidade máxima para evitar conflitos com app.css */
+html:not(.blazor-loaded) body:not(.blazor-loaded) #app {
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: var(--loading-bg-color) !important;
+    color: var(--loading-text-color) !important;
+    box-sizing: border-box !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Garantia adicional para html e body durante loading */
+html:not(.blazor-loaded),
+body:not(.blazor-loaded) {
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Quando a aplicação carrega, remove os estilos de loading com especificidade alta */
+html.blazor-loaded body.blazor-loaded #app {
+    width: auto !important;
+    height: auto !important;
+    overflow: auto !important;
+    display: block !important;
+    flex-direction: unset !important;
+    align-items: unset !important;
+    justify-content: unset !important;
+    background-color: unset !important;
+    color: unset !important;
+    position: unset !important;
+    top: unset !important;
+    left: unset !important;
+    z-index: unset !important;
+    margin: unset !important;
+    padding: unset !important;
+}
+
+/* ===== COMPONENTES ===== */
+
+/* Título */
+.loading-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--loading-title-color);
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+/* Wrapper do D20 */
+.loading-d20-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* D20 - aparência estática sem animação */
+.loading-d20 {
+    width: 200px;
+    height: 200px;
+    margin: 24px 0;
+    fill: var(--loading-d20-color);
+}
+
+/* Progress Bar Container */
+.loading-progress-wrapper {
+    width: 100%;
+    max-width: 320px;
+    padding: 0 16px;
+    margin-top: 40px;
+    box-sizing: border-box;
+}
+
+/* Progress Bar Track */
+.loading-progress-track {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background-color: var(--loading-progress-track);
+    position: relative;
+}
+
+/* Progress Bar Fill */
+.loading-progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(var(--blazor-load-percentage, 0) * 1%); /* Fallback se for número */
+    width: var(--blazor-load-percentage, 0%); /* Sobrescreve se já for porcentagem */
+    height: 8px;
+    background-color: var(--loading-progress-fill);
+    border-radius: 4px;
+    transition: width 0.05s ease-in-out;
+}
+
+/* Progress Bar Label */
+.loading-progress-label {
+    margin-top: 8px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--loading-progress-fill);
+}
+
+.loading-progress-label::after {
+    content: var(--blazor-load-percentage-text, "0%");
+}
+
+/* ===== RESPONSIVIDADE ===== */
+
+/* Mobile - D20 menor */
+@media (max-width: 479px) {
+    .loading-d20 {
+        width: 150px;
+        height: 150px;
+    }
+}
+
+/* ===== ACESSIBILIDADE ===== */
+
+/* Respeita preferência de movimento reduzido */
+@media (prefers-reduced-motion: reduce) {
+    .loading-progress-fill {
+        transition: none;
+    }
+}
