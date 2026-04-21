@@ -376,13 +376,12 @@ else
         };
         
         var dialog = await DialogService.ShowAsync<XPDialog>("Gerenciar XP", parameters, options);
-        var result = await dialog.Result;
+        await dialog.Result;
 
-        if (result != null && !result.Canceled)
-        {
-            await SaveCharacter();
-            StateHasChanged();
-        }
+        // Always save after XP dialog closes, since changes are applied directly
+        // to the Character object (by reference) as the user interacts with the dialog.
+        await SaveCharacter();
+        StateHasChanged();
     }
 
     private async Task OpenImageModal()
