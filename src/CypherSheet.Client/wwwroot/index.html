@@ -26,6 +26,22 @@
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
     <!-- script type="importmap"></script -->
+    <!-- GitHub Pages SPA: restore the path encoded by 404.html -->
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var path = params.get('p');
+            if (path) {
+                var query = params.get('q') ? '?' + params.get('q') : '';
+                var hash = params.get('h') ? '#' + params.get('h') : '';
+                // Replace the current history entry with the real URL
+                window.history.replaceState(
+                    null, null,
+                    window.location.pathname + path + query + hash
+                );
+            }
+        })();
+    </script>
 </head>
 
 <body>
