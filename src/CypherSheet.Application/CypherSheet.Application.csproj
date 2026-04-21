@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CypherSheet.Domain\CypherSheet.Domain.csproj" />
+    <ProjectReference Include="..\CypherSheet.Shared\CypherSheet.Shared.csproj" />
+    <ProjectReference Include="..\CypherSheet.Storage\CypherSheet.Storage.csproj" />
+  </ItemGroup>
+</Project>

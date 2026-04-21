@@ -6,6 +6,7 @@ using CypherSheet.Shared;
 using MudBlazor.Services;
 using TG.Blazor.IndexedDB;
 using CypherSheet.Storage;
+using CypherSheet.Application;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -21,6 +22,7 @@ builder.Services.AddIndexedDB(CypherSheetDb.Configure);
 
 // Registrar serviços de domínio e persistência
 builder.Services.AddScoped<ICharacterRepository, CharacterRepository>();
+builder.Services.AddApplicationServices();
 builder.Services.AddScoped<CharacterStateService>();
 
 // Registrar serviços de UI e tema

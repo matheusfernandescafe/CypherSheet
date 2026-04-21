@@ -1,27 +1,25 @@
+using CypherSheet.Application;
 using CypherSheet.Domain;
-using CypherSheet.Storage;
-using System;
-using System.Threading.Tasks;
 
 namespace CypherSheet.Client.Services
 {
     public class CharacterStateService
     {
-        private readonly ICharacterRepository _repository;
+        private readonly ICharacterAppService _appService;
         private Character? _character;
 
         public event Action? OnChange;
 
-        public CharacterStateService(ICharacterRepository repository)
+        public CharacterStateService(ICharacterAppService appService)
         {
-            _repository = repository;
+            _appService = appService;
         }
 
         public Character? Character => _character;
 
         public async Task LoadCharacterAsync(Guid id)
         {
-            _character = await _repository.GetCharacterAsync(id);
+            _character = await _appService.GetCharacterAsync(id);
             NotifyStateChanged();
         }
 
@@ -35,7 +33,7 @@ namespace CypherSheet.Client.Services
         {
             if (_character != null)
             {
-                await _repository.SaveCharacterAsync(_character);
+                await _appService.SaveCharacterAsync(_character);
                 NotifyStateChanged();
             }
         }

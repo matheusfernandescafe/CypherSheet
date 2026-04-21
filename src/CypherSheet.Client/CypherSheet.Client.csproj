@@ -28,6 +28,7 @@
     <ProjectReference Include="..\CypherSheet.Storage\CypherSheet.Storage.csproj" />
     <ProjectReference Include="..\CypherSheet.Domain\CypherSheet.Domain.csproj" />
     <ProjectReference Include="..\CypherSheet.Shared\CypherSheet.Shared.csproj" />
+    <ProjectReference Include="..\CypherSheet.Application\CypherSheet.Application.csproj" />
   </ItemGroup>
 
 </Project>
