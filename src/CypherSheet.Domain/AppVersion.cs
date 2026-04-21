@@ -4,7 +4,7 @@ namespace CypherSheet.Domain;
 
 public static class AppVersion
 {
-    public const string Version = "1.5.4";
+    public const string Version = "1.6.0;
     public static string BuildDate => GetBuildDate();
     public static string FullVersion => $"v{Version} ({BuildDate})";
     private static string GetBuildDate()
