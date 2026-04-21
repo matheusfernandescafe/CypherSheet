@@ -1,12 +1,13 @@
-﻿@page "/character/{Id:guid}"
+@page "/character/{Id:guid}"
 @using CypherSheet.Domain
 @using CypherSheet.Storage
 @using CypherSheet.Client.Components.Views
-@inject ICharacterRepository Repository
+@inject CypherSheet.Client.Services.CharacterStateService StateService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@implements IDisposable
 
-<PageTitle>@(character?.Name ?? "Carregando...") - Cypher Sheet</PageTitle>
+<PageTitle>@(StateService.Character?.Name ?? "Carregando...") - Cypher Sheet</PageTitle>
 
 <div class="app-container">
     <div class="content-area">
@@ -16,7 +17,7 @@
                 <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
             </MudContainer>
         }
-        else if (character == null)
+        else if (StateService.Character == null)
         {
             @switch (currentTab)
             {
@@ -39,25 +40,25 @@
             @switch (currentTab)
             {
                 case TabType.Stats:
-                    <StatsView Character="character" OnSave="SaveCharacter" />
+                    <StatsView />
                     break;
                 case TabType.Combat:
-                    <CombatView Character="character" OnSave="SaveCharacter" />
+                    <CombatView />
                     break;
                 case TabType.Skills:
-                    <SkillsView Character="character" />
+                    <SkillsView />
                     break;
                 case TabType.Abilities:
-                    <AbilitiesView Character="character" />
+                    <AbilitiesView />
                     break;
                 case TabType.Cyphers:
-                    <CyphersView Character="character" />
+                    <CyphersView />
                     break;
                 case TabType.Equipment:
-                    <EquipmentView Character="character" />
+                    <EquipmentView />
                     break;
                 case TabType.Notes:
-                    <NotesView Character="character" />
+                    <NotesView />
                     break;
                 case TabType.Characters:
                     <div class="d-flex justify-center align-center pa-4">
@@ -71,24 +72,24 @@
         }
     </div>
 
-    <AppFooter Character="@character" CurrentTab="currentTab" CurrentTabChanged="NavigateToTab" />
+    <AppFooter CurrentTab="currentTab" CurrentTabChanged="NavigateToTab" />
 </div>
 
 @code {
     [Parameter] public Guid Id { get; set; }
 
-    private Character? character;
     private bool isLoading = true;
 
     private TabType currentTab = TabType.Stats;
 
     protected override async Task OnInitializedAsync()
     {
+        StateService.OnChange += StateHasChanged;
         isLoading = true;
-        character = await Repository.GetCharacterAsync(Id);
+        await StateService.LoadCharacterAsync(Id);
 
         // Se não há personagem, definir Settings como aba padrão
-        if (character == null)
+        if (StateService.Character == null)
         {
             currentTab = TabType.Settings;
         }
@@ -96,16 +97,13 @@
         isLoading = false;
     }
 
+    public void Dispose()
+    {
+        StateService.OnChange -= StateHasChanged;
+    }
+
     private void NavigateToTab(TabType tab)
     {
         currentTab = tab;
-    }
-
-    private async Task SaveCharacter()
-    {
-        if (character != null)
-        {
-            await Repository.SaveCharacterAsync(character);
-        }
     }
 }

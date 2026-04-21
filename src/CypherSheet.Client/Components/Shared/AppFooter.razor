@@ -1,3 +1,5 @@
+@inject CypherSheet.Client.Services.CharacterStateService StateService
+
 <div class="custom-footer" style="height: @(Height)px">
     <div class="footer-item @(CurrentTab == TabType.Stats ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
          @onclick="@(() => OnTabClick(TabType.Stats))">
@@ -55,12 +57,11 @@
 </div>
 
 @code {
-    [Parameter] public Character? Character { get; set; }
     [Parameter] public TabType CurrentTab { get; set; }
     [Parameter] public EventCallback<TabType> CurrentTabChanged { get; set; }
     [Parameter] public int Height { get; set; } = 80;
 
-    private bool IsCharacterLoaded => Character != null;
+    private bool IsCharacterLoaded => StateService.Character != null;
 
     private async Task OnTabClick(TabType tab)
     {

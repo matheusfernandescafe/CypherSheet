@@ -21,6 +21,7 @@ builder.Services.AddIndexedDB(CypherSheetDb.Configure);
 
 // Registrar serviços de domínio e persistência
 builder.Services.AddScoped<ICharacterRepository, CharacterRepository>();
+builder.Services.AddScoped<CharacterStateService>();
 
 // Registrar serviços de UI e tema
 builder.Services.AddScoped<IThemeService, ThemeService>();

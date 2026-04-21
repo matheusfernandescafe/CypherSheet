@@ -1,8 +1,9 @@
 @using CypherSheet.Domain
 @using CypherSheet.Client.Components.Views
+@inject CypherSheet.Client.Services.CharacterStateService StateService
 @inject ISnackbar Snackbar
 
-@if (Character == null)
+@if (StateService.Character == null)
 {
     <MudContainer Class="d-flex justify-center align-center pa-4">
         <MudAlert Severity="Severity.Info">
@@ -22,10 +23,9 @@ else
         </MudCardContent>
     </MudCard>
 
-    <RollCalculatorComponent Character="Character" OnSave="OnSave" />
+    <RollCalculatorComponent />
 }
 
 @code {
-    [Parameter] public Character Character { get; set; } = null!;
-    [Parameter] public EventCallback OnSave { get; set; }
+    private Character Character => StateService.Character!;
 }

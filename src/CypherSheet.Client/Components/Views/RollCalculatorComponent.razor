@@ -1,4 +1,5 @@
 @using CypherSheet.Domain
+@inject CypherSheet.Client.Services.CharacterStateService StateService
 @inject ISnackbar Snackbar
 
 <MudContainer Style="max-width: 600px;">
@@ -187,8 +188,8 @@
 </MudContainer>
 
 @code {
-    [Parameter] public Character Character { get; set; } = null!;
-    [Parameter] public EventCallback OnSave { get; set; }
+    private Character Character => StateService.Character!;
+    [Parameter] public EventCallback OnApplied { get; set; }
 
     private RollCalculation RollCalc = new();
 
@@ -228,7 +229,11 @@
         if (intellectCost > 0) Character.Intellect.Spend(intellectCost);
 
         Snackbar.Add($"Custos aplicados! Total: {GetTotalCost()} pontos", Severity.Success);
-        await OnSave.InvokeAsync();
+        await StateService.SaveCharacterAsync();
+        if (OnApplied.HasDelegate)
+        {
+            await OnApplied.InvokeAsync();
+        }
     }
 
     private int GetMaxEffortForPool()

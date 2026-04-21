@@ -4,11 +4,12 @@
 @using CypherSheet.Client.Components.Dialogs
 @using CypherSheet.Client.Services
 @inject ICharacterRepository Repository
+@inject CypherSheet.Client.Services.CharacterStateService StateService
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject IImageCacheService ImageCacheService
 
-@if (Character == null)
+@if (StateService.Character == null)
 {
     <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
 }
@@ -56,9 +57,9 @@ else
             </MudCardContent>
         </MudCard>
 
-        <PoolComponent Pool="@Character.Might" OnChange="SaveCharacter" />
-        <PoolComponent Pool="@Character.Speed" OnChange="SaveCharacter" />
-        <PoolComponent Pool="@Character.Intellect" OnChange="SaveCharacter" />
+        <PoolComponent Pool="@Character.Might" />
+        <PoolComponent Pool="@Character.Speed" />
+        <PoolComponent Pool="@Character.Intellect" />
         
         <MudCard Elevation="3" Class="pa-2">
             <MudCardContent>
@@ -197,11 +198,7 @@ else
 }
 
 @code {
-    [Parameter] public Character Character { get; set; } = null!;
-    [Parameter] public EventCallback<Character> CharacterChanged { get; set; }
-    [Parameter] public EventCallback OnSave { get; set; }
-
-
+    private Character Character => StateService.Character!;
 
     private async Task EditStats()
     {
@@ -240,7 +237,7 @@ else
 
     private async Task SaveCharacter()
     {
-        await OnSave.InvokeAsync();
+        await StateService.SaveCharacterAsync();
     }
     // All recovery steps in sequential order, used by the stepper UI
     private static readonly RecoveryStep[] _allSteps = new[]
