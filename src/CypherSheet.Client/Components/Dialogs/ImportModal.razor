@@ -20,14 +20,15 @@
 
                     <MudCard Elevation="2">
                         <MudCardContent>
-                            <MudTextField Value="@importData"
-                                        ValueChanged="@((string value) => OnImportDataChanged(value))"
+                            <MudTextField @bind-Value="importData"
+                                        @bind-Value:after="ValidateImportData"
                                         Label="Dados para Importação"
                                         Placeholder="Cole aqui os dados JSON exportados..."
                                         Variant="Variant.Outlined"
                                         Lines="12"
                                         FullWidth="true"
                                         Class="import-data-field"
+                                        Immediate="true"
                                         Error="@(!string.IsNullOrEmpty(validationMessage))"
                                         ErrorText="@validationMessage" />
                         </MudCardContent>
@@ -188,12 +189,6 @@
     private ExportFormat? parsedData = null;
     private ImportResult? importResult = null;
     private bool hasVersionMismatch = false;
-
-    private async Task OnImportDataChanged(string value)
-    {
-        importData = value ?? string.Empty;
-        await ValidateImportData();
-    }
 
     private async Task ValidateImportData()
     {
