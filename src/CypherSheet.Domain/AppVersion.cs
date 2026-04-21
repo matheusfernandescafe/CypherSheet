@@ -11,23 +11,22 @@ public static class AppVersion
     {
         try
         {
-            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            
-            // Try to get build date from assembly attributes first
-            var buildDateAttribute = assembly.GetCustomAttribute<System.Reflection.AssemblyMetadataAttribute>();
-            if (buildDateAttribute?.Key == "BuildDate")
+            var assembly = typeof(AppVersion).Assembly;
+
+            var buildDateAttribute = assembly
+                .GetCustomAttributes<System.Reflection.AssemblyMetadataAttribute>()
+                .FirstOrDefault(a => a.Key == "BuildDate");
+
+            if (buildDateAttribute?.Value is { Length: > 0 } value)
             {
-                return buildDateAttribute.Value ?? DateTime.Now.ToString("yyyy-MM-dd");
+                return value;
             }
 
-            // Fallback: Use current date for Blazor WebAssembly
-            // In production, this should be replaced by build-time injection
-            return DateTime.Now.ToString("yyyy-MM-dd");
+            return "dev";
         }
         catch
         {
-            // Ultimate fallback
-            return DateTime.Now.ToString("yyyy-MM-dd");
+            return "dev";
         }
     }
 

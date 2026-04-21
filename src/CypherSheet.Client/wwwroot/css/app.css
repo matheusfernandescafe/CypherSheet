@@ -131,7 +131,7 @@ html, body, #app {
 
 /* MudContainer não deve bloquear scroll — o scroll acontece no .content-area */
 .mud-container {
-    height: 100% !important;
+    min-height: 100%;
 }
 
 /* Container da página com footer */
