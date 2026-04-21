@@ -1,0 +1,56 @@
+@using CypherSheet.Domain
+@using CypherSheet.Client.Components.Views
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+@if (Character == null)
+{
+    <MudContainer Class="d-flex justify-center align-center pa-4">
+        <MudAlert Severity="Severity.Info">
+            Selecione um personagem para acessar funcionalidades de combate.
+        </MudAlert>
+    </MudContainer>
+}
+else
+{
+    <MudStack Spacing="2">
+        <!-- Roll Button -->
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.Casino"
+                   FullWidth="true"
+                   Size="Size.Large"
+                   OnClick="OpenRollDialog"
+                   Class="mb-3">
+            Fazer Rolagem
+        </MudButton>
+        
+        <!-- Future combat features will be added here -->
+    </MudStack>
+}
+
+@code {
+    [Parameter] public Character Character { get; set; } = null!;
+    [Parameter] public EventCallback OnSave { get; set; }
+    
+    private async Task OpenRollDialog()
+    {
+        var parameters = new DialogParameters { ["Character"] = Character };
+        var options = new DialogOptions 
+        { 
+            CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            CloseButton = true
+        };
+        
+        var dialog = await DialogService.ShowAsync<RollDialog>("Calculadora de Rolagem", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await OnSave.InvokeAsync();
+            StateHasChanged();
+        }
+    }
+}

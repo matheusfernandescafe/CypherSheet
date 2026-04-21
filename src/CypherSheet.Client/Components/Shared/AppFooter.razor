@@ -5,6 +5,12 @@
         <span class="footer-item-label">Stats</span>
     </div>
 
+    <div class="footer-item @(CurrentTab == TabType.Combat ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
+         @onclick="@(() => OnTabClick(TabType.Combat))">
+        <MudIcon Icon="@Icons.Material.Filled.Gavel" />
+        <span class="footer-item-label">Combat</span>
+    </div>
+
     <div class="footer-item @(CurrentTab == TabType.Skills ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
          @onclick="@(() => OnTabClick(TabType.Skills))">
         <MudIcon Icon="@Icons.Material.Filled.SportsMma" />
