@@ -127,21 +127,43 @@ else
 
         <MudCard Elevation="3" Class="pa-3">
             <MudCardContent>
-                <MudText Typo="Typo.h6" Class="mb-3">Marcador de Dano</MudText>
+                <div class="d-flex justify-space-between align-center mb-3">
+                    <MudText Typo="Typo.h6">Marcador de Dano</MudText>
+                    <MudChip T="string" Color="@GetDamageTrackColor()" Size="Size.Small" Variant="Variant.Filled">
+                        @GetDamageTrackLabel()
+                    </MudChip>
+                </div>
+
                 <MudGrid Spacing="3">
                     <MudItem xs="12" sm="6">
-                        <MudCheckBox Value="@Character.Impaired" Label="Enfraquecido" Dense="true" Color="Color.Warning" T="bool" ValueChanged="@((v) => UpdateDamageTrack(v, true))" />
+                        <MudCheckBox Value="@Character.Impaired" Label="Enfraquecido" Dense="true" Color="Color.Warning" T="bool"
+                                     Disabled="@IsImpairedFromPools()" ReadOnly="@IsImpairedFromPools()"
+                                     ValueChanged="@((v) => UpdateDamageTrack(v, true))" />
+                        @if (IsImpairedFromPools() && !Character.ImpairedOverride)
+                        {
+                            <MudText Typo="Typo.caption" Class="ml-8" Color="Color.Warning">
+                                <em>(automático — pool a zero)</em>
+                            </MudText>
+                        }
                         <MudText Typo="Typo.caption" Class="ml-8">
-                            +1 Effort per level<br/>
-                            Ignore minor and major effect results on rolls<br/>
-                            Combat roll of 17-20 deals only +1 damage
+                            +1 de Esforço por nível aplicado<br/>
+                            Ignora efeitos menores e maiores nas rolagens<br/>
+                            Rolagem de combate 17-20 causa apenas +1 de dano
                         </MudText>
                     </MudItem>
                     <MudItem xs="12" sm="6">
-                        <MudCheckBox Value="@Character.Debilitated" Label="Debilitado" Dense="true" Color="Color.Error" T="bool" ValueChanged="@((v) => UpdateDamageTrack(v, false))" />
+                        <MudCheckBox Value="@Character.Debilitated" Label="Debilitado" Dense="true" Color="Color.Error" T="bool"
+                                     Disabled="@IsDebilitatedFromPools()" ReadOnly="@IsDebilitatedFromPools()"
+                                     ValueChanged="@((v) => UpdateDamageTrack(v, false))" />
+                        @if (IsDebilitatedFromPools() && !Character.DebilitatedOverride)
+                        {
+                            <MudText Typo="Typo.caption" Class="ml-8" Color="Color.Error">
+                                <em>(automático — 2+ pools a zero)</em>
+                            </MudText>
+                        }
                         <MudText Typo="Typo.caption" Class="ml-8">
-                            Can move only an immediate distance<br/>
-                            Cannot move if Speed Pool is 0
+                            Pode mover-se apenas uma distância imediata<br/>
+                            Não pode se mover se o Pool de Speed for 0
                         </MudText>
                     </MudItem>
                 </MudGrid>
@@ -241,15 +263,53 @@ else
     
     private async Task UpdateDamageTrack(bool value, bool isImpaired)
     {
+        // Checkboxes now toggle the manual override flags, not the computed properties.
         if (isImpaired)
         {
-            Character.Impaired = value;
+            Character.ImpairedOverride = value;
         }
         else
         {
-            Character.Debilitated = value;
+            Character.DebilitatedOverride = value;
         }
         await SaveCharacter();
+    }
+
+    /// <summary>
+    /// True when the pool-based damage track already makes the character Impaired
+    /// (i.e. at least 1 pool is at zero). In this case the checkbox is disabled
+    /// because the condition is automatic.
+    /// </summary>
+    private bool IsImpairedFromPools() => Character.GetDamageTrack() >= DamageTrack.Impaired;
+
+    /// <summary>
+    /// True when the pool-based damage track already makes the character Debilitated
+    /// (i.e. at least 2 pools are at zero).
+    /// </summary>
+    private bool IsDebilitatedFromPools() => Character.GetDamageTrack() >= DamageTrack.Debilitated;
+
+    private Color GetDamageTrackColor()
+    {
+        return Character.GetEffectiveDamageTrack() switch
+        {
+            DamageTrack.Hale => Color.Success,
+            DamageTrack.Impaired => Color.Warning,
+            DamageTrack.Debilitated => Color.Error,
+            DamageTrack.Dead => Color.Dark,
+            _ => Color.Default
+        };
+    }
+
+    private string GetDamageTrackLabel()
+    {
+        return Character.GetEffectiveDamageTrack() switch
+        {
+            DamageTrack.Hale => "Saudável",
+            DamageTrack.Impaired => "Enfraquecido",
+            DamageTrack.Debilitated => "Debilitado",
+            DamageTrack.Dead => "Morto",
+            _ => "—"
+        };
     }
     
     private async Task OpenXPDialog()

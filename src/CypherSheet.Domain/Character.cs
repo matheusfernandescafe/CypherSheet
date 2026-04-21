@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Serialization;
 
 namespace CypherSheet.Domain
 {
@@ -97,8 +98,32 @@ namespace CypherSheet.Domain
         public int Effort { get; set; } = 1;
         public int Armor { get; set; } = 0;
 
-        public bool Impaired { get; set; } = false;
-        public bool Debilitated { get; set; } = false;
+        // Manual overrides — for GM/monster effects that impose a condition
+        // without zeroing pools (e.g. a debuff ability).
+        public bool ImpairedOverride { get; set; } = false;
+        public bool DebilitatedOverride { get; set; } = false;
+
+        // Computed damage state: true when the damage track says so OR when manually overridden.
+        [JsonIgnore]
+        public bool Impaired => GetDamageTrack() >= DamageTrack.Impaired || ImpairedOverride;
+        [JsonIgnore]
+        public bool Debilitated => GetDamageTrack() >= DamageTrack.Debilitated || DebilitatedOverride;
+
+        /// <summary>
+        /// Returns the effective damage track considering both pool-based calculation and manual overrides.
+        /// </summary>
+        public DamageTrack GetEffectiveDamageTrack()
+        {
+            var poolBased = GetDamageTrack();
+
+            // Manual overrides can only make it worse, never better
+            if (DebilitatedOverride && poolBased < DamageTrack.Debilitated)
+                return DamageTrack.Debilitated;
+            if (ImpairedOverride && poolBased < DamageTrack.Impaired)
+                return DamageTrack.Impaired;
+
+            return poolBased;
+        }
 
         private List<Ability> _abilities = new();
         public List<Ability> Abilities { get => _abilities; set => _abilities = value ?? new(); }
