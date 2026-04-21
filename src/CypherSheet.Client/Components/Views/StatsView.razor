@@ -64,42 +64,65 @@ else
             <MudCardContent>
                 <MudText Typo="Typo.h6" Class="mb-3">Recovery</MudText>
                 
-                <!-- Recovery Checkboxes in Grid Layout -->
-                <MudGrid Spacing="2">
-                    <MudItem xs="6">
-                        <MudCheckBox T="bool" 
-                                   Value="@Character.Recovery.OneActionUsed" 
-                                   ValueChanged="@((v) => OpenRecoveryDialog(v, "1 Action"))" 
-                                   Label="1 Action" 
-                                   Dense="true" 
-                                   Color="Color.Success" />
-                    </MudItem>
-                    <MudItem xs="6">
-                        <MudCheckBox T="bool" 
-                                   Value="@Character.Recovery.TenMinutesUsed" 
-                                   ValueChanged="@((v) => OpenRecoveryDialog(v, "10 Mins"))" 
-                                   Label="10 Mins" 
-                                   Dense="true" 
-                                   Color="Color.Success" />
-                    </MudItem>
-                    <MudItem xs="6">
-                        <MudCheckBox T="bool" 
-                                   Value="@Character.Recovery.OneHourUsed" 
-                                   ValueChanged="@((v) => OpenRecoveryDialog(v, "1 Hour"))" 
-                                   Label="1 Hour" 
-                                   Dense="true" 
-                                   Color="Color.Success" />
-                    </MudItem>
-                    <MudItem xs="6">
-                        <MudCheckBox T="bool" 
-                                   Value="@Character.Recovery.TenHoursUsed" 
-                                   ValueChanged="@((v) => OpenRecoveryDialog(v, "10 Hours"))" 
-                                   Label="10 Hours" 
-                                   Dense="true" 
-                                   Color="Color.Success" />
-                    </MudItem>
-                </MudGrid>
-                
+                <!-- Sequential Recovery Stepper -->
+                <div class="d-flex justify-space-between align-center mb-3" style="gap: 4px;">
+                    @foreach (var step in _allSteps)
+                    {
+                        var isUsed = Character.Recovery.IsStepUsed(step);
+                        var isNext = Character.Recovery.GetNextStep() == step;
+                        <MudPaper Elevation="@(isNext ? 3 : 0)" 
+                                  Class="@($"pa-2 flex-grow-1 d-flex flex-column align-center justify-center")"
+                                  Style="@GetStepStyle(step, isUsed, isNext)">
+                            @if (isUsed)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                            }
+                            else if (isNext)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.ArrowCircleRight" Color="Color.Primary" Size="Size.Small" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.Circle" Size="Size.Small" 
+                                         Style="opacity: 0.35;" />
+                            }
+                            <MudText Typo="Typo.caption" Align="Align.Center" 
+                                     Style="@($"font-size: 0.65rem; line-height: 1.2; margin-top: 2px; {(isUsed ? "opacity: 0.6;" : isNext ? "font-weight: 600;" : "opacity: 0.35;")}")">
+                                @Recovery.GetStepShortLabel(step)
+                            </MudText>
+                        </MudPaper>
+                    }
+                </div>
+
+                <!-- Action Buttons -->
+                <MudStack Spacing="2">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               FullWidth="true"
+                               Size="Size.Large"
+                               StartIcon="@Icons.Material.Filled.Casino"
+                               Disabled="@Character.Recovery.AllUsed"
+                               OnClick="OnFazerRecovery">
+                        @if (Character.Recovery.AllUsed)
+                        {
+                            <span>Todas as Recoveries Usadas</span>
+                        }
+                        else
+                        {
+                            <span>Fazer Recovery — @Recovery.GetStepLabel(Character.Recovery.GetNextStep()!.Value)</span>
+                        }
+                    </MudButton>
+
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Warning"
+                               FullWidth="true"
+                               StartIcon="@Icons.Material.Filled.Brightness7"
+                               Disabled="@(Character.Recovery.CompletedCount == 0)"
+                               OnClick="OnFimDeDia">
+                        Fim de Dia
+                    </MudButton>
+                </MudStack>
+
                 <!-- Custom Roll Bonus Field -->
                 <div class="d-flex align-center gap-2 mt-3">
                     <MudText Typo="Typo.body1" Style="white-space: nowrap;">1D6 +</MudText>
@@ -219,44 +242,78 @@ else
     {
         await OnSave.InvokeAsync();
     }
-    
-    
-    private async Task OpenRecoveryDialog(bool value, string recoveryType)
+    // All recovery steps in sequential order, used by the stepper UI
+    private static readonly RecoveryStep[] _allSteps = new[]
     {
-        // If unchecking, just toggle it off
-        if (!value)
-        {
-            switch (recoveryType)
-            {
-                case "1 Action": Character.Recovery.OneActionUsed = false; break;
-                case "10 Mins": Character.Recovery.TenMinutesUsed = false; break;
-                case "1 Hour": Character.Recovery.OneHourUsed = false; break;
-                case "10 Hours": Character.Recovery.TenHoursUsed = false; break;
-            }
-            await SaveCharacter();
-            return;
-        }
+        RecoveryStep.OneAction,
+        RecoveryStep.TenMinutes,
+        RecoveryStep.OneHour,
+        RecoveryStep.TenHours
+    };
 
-        // If checking, open the recovery dialog
+    private async Task OnFazerRecovery()
+    {
+        var nextStep = Character.Recovery.GetNextStep();
+        if (nextStep == null) return;
+
         var parameters = new DialogParameters 
         { 
             ["Character"] = Character,
-            ["RecoveryType"] = recoveryType
+            ["CurrentStep"] = nextStep.Value
         };
-        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var options = new DialogOptions 
+        { 
+            CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Small, 
+            FullWidth = true 
+        };
         
-        var dialog = await DialogService.ShowAsync<RecoveryDialog>("Recovery", parameters, options);
+        var dialog = await DialogService.ShowAsync<RecoveryDialog>(
+            $"Recovery — {Recovery.GetStepLabel(nextStep.Value)}", 
+            parameters, 
+            options);
         var result = await dialog.Result;
 
         if (result != null && !result.Canceled)
         {
+            var pointsRecovered = (int)result.Data;
+            Snackbar.Add(
+                $"Recuperou {pointsRecovered} pontos ({Recovery.GetStepLabel(nextStep.Value)})", 
+                Severity.Success);
             await SaveCharacter();
         }
-        else
-        {
-            // If dialog was canceled, don't mark as used
-            StateHasChanged();
-        }
+        
+        StateHasChanged();
+    }
+
+    private async Task OnFimDeDia()
+    {
+        Character.Recovery.Reset();
+
+        // Also restore all pools to max
+        Character.Might.Current = Character.Might.Max;
+        Character.Speed.Current = Character.Speed.Max;
+        Character.Intellect.Current = Character.Intellect.Max;
+
+        // Clear manual damage overrides
+        Character.ImpairedOverride = false;
+        Character.DebilitatedOverride = false;
+
+        Snackbar.Add("Fim de dia! Todas as pools e recoveries foram restauradas.", Severity.Info);
+        await SaveCharacter();
+        StateHasChanged();
+    }
+
+    private string GetStepStyle(RecoveryStep step, bool isUsed, bool isNext)
+    {
+        var baseStyle = "border-radius: 8px; min-height: 52px; transition: all 0.2s ease;";
+        
+        if (isUsed)
+            return $"{baseStyle} background: rgba(var(--mud-palette-success-rgb), 0.1); border: 1px solid rgba(var(--mud-palette-success-rgb), 0.3);";
+        if (isNext)
+            return $"{baseStyle} background: rgba(var(--mud-palette-primary-rgb), 0.1); border: 2px solid rgba(var(--mud-palette-primary-rgb), 0.5);";
+        
+        return $"{baseStyle} background: transparent; border: 1px solid rgba(128,128,128,0.15);";
     }
     
     

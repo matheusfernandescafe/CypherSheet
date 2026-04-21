@@ -3,143 +3,193 @@
 
 <MudDialog>
     <DialogContent>
-        <MudText Typo="Typo.h6" Class="mb-4">Recover</MudText>
-        
         <MudStack Spacing="3">
-            <!-- Pool Status Display -->
-            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                <MudText Typo="Typo.subtitle1"><strong>Might</strong></MudText>
-                <MudText Typo="Typo.subtitle1"><strong>Speed</strong></MudText>
-                <MudText Typo="Typo.subtitle1"><strong>Intellect</strong></MudText>
-            </MudStack>
-            
-            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                <MudChip T="string" Size="Size.Large" Color="Color.Default">@Character.Might.Current/@Character.Might.Max</MudChip>
-                <MudChip T="string" Size="Size.Large" Color="Color.Default">@Character.Speed.Current/@Character.Speed.Max</MudChip>
-                <MudChip T="string" Size="Size.Large" Color="Color.Default">@Character.Intellect.Current/@Character.Intellect.Max</MudChip>
-            </MudStack>
+            <!-- Recovery Step Header -->
+            <div class="d-flex justify-space-between align-center">
+                <MudText Typo="Typo.h6">
+                    Recovery: @Recovery.GetStepLabel(CurrentStep)
+                </MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                    @($"{Character.Recovery.CompletedCount + 1}/4")
+                </MudChip>
+            </div>
 
-            <!-- Reset All Button -->
-            <MudButton Variant="Variant.Filled" 
-                       Color="Color.Default" 
-                       FullWidth="true" 
-                       OnClick="ResetAllToCap"
-                       Class="mt-2">
-                Reset all to Cap
-            </MudButton>
+            <MudDivider />
 
-            <!-- Recovery Amount Inputs -->
-            <MudText Typo="Typo.subtitle2" Class="mt-3">Add</MudText>
+            <!-- Dice Roll Input -->
+            <MudPaper Elevation="4" Class="pa-4 d-flex flex-column align-center" 
+                      Style="background: linear-gradient(135deg, rgba(var(--mud-palette-primary-rgb), 0.08), rgba(var(--mud-palette-secondary-rgb), 0.08)); border-radius: 12px;">
+                
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Resultado do Dado (1d6)</MudText>
+                
+                <div class="d-flex align-center gap-4">
+                    <MudNumericField Value="diceResult" 
+                                     ValueChanged="OnDiceResultChanged"
+                                     T="int"
+                                     Min="1" 
+                                     Max="6" 
+                                     Variant="Variant.Outlined" 
+                                     Margin="Margin.Dense"
+                                     Style="width: 80px; text-align: center; font-weight: bold; font-size: 1.2rem;" />
+                    
+                    <MudText Typo="Typo.h4" Color="Color.Primary" Style="font-weight: 700;">
+                        = @TotalRecovered
+                    </MudText>
+                </div>
+
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2">
+                    @diceResult (dado) + @Character.Tier (tier) + @Character.Recovery.CustomRollBonus (bônus)
+                </MudText>
+                
+                <MudText Typo="Typo.body2" Class="mt-1" Color="Color.Success">
+                    Total a distribuir: <strong>@TotalRecovered pontos</strong>
+                </MudText>
+            </MudPaper>
+
+            <!-- Pool Status & Distribution -->
+            <MudText Typo="Typo.subtitle2">Distribuir pontos nos pools</MudText>
             
-            <MudStack Row="true" Justify="Justify.SpaceBetween" Spacing="2">
-                <MudPaper Class="pa-3 flex-grow-1" Elevation="2">
-                    <MudNumericField @bind-Value="mightRecovery" 
-                                   Min="0" 
-                                   Max="@GetMaxRecovery(Character.Might)"
-                                   HideSpinButtons="false"
-                                   Variant="Variant.Outlined"
-                                   T="int" />
+            <MudStack Spacing="2">
+                <!-- Might -->
+                <MudPaper Class="pa-3" Elevation="1" Style="border-radius: 8px;">
+                    <div class="d-flex justify-space-between align-center mb-1">
+                        <MudText Typo="Typo.subtitle2"><strong>Might</strong></MudText>
+                        <MudChip T="string" Size="Size.Small" Color="@GetPoolColor(Character.Might)" Variant="Variant.Filled">
+                            @Character.Might.Current / @Character.Might.Max
+                        </MudChip>
+                    </div>
+                    <MudSlider @bind-Value="mightRecovery" 
+                               Min="0" 
+                               Max="@GetMaxRecovery(Character.Might)"
+                               Step="1"
+                               Color="Color.Primary"
+                               T="int">
+                        +@mightRecovery pontos
+                    </MudSlider>
                 </MudPaper>
                 
-                <MudPaper Class="pa-3 flex-grow-1" Elevation="2">
-                    <MudNumericField @bind-Value="speedRecovery" 
-                                   Min="0" 
-                                   Max="@GetMaxRecovery(Character.Speed)"
-                                   HideSpinButtons="false"
-                                   Variant="Variant.Outlined"
-                                   T="int" />
+                <!-- Speed -->
+                <MudPaper Class="pa-3" Elevation="1" Style="border-radius: 8px;">
+                    <div class="d-flex justify-space-between align-center mb-1">
+                        <MudText Typo="Typo.subtitle2"><strong>Speed</strong></MudText>
+                        <MudChip T="string" Size="Size.Small" Color="@GetPoolColor(Character.Speed)" Variant="Variant.Filled">
+                            @Character.Speed.Current / @Character.Speed.Max
+                        </MudChip>
+                    </div>
+                    <MudSlider @bind-Value="speedRecovery" 
+                               Min="0" 
+                               Max="@GetMaxRecovery(Character.Speed)"
+                               Step="1"
+                               Color="Color.Secondary"
+                               T="int">
+                        +@speedRecovery pontos
+                    </MudSlider>
                 </MudPaper>
                 
-                <MudPaper Class="pa-3 flex-grow-1" Elevation="2">
-                    <MudNumericField @bind-Value="intellectRecovery" 
-                                   Min="0" 
-                                   Max="@GetMaxRecovery(Character.Intellect)"
-                                   HideSpinButtons="false"
-                                   Variant="Variant.Outlined"
-                                   T="int" />
+                <!-- Intellect -->
+                <MudPaper Class="pa-3" Elevation="1" Style="border-radius: 8px;">
+                    <div class="d-flex justify-space-between align-center mb-1">
+                        <MudText Typo="Typo.subtitle2"><strong>Intellect</strong></MudText>
+                        <MudChip T="string" Size="Size.Small" Color="@GetPoolColor(Character.Intellect)" Variant="Variant.Filled">
+                            @Character.Intellect.Current / @Character.Intellect.Max
+                        </MudChip>
+                    </div>
+                    <MudSlider @bind-Value="intellectRecovery" 
+                               Min="0" 
+                               Max="@GetMaxRecovery(Character.Intellect)"
+                               Step="1"
+                               Color="Color.Tertiary"
+                               T="int">
+                        +@intellectRecovery pontos
+                    </MudSlider>
                 </MudPaper>
             </MudStack>
 
-            <!-- Info Text -->
-            <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-2">
-                Set how many points should be added to
-            </MudText>
+            <!-- Points Remaining -->
+            <MudPaper Class="pa-3 d-flex justify-space-between align-center" Elevation="0"
+                      Style="@($"border-radius: 8px; border: 2px solid {(PointsRemaining < 0 ? "var(--mud-palette-error)" : PointsRemaining == 0 ? "var(--mud-palette-success)" : "var(--mud-palette-warning)") };")">
+                <MudText Typo="Typo.body1">Pontos restantes:</MudText>
+                <MudText Typo="Typo.h6" Color="@(PointsRemaining < 0 ? Color.Error : PointsRemaining == 0 ? Color.Success : Color.Warning)">
+                    @PointsRemaining
+                </MudText>
+            </MudPaper>
 
-            <!-- Recover Button -->
-            <MudButton Variant="Variant.Filled" 
-                       Color="Color.Primary" 
-                       FullWidth="true" 
-                       Size="Size.Large"
-                       OnClick="ApplyRecovery"
-                       Class="mt-2">
-                Recover @TotalRecoveryPoints points
-            </MudButton>
+            @if (PointsRemaining < 0)
+            {
+                <MudAlert Severity="Severity.Error" Dense="true">
+                    Você distribuiu mais pontos do que recuperou!
+                </MudAlert>
+            }
         </MudStack>
     </DialogContent>
+    
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   OnClick="ApplyRecovery"
+                   Disabled="@(PointsRemaining < 0 || TotalDistributed == 0)">
+            Aplicar Recovery
+        </MudButton>
+    </DialogActions>
 </MudDialog>
 
 @code {
     [CascadingParameter] public IMudDialogInstance MudDialog { get; set; }
     [Parameter] public Character Character { get; set; }
-    [Parameter] public string RecoveryType { get; set; }
+    [Parameter] public RecoveryStep CurrentStep { get; set; }
 
     private int mightRecovery = 0;
     private int speedRecovery = 0;
     private int intellectRecovery = 0;
 
-    private int TotalRecoveryPoints => mightRecovery + speedRecovery + intellectRecovery;
+    private int diceResult = 1;
 
-    protected override void OnInitialized()
+    private int TotalRecovered => diceResult + Character.Recovery.GetRollBonus(Character.Tier);
+    private int TotalDistributed => mightRecovery + speedRecovery + intellectRecovery;
+    private int PointsRemaining => TotalRecovered - TotalDistributed;
+
+    private void OnDiceResultChanged(int value)
     {
+        diceResult = value;
         
+        // Se o total diminuir, garante que os sliders não excedam o novo máximo permitido
+        if (mightRecovery > GetMaxRecovery(Character.Might)) mightRecovery = GetMaxRecovery(Character.Might);
+        if (speedRecovery > GetMaxRecovery(Character.Speed)) speedRecovery = GetMaxRecovery(Character.Speed);
+        if (intellectRecovery > GetMaxRecovery(Character.Intellect)) intellectRecovery = GetMaxRecovery(Character.Intellect);
     }
 
     private int GetMaxRecovery(Pool pool)
     {
-        return pool.Max - pool.Current;
+        // Can't distribute more than pool deficit, and can't exceed total recovered
+        int poolDeficit = pool.Max - pool.Current;
+        return Math.Min(poolDeficit, TotalRecovered);
     }
 
-    private void ResetAllToCap()
+    private Color GetPoolColor(Pool pool)
     {
-        Character.Might.Current = Character.Might.Max;
-        Character.Speed.Current = Character.Speed.Max;
-        Character.Intellect.Current = Character.Intellect.Max;
-        
-        mightRecovery = 0;
-        speedRecovery = 0;
-        intellectRecovery = 0;
-        
-        StateHasChanged();
+        if (pool.Current == 0) return Color.Error;
+        if (pool.Current < pool.Max / 2) return Color.Warning;
+        if (pool.Current == pool.Max) return Color.Success;
+        return Color.Default;
     }
 
     private void ApplyRecovery()
     {
+        if (PointsRemaining < 0 || TotalDistributed == 0) return;
+
         Character.Might.Current = Math.Min(Character.Might.Current + mightRecovery, Character.Might.Max);
         Character.Speed.Current = Math.Min(Character.Speed.Current + speedRecovery, Character.Speed.Max);
         Character.Intellect.Current = Math.Min(Character.Intellect.Current + intellectRecovery, Character.Intellect.Max);
         
-        // Mark the recovery as used
-        MarkRecoveryUsed();
+        // Mark this recovery step as used
+        Character.Recovery.MarkStepUsed(CurrentStep);
         
-        MudDialog.Close(DialogResult.Ok(true));
+        MudDialog.Close(DialogResult.Ok(TotalRecovered));
     }
 
-    private void MarkRecoveryUsed()
+    private void Cancel()
     {
-        switch (RecoveryType)
-        {
-            case "1 Action":
-                Character.Recovery.OneActionUsed = true;
-                break;
-            case "10 Mins":
-                Character.Recovery.TenMinutesUsed = true;
-                break;
-            case "1 Hour":
-                Character.Recovery.OneHourUsed = true;
-                break;
-            case "10 Hours":
-                Character.Recovery.TenHoursUsed = true;
-                break;
-        }
+        MudDialog.Cancel();
     }
 }

@@ -263,6 +263,14 @@ namespace CypherSheet.Domain
         public NoteType Type { get; set; } = NoteType.Outro;
     }
 
+    public enum RecoveryStep
+    {
+        OneAction,
+        TenMinutes,
+        OneHour,
+        TenHours
+    }
+
     public class Recovery
     {
         public bool OneActionUsed { get; set; }
@@ -282,6 +290,99 @@ namespace CypherSheet.Domain
         public int GetRollBonus(int tier)
         {
             return tier + CustomRollBonus;
+        }
+
+        /// <summary>
+        /// Returns the next recovery step in the strict Cypher System sequence.
+        /// Returns null if all four recoveries have been used.
+        /// </summary>
+        public RecoveryStep? GetNextStep()
+        {
+            if (!OneActionUsed) return RecoveryStep.OneAction;
+            if (!TenMinutesUsed) return RecoveryStep.TenMinutes;
+            if (!OneHourUsed) return RecoveryStep.OneHour;
+            if (!TenHoursUsed) return RecoveryStep.TenHours;
+            return null;
+        }
+
+        /// <summary>
+        /// Marks the specified recovery step as used.
+        /// </summary>
+        public void MarkStepUsed(RecoveryStep step)
+        {
+            switch (step)
+            {
+                case RecoveryStep.OneAction: OneActionUsed = true; break;
+                case RecoveryStep.TenMinutes: TenMinutesUsed = true; break;
+                case RecoveryStep.OneHour: OneHourUsed = true; break;
+                case RecoveryStep.TenHours: TenHoursUsed = true; break;
+            }
+        }
+
+        /// <summary>
+        /// True when all four recovery slots have been exhausted.
+        /// </summary>
+        public bool AllUsed => OneActionUsed && TenMinutesUsed && OneHourUsed && TenHoursUsed;
+
+        /// <summary>
+        /// How many recovery steps have been completed (0-4).
+        /// </summary>
+        public int CompletedCount
+        {
+            get
+            {
+                int count = 0;
+                if (OneActionUsed) count++;
+                if (TenMinutesUsed) count++;
+                if (OneHourUsed) count++;
+                if (TenHoursUsed) count++;
+                return count;
+            }
+        }
+
+        /// <summary>
+        /// Returns a human-readable label for a given recovery step.
+        /// </summary>
+        public static string GetStepLabel(RecoveryStep step)
+        {
+            return step switch
+            {
+                RecoveryStep.OneAction => "1 Ação",
+                RecoveryStep.TenMinutes => "10 Minutos",
+                RecoveryStep.OneHour => "1 Hora",
+                RecoveryStep.TenHours => "10 Horas",
+                _ => ""
+            };
+        }
+
+        /// <summary>
+        /// Returns a short label for display in stepper UIs.
+        /// </summary>
+        public static string GetStepShortLabel(RecoveryStep step)
+        {
+            return step switch
+            {
+                RecoveryStep.OneAction => "1 Ação",
+                RecoveryStep.TenMinutes => "10 Min",
+                RecoveryStep.OneHour => "1 Hora",
+                RecoveryStep.TenHours => "10 Hrs",
+                _ => ""
+            };
+        }
+
+        /// <summary>
+        /// Checks whether a specific step has been used.
+        /// </summary>
+        public bool IsStepUsed(RecoveryStep step)
+        {
+            return step switch
+            {
+                RecoveryStep.OneAction => OneActionUsed,
+                RecoveryStep.TenMinutes => TenMinutesUsed,
+                RecoveryStep.OneHour => OneHourUsed,
+                RecoveryStep.TenHours => TenHoursUsed,
+                _ => false
+            };
         }
     }
 }
