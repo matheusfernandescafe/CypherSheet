@@ -147,6 +147,13 @@ namespace CypherSheet.Domain
             set => _activeEffects = value ?? new();
         }
 
+        private List<InitiativeParticipant> _initiativeParticipants = new();
+        public List<InitiativeParticipant> InitiativeParticipants
+        {
+            get => _initiativeParticipants;
+            set => _initiativeParticipants = value ?? new();
+        }
+
         /// <summary>
         /// Remove todos os efeitos com DurationType=Turns e RemainingTurns=0 da lista ActiveEffects.
         /// Deve ser chamado ao carregar o personagem para evitar acúmulo de efeitos fantasma entre sessões.
@@ -277,6 +284,12 @@ namespace CypherSheet.Domain
         public string Title { get; set; } = "";
         public string Content { get; set; } = "";
         public NoteType Type { get; set; } = NoteType.Outro;
+    }
+
+    public class InitiativeParticipant
+    {
+        public string Name { get; set; } = "";
+        public int InitiativeValue { get; set; } = 0;
     }
 
     public enum RecoveryStep

@@ -1,0 +1,122 @@
+@using CypherSheet.Domain
+@using CypherSheet.Storage
+@inject IDialogService DialogService
+@inject CypherSheet.Client.Services.CharacterStateService StateService
+
+<MudStack Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudButton StartIcon="@Icons.Material.Filled.PersonAdd"
+                   Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="AddParticipant">
+            Adicionar
+        </MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.DeleteSweep"
+                   Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   Disabled="@(!Character.InitiativeParticipants.Any())"
+                   OnClick="ClearAll">
+            Limpar Tudo
+        </MudButton>
+    </MudStack>
+
+    @if (!Character.InitiativeParticipants.Any())
+    {
+        <div style="position: relative; min-height: 300px;">
+            <EmptyStateWatermark Icon="@Icons.Material.Filled.FormatListNumbered" />
+            <MudText Typo="Typo.body2" Class="pa-4" Style="position: relative; z-index: 1;">
+                Nenhum participante adicionado. Clique em "Adicionar" para começar.
+            </MudText>
+        </div>
+    }
+    else
+    {
+        @foreach (var (participant, index) in OrderedParticipants.Select((p, i) => (p, i)))
+        {
+            <MudPaper Class="pa-3" Elevation="2">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudText Typo="Typo.body2"
+                             Color="Color.Secondary"
+                             Style="min-width: 20px; text-align: center;">
+                        @(index + 1)
+                    </MudText>
+
+                    <MudStack Spacing="0" Style="flex: 1; min-width: 0;">
+                        <MudText Typo="Typo.subtitle1">@participant.Name</MudText>
+                    </MudStack>
+
+                    <MudChip T="string"
+                             Color="Color.Default"
+                             Size="Size.Small"
+                             Style="font-weight: bold;">
+                        @participant.InitiativeValue
+                    </MudChip>
+
+                    <div @onclick:stopPropagation="true">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Size="Size.Small"
+                                       Color="Color.Error"
+                                       OnClick="@(async () => await RemoveParticipant(participant))" />
+                    </div>
+                </MudStack>
+            </MudPaper>
+        }
+    }
+</MudStack>
+
+@code {
+    private Character Character => StateService.Character!;
+
+    private List<InitiativeParticipant> OrderedParticipants =>
+        Character.InitiativeParticipants
+            .Select((p, i) => (Participant: p, Index: i))
+            .OrderByDescending(x => x.Participant.InitiativeValue)
+            .ThenBy(x => x.Index)
+            .Select(x => x.Participant)
+            .ToList();
+
+    private async Task AddParticipant()
+    {
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialogReference = await DialogService.ShowAsync<AddParticipantDialog>("Adicionar Participante", options);
+        var result = await dialogReference.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            var participant = result.Data as InitiativeParticipant;
+            if (participant != null)
+            {
+                Character.InitiativeParticipants.Add(participant);
+                await StateService.SaveCharacterAsync();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task RemoveParticipant(InitiativeParticipant participant)
+    {
+        Character.InitiativeParticipants.Remove(participant);
+        await StateService.SaveCharacterAsync();
+    }
+
+    private async Task ClearAll()
+    {
+        bool? confirmed = await DialogService.ShowMessageBox(
+            "Limpar Tudo",
+            "Tem certeza que deseja remover todos os participantes da lista de iniciativa?",
+            yesText: "Limpar",
+            cancelText: "Cancelar");
+
+        if (confirmed == true)
+        {
+            Character.InitiativeParticipants.Clear();
+            await StateService.SaveCharacterAsync();
+        }
+    }
+}
