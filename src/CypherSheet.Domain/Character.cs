@@ -146,6 +146,15 @@ namespace CypherSheet.Domain
             get => _activeEffects;
             set => _activeEffects = value ?? new();
         }
+
+        /// <summary>
+        /// Remove todos os efeitos com DurationType=Turns e RemainingTurns=0 da lista ActiveEffects.
+        /// Deve ser chamado ao carregar o personagem para evitar acúmulo de efeitos fantasma entre sessões.
+        /// </summary>
+        public void CleanExpiredEffects()
+        {
+            ActiveEffects.RemoveAll(e => e.IsExpired);
+        }
         
         public decimal Money { get; set; } = 0;
         

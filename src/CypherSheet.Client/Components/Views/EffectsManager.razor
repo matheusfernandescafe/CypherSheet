@@ -2,8 +2,11 @@
 @using MudBlazor
 
 @inject IDialogService DialogService
+@inject ISnackbar Snackbar
 @inject CypherSheet.Client.Services.CharacterStateService StateService
 
+@if (Character != null)
+{
 <MudCard Elevation="2" Class="mb-2">
     <MudCardHeader>
         <CardHeaderContent>
@@ -42,13 +45,13 @@
                                          Size="Size.Small"
                                          Color="Color.Default" />
                             }
-                            else if (effect.Value < 0)
+                            else if (effect.IsBuff)
                             {
                                 <MudIcon Icon="@Icons.Material.Filled.Circle"
                                          Size="Size.Small"
                                          Color="Color.Success" />
                             }
-                            else if (effect.Value > 0)
+                            else if (effect.IsDebuff)
                             {
                                 <MudIcon Icon="@Icons.Material.Filled.Circle"
                                          Size="Size.Small"
@@ -130,9 +133,10 @@
         </MudButton>
     </MudCardActions>
 </MudCard>
+}
 
 @code {
-    [Parameter] public Character Character { get; set; } = null!;
+    private Character? Character => StateService.Character;
 
     // Abre o AddEffectDialog para criação
     private async Task OpenAddEffectDialog()
@@ -153,6 +157,7 @@
 
         if (result != null && !result.Canceled)
         {
+            await StateService.SaveCharacterAsync();
             StateHasChanged();
         }
     }
@@ -177,6 +182,7 @@
 
         if (result != null && !result.Canceled)
         {
+            await StateService.SaveCharacterAsync();
             StateHasChanged();
         }
     }
@@ -184,7 +190,7 @@
     // Remove o efeito e persiste
     private async Task RemoveEffect(ActiveEffect effect)
     {
-        Character.ActiveEffects.Remove(effect);
+        Character!.ActiveEffects.Remove(effect);
         await StateService.SaveCharacterAsync();
     }
 
@@ -208,18 +214,36 @@
     // Avança o turno: decrementa RemainingTurns de todos os efeitos de turno (piso em 0)
     private async Task NextTurn()
     {
-        foreach (var effect in Character.ActiveEffects.Where(e => e.DurationType == DurationType.Turns))
+        var expiredNames = new List<string>();
+
+        foreach (var effect in Character!.ActiveEffects.Where(e => e.DurationType == DurationType.Turns))
         {
             if (effect.RemainingTurns > 0)
+            {
                 effect.RemainingTurns--;
+                if (effect.RemainingTurns == 0)
+                    expiredNames.Add(effect.Name);
+            }
         }
+
         await StateService.SaveCharacterAsync();
+
+        if (expiredNames.Count > 0)
+            Snackbar.Add($"Efeitos expirados: {string.Join(", ", expiredNames)}", Severity.Info);
     }
 
-    // Remove todos os efeitos FullCombat OU expirados
+    // Remove todos os efeitos FullCombat OU expirados, com confirmação
     private async Task EndCombat()
     {
-        Character.ActiveEffects.RemoveAll(e =>
+        bool? confirmed = await DialogService.ShowMessageBox(
+            "Encerrar Combate",
+            "Isso removerá todos os efeitos de combate e os efeitos expirados. Continuar?",
+            yesText: "Confirmar",
+            cancelText: "Cancelar");
+
+        if (confirmed != true) return;
+
+        Character!.ActiveEffects.RemoveAll(e =>
             e.DurationType == DurationType.FullCombat || e.IsExpired);
         await StateService.SaveCharacterAsync();
     }

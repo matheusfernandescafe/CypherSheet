@@ -20,6 +20,7 @@ namespace CypherSheet.Client.Services
         public async Task LoadCharacterAsync(Guid id)
         {
             _character = await _appService.GetCharacterAsync(id);
+            _character?.CleanExpiredEffects();
             NotifyStateChanged();
         }
 

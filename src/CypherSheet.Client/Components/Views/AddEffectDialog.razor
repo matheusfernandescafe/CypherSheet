@@ -1,8 +1,6 @@
 @using CypherSheet.Domain
 @using MudBlazor
 
-@inject CypherSheet.Client.Services.CharacterStateService StateService
-
 <MudDialog>
     <DialogContent>
 
@@ -55,7 +53,7 @@
             </MudButton>
         </MudStack>
 
-        <MudSelect @bind-Value="modifierType" Label="Tipo de Modificador" Class="mb-2">
+        <MudSelect @bind-Value="modifierType" @bind-Value:after="UpdatePreview" Label="Tipo de Modificador" Class="mb-2">
             <MudSelectItem Value="@ModifierType.Step">Passo de Dificuldade</MudSelectItem>
             <MudSelectItem Value="@ModifierType.FlatDamage">Dano Fixo</MudSelectItem>
             <MudSelectItem Value="@ModifierType.Armor">Armadura</MudSelectItem>
@@ -78,30 +76,32 @@
             Bônus facilita / adiciona; Penalidade dificulta / reduz. Magnitude zero não é permitida.
         </MudText>
 
-        @* Dropdown AppliesTo com grupos usando itens desabilitados como separadores *@
-        <MudSelect @bind-Value="appliesTo" Label="Aplica-se a" Class="mb-4">
-            <MudSelectItem Value="@AppliesTo.AnyRoll" Disabled="false">— Geral —</MudSelectItem>
+        @* Dropdown AppliesTo com grupos usando separadores nativos do MudBlazor *@
+        <MudSelect @bind-Value="appliesTo" @bind-Value:after="UpdatePreview" Label="Aplica-se a" Class="mb-4">
             <MudSelectItem Value="@AppliesTo.AnyRoll">Qualquer Rolagem</MudSelectItem>
 
-            <MudSelectItem Value="@((AppliesTo)(-1))" Disabled="true">— Defesas —</MudSelectItem>
+            <MudDivider />
+            <MudListSubheader>Defesas</MudListSubheader>
             <MudSelectItem Value="@AppliesTo.AllDefenses">Defesas — Todas</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.MightDefense">Defesa Might</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.SpeedDefense">Defesa Speed</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.IntellectDefense">Defesa Intellect</MudSelectItem>
 
-            <MudSelectItem Value="@((AppliesTo)(-2))" Disabled="true">— Ataques —</MudSelectItem>
+            <MudDivider />
+            <MudListSubheader>Ataques</MudListSubheader>
             <MudSelectItem Value="@AppliesTo.AllAttacks">Ataques — Todos</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.MeleeAttack">Ataque Melee</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.RangedAttack">Ataque à Distância</MudSelectItem>
 
-            <MudSelectItem Value="@((AppliesTo)(-3))" Disabled="true">— Testes de Perícia —</MudSelectItem>
+            <MudDivider />
+            <MudListSubheader>Testes de Perícia</MudListSubheader>
             <MudSelectItem Value="@AppliesTo.SkillTests">Testes de Perícia</MudSelectItem>
         </MudSelect>
 
         @* Seção 3 — Temporalidade *@
         <MudText Typo="Typo.subtitle2" Class="mb-2">Temporalidade</MudText>
 
-        <MudSelect @bind-Value="durationType" Label="Duração" Class="mb-2">
+        <MudSelect @bind-Value="durationType" @bind-Value:after="UpdatePreview" Label="Duração" Class="mb-2">
             <MudSelectItem Value="@DurationType.Turns">Turnos</MudSelectItem>
             <MudSelectItem Value="@DurationType.FullCombat">Combate Inteiro</MudSelectItem>
             <MudSelectItem Value="@DurationType.Manual">Manual</MudSelectItem>
@@ -110,19 +110,19 @@
         @* Campo de turnos condicional *@
         @if (durationType == DurationType.Turns)
         {
-            <MudNumericField @bind-Value="remainingTurns"
+            <MudNumericField @bind-Value="remainingTurns" @bind-Value:after="UpdatePreview"
                              Label="Número de Turnos"
                              Min="1"
                              Class="mb-2" />
         }
 
         @* Preview em linguagem natural *@
-        @if (!string.IsNullOrWhiteSpace(PreviewDescription))
+        @if (!string.IsNullOrWhiteSpace(_previewDescription))
         {
             <MudPaper Elevation="0" Class="pa-2 mt-2" Style="background-color: var(--mud-palette-background-grey);">
                 <MudText Typo="Typo.caption" Color="Color.Secondary">
                     <MudIcon Icon="@Icons.Material.Outlined.Preview" Size="Size.Small" Class="mr-1" />
-                    @PreviewDescription
+                    @_previewDescription
                 </MudText>
             </MudPaper>
         }
@@ -156,6 +156,9 @@
     private AppliesTo appliesTo = AppliesTo.AnyRoll;
     private DurationType durationType = DurationType.Turns;
     private int remainingTurns = 1;
+
+    // Campo memoizado do preview
+    private string _previewDescription = string.Empty;
 
     // Value calculado a partir de magnitude e sinal
     private int ComputedValue => effectSign == 0 ? 0 : effectSign * magnitude;
@@ -191,6 +194,8 @@
                 magnitude = 1;
             }
         }
+
+        UpdatePreview();
     }
 
     private void SetSign(int sign)
@@ -198,50 +203,61 @@
         effectSign = sign;
         // Neutro força magnitude a 0 para o cálculo, mas mantemos o display em 1
         if (sign == 0) magnitude = 1;
+        UpdatePreview();
     }
 
     private void DecrementMagnitude()
     {
         if (magnitude > 1) magnitude--;
+        UpdatePreview();
     }
 
-    private void IncrementMagnitude() => magnitude++;
-
-    // Preview em linguagem natural usando EffectDescriptionBuilder
-    private string PreviewDescription
+    private void IncrementMagnitude()
     {
-        get
-        {
-            var computedValue = ComputedValue;
-            if (computedValue == 0) return string.Empty;
-
-            var previewEffect = new ActiveEffect
-            {
-                Name = name,
-                Origin = string.IsNullOrWhiteSpace(origin) ? null : origin,
-                ModifierType = modifierType,
-                Value = computedValue,
-                AppliesTo = appliesTo,
-                DurationType = durationType,
-                RemainingTurns = durationType == DurationType.Turns ? remainingTurns : null
-            };
-
-            var description = EffectDescriptionBuilder.Build(previewEffect);
-            if (string.IsNullOrEmpty(description)) return string.Empty;
-
-            var durationText = durationType switch
-            {
-                DurationType.Turns => $"por {remainingTurns} turno(s)",
-                DurationType.FullCombat => "durante o combate inteiro",
-                DurationType.Manual => "até remoção manual",
-                _ => string.Empty
-            };
-
-            return $"{description} {durationText}".Trim();
-        }
+        magnitude++;
+        UpdatePreview();
     }
 
-    private async Task Submit()
+    // Recalcula o preview e armazena em _previewDescription
+    private void UpdatePreview()
+    {
+        var computedValue = ComputedValue;
+        if (computedValue == 0)
+        {
+            _previewDescription = string.Empty;
+            return;
+        }
+
+        var previewEffect = new ActiveEffect
+        {
+            Name = name,
+            Origin = string.IsNullOrWhiteSpace(origin) ? null : origin,
+            ModifierType = modifierType,
+            Value = computedValue,
+            AppliesTo = appliesTo,
+            DurationType = durationType,
+            RemainingTurns = durationType == DurationType.Turns ? remainingTurns : null
+        };
+
+        var description = EffectDescriptionBuilder.Build(previewEffect);
+        if (string.IsNullOrEmpty(description))
+        {
+            _previewDescription = string.Empty;
+            return;
+        }
+
+        var durationText = durationType switch
+        {
+            DurationType.Turns => $"por {remainingTurns} turno(s)",
+            DurationType.FullCombat => "durante o combate inteiro",
+            DurationType.Manual => "até remoção manual",
+            _ => string.Empty
+        };
+
+        _previewDescription = $"{description} {durationText}".Trim();
+    }
+
+    private void Submit()
     {
         if (IsSubmitDisabled) return;
 
@@ -275,7 +291,6 @@
             Character.ActiveEffects.Add(newEffect);
         }
 
-        await StateService.SaveCharacterAsync();
         MudDialog.Close(DialogResult.Ok(true));
     }
 

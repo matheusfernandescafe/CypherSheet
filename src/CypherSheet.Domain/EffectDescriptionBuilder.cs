@@ -14,6 +14,12 @@ public static class EffectDescriptionBuilder
     /// String com a descrição em linguagem natural, ex: "2 passo(s) mais fácil em Defesa Speed".
     /// Retorna string vazia se Value for zero.
     /// </returns>
+    /// <remarks>
+    /// Convenção de sinal: <c>Value &lt; 0</c> representa um buff (benefício ao personagem),
+    /// enquanto <c>Value &gt; 0</c> representa um debuff (penalidade ao personagem).
+    /// Essa inversão semântica é intencional e encapsulada nas propriedades
+    /// <see cref="ActiveEffect.IsBuff"/> e <see cref="ActiveEffect.IsDebuff"/>.
+    /// </remarks>
     public static string Build(ActiveEffect effect)
     {
         if (effect.Value == 0)
@@ -40,7 +46,7 @@ public static class EffectDescriptionBuilder
     /// </summary>
     /// <param name="appliesTo">O escopo de aplicação do efeito.</param>
     /// <returns>String localizada em português, ex: "em Defesa Speed".</returns>
-    public static string GetAppliesToLabel(AppliesTo appliesTo) => appliesTo switch
+    private static string GetAppliesToLabel(AppliesTo appliesTo) => appliesTo switch
     {
         AppliesTo.AnyRoll => "em Qualquer Rolagem",
         AppliesTo.AllDefenses => "em Defesas — Todas",

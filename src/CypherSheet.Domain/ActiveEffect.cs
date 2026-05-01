@@ -16,4 +16,10 @@ public class ActiveEffect
     [JsonIgnore]
     public bool IsExpired =>
         DurationType == DurationType.Turns && RemainingTurns == 0;
+
+    [JsonIgnore]
+    public bool IsBuff => Value < 0;
+
+    [JsonIgnore]
+    public bool IsDebuff => Value > 0;
 }
