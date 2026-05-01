@@ -139,6 +139,13 @@ namespace CypherSheet.Domain
 
         private List<Note> _notes = new();
         public List<Note> Notes { get => _notes; set => _notes = value ?? new(); }
+
+        private List<ActiveEffect> _activeEffects = new();
+        public List<ActiveEffect> ActiveEffects
+        {
+            get => _activeEffects;
+            set => _activeEffects = value ?? new();
+        }
         
         public decimal Money { get; set; } = 0;
         

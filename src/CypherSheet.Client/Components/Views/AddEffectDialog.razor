@@ -1,0 +1,283 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+@inject CypherSheet.Client.Services.CharacterStateService StateService
+
+<MudDialog>
+    <DialogContent>
+
+        @* Seção 1 — Informações Básicas *@
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Informações Básicas</MudText>
+        <MudTextField @bind-Value="name"
+                      Label="Nome"
+                      Required="true"
+                      AutoFocus="true"
+                      Immediate="true"
+                      Class="mb-2" />
+        <MudTextField @bind-Value="origin"
+                      Label="Origem (opcional)"
+                      Class="mb-4" />
+
+        @* Seção 2 — Matemática do Efeito *@
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Matemática do Efeito</MudText>
+
+        @* Seletor de tipo: Bônus / Neutro / Penalidade *@
+        <MudStack Row="true" Spacing="2" Class="mb-3">
+            <MudButton Color="Color.Default"
+                       Variant="Variant.Outlined"
+                       OnClick="@(() => SetSign(-1))"
+                       Style="flex: 1;">
+                <MudIcon Icon="@(effectSign == -1 ? Icons.Material.Filled.Circle : Icons.Material.Outlined.RadioButtonUnchecked)"
+                         Size="Size.Small"
+                         Style="@(effectSign == -1 ? "color: var(--mud-palette-success);" : "")"
+                         Class="mr-1" />
+                Bônus
+            </MudButton>
+            <MudButton Color="Color.Default"
+                       Variant="Variant.Outlined"
+                       OnClick="@(() => SetSign(0))"
+                       Style="flex: 1;">
+                <MudIcon Icon="@(effectSign == 0 ? Icons.Material.Filled.Circle : Icons.Material.Outlined.RadioButtonUnchecked)"
+                         Size="Size.Small"
+                         Style="@(effectSign == 0 ? "color: var(--mud-palette-text-secondary);" : "")"
+                         Class="mr-1" />
+                Neutro
+            </MudButton>
+            <MudButton Color="Color.Default"
+                       Variant="Variant.Outlined"
+                       OnClick="@(() => SetSign(1))"
+                       Style="flex: 1;">
+                <MudIcon Icon="@(effectSign == 1 ? Icons.Material.Filled.Circle : Icons.Material.Outlined.RadioButtonUnchecked)"
+                         Size="Size.Small"
+                         Style="@(effectSign == 1 ? "color: var(--mud-palette-error);" : "")"
+                         Class="mr-1" />
+                Penalidade
+            </MudButton>
+        </MudStack>
+
+        <MudSelect @bind-Value="modifierType" Label="Tipo de Modificador" Class="mb-2">
+            <MudSelectItem Value="@ModifierType.Step">Passo de Dificuldade</MudSelectItem>
+            <MudSelectItem Value="@ModifierType.FlatDamage">Dano Fixo</MudSelectItem>
+            <MudSelectItem Value="@ModifierType.Armor">Armadura</MudSelectItem>
+            <MudSelectItem Value="@ModifierType.TemporaryEdge">Edge Temporário</MudSelectItem>
+        </MudSelect>
+
+        @* Seletor de magnitude com botões [-1] e [+1] *@
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
+            <MudText Typo="Typo.body2">Magnitude:</MudText>
+            <MudButton Variant="Variant.Outlined"
+                       Size="Size.Small"
+                       OnClick="DecrementMagnitude">-1</MudButton>
+            <MudText Typo="Typo.h6" Style="min-width: 40px; text-align: center;">@magnitude</MudText>
+            <MudButton Variant="Variant.Outlined"
+                       Size="Size.Small"
+                       OnClick="IncrementMagnitude">+1</MudButton>
+        </MudStack>
+
+        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-3">
+            Bônus facilita / adiciona; Penalidade dificulta / reduz. Magnitude zero não é permitida.
+        </MudText>
+
+        @* Dropdown AppliesTo com grupos usando itens desabilitados como separadores *@
+        <MudSelect @bind-Value="appliesTo" Label="Aplica-se a" Class="mb-4">
+            <MudSelectItem Value="@AppliesTo.AnyRoll" Disabled="false">— Geral —</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.AnyRoll">Qualquer Rolagem</MudSelectItem>
+
+            <MudSelectItem Value="@((AppliesTo)(-1))" Disabled="true">— Defesas —</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.AllDefenses">Defesas — Todas</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.MightDefense">Defesa Might</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.SpeedDefense">Defesa Speed</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.IntellectDefense">Defesa Intellect</MudSelectItem>
+
+            <MudSelectItem Value="@((AppliesTo)(-2))" Disabled="true">— Ataques —</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.AllAttacks">Ataques — Todos</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.MeleeAttack">Ataque Melee</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.RangedAttack">Ataque à Distância</MudSelectItem>
+
+            <MudSelectItem Value="@((AppliesTo)(-3))" Disabled="true">— Testes de Perícia —</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.SkillTests">Testes de Perícia</MudSelectItem>
+        </MudSelect>
+
+        @* Seção 3 — Temporalidade *@
+        <MudText Typo="Typo.subtitle2" Class="mb-2">Temporalidade</MudText>
+
+        <MudSelect @bind-Value="durationType" Label="Duração" Class="mb-2">
+            <MudSelectItem Value="@DurationType.Turns">Turnos</MudSelectItem>
+            <MudSelectItem Value="@DurationType.FullCombat">Combate Inteiro</MudSelectItem>
+            <MudSelectItem Value="@DurationType.Manual">Manual</MudSelectItem>
+        </MudSelect>
+
+        @* Campo de turnos condicional *@
+        @if (durationType == DurationType.Turns)
+        {
+            <MudNumericField @bind-Value="remainingTurns"
+                             Label="Número de Turnos"
+                             Min="1"
+                             Class="mb-2" />
+        }
+
+        @* Preview em linguagem natural *@
+        @if (!string.IsNullOrWhiteSpace(PreviewDescription))
+        {
+            <MudPaper Elevation="0" Class="pa-2 mt-2" Style="background-color: var(--mud-palette-background-grey);">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    <MudIcon Icon="@Icons.Material.Outlined.Preview" Size="Size.Small" Class="mr-1" />
+                    @PreviewDescription
+                </MudText>
+            </MudPaper>
+        }
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   Disabled="@IsSubmitDisabled"
+                   OnClick="Submit">
+            @(IsEditing ? "Salvar Alterações" : "Adicionar Efeito")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Character Character { get; set; } = null!;
+    [Parameter] public ActiveEffect? EffectToEdit { get; set; }
+
+    private bool IsEditing => EffectToEdit != null;
+
+    // Campos do formulário
+    private string name = string.Empty;
+    private string origin = string.Empty;
+    private ModifierType modifierType = ModifierType.Step;
+    private int magnitude = 1;   // sempre positivo (1..N)
+    private int effectSign = 1;  // -1 = Bônus, 0 = Neutro, 1 = Penalidade
+    private AppliesTo appliesTo = AppliesTo.AnyRoll;
+    private DurationType durationType = DurationType.Turns;
+    private int remainingTurns = 1;
+
+    // Value calculado a partir de magnitude e sinal
+    private int ComputedValue => effectSign == 0 ? 0 : effectSign * magnitude;
+
+    // Validação: desabilitado quando Name vazio OU magnitude == 0 (neutro com magnitude 0 não faz sentido)
+    private bool IsSubmitDisabled => string.IsNullOrWhiteSpace(name) || (effectSign != 0 && magnitude == 0);
+
+    protected override void OnInitialized()
+    {
+        if (EffectToEdit != null)
+        {
+            name = EffectToEdit.Name;
+            origin = EffectToEdit.Origin ?? string.Empty;
+            modifierType = EffectToEdit.ModifierType;
+            appliesTo = EffectToEdit.AppliesTo;
+            durationType = EffectToEdit.DurationType;
+            remainingTurns = EffectToEdit.RemainingTurns ?? 1;
+
+            // Decompor Value em sinal e magnitude
+            if (EffectToEdit.Value < 0)
+            {
+                effectSign = -1;
+                magnitude = Math.Abs(EffectToEdit.Value);
+            }
+            else if (EffectToEdit.Value > 0)
+            {
+                effectSign = 1;
+                magnitude = EffectToEdit.Value;
+            }
+            else
+            {
+                effectSign = 0;
+                magnitude = 1;
+            }
+        }
+    }
+
+    private void SetSign(int sign)
+    {
+        effectSign = sign;
+        // Neutro força magnitude a 0 para o cálculo, mas mantemos o display em 1
+        if (sign == 0) magnitude = 1;
+    }
+
+    private void DecrementMagnitude()
+    {
+        if (magnitude > 1) magnitude--;
+    }
+
+    private void IncrementMagnitude() => magnitude++;
+
+    // Preview em linguagem natural usando EffectDescriptionBuilder
+    private string PreviewDescription
+    {
+        get
+        {
+            var computedValue = ComputedValue;
+            if (computedValue == 0) return string.Empty;
+
+            var previewEffect = new ActiveEffect
+            {
+                Name = name,
+                Origin = string.IsNullOrWhiteSpace(origin) ? null : origin,
+                ModifierType = modifierType,
+                Value = computedValue,
+                AppliesTo = appliesTo,
+                DurationType = durationType,
+                RemainingTurns = durationType == DurationType.Turns ? remainingTurns : null
+            };
+
+            var description = EffectDescriptionBuilder.Build(previewEffect);
+            if (string.IsNullOrEmpty(description)) return string.Empty;
+
+            var durationText = durationType switch
+            {
+                DurationType.Turns => $"por {remainingTurns} turno(s)",
+                DurationType.FullCombat => "durante o combate inteiro",
+                DurationType.Manual => "até remoção manual",
+                _ => string.Empty
+            };
+
+            return $"{description} {durationText}".Trim();
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (IsSubmitDisabled) return;
+
+        var computedValue = ComputedValue;
+
+        if (IsEditing)
+        {
+            // Atualiza o efeito existente
+            EffectToEdit!.Name = name.Trim();
+            EffectToEdit.Origin = string.IsNullOrWhiteSpace(origin) ? null : origin.Trim();
+            EffectToEdit.ModifierType = modifierType;
+            EffectToEdit.Value = computedValue;
+            EffectToEdit.AppliesTo = appliesTo;
+            EffectToEdit.DurationType = durationType;
+            EffectToEdit.RemainingTurns = durationType == DurationType.Turns ? remainingTurns : null;
+        }
+        else
+        {
+            // Cria novo efeito
+            var newEffect = new ActiveEffect
+            {
+                Id = Guid.NewGuid(),
+                Name = name.Trim(),
+                Origin = string.IsNullOrWhiteSpace(origin) ? null : origin.Trim(),
+                ModifierType = modifierType,
+                Value = computedValue,
+                AppliesTo = appliesTo,
+                DurationType = durationType,
+                RemainingTurns = durationType == DurationType.Turns ? remainingTurns : null
+            };
+            Character.ActiveEffects.Add(newEffect);
+        }
+
+        await StateService.SaveCharacterAsync();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

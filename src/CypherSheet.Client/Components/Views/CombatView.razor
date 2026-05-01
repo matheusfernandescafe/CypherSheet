@@ -13,15 +13,7 @@
 }
 else
 {
-    <!-- BuffsDebuffsArea placeholder -->
-    <MudCard Elevation="0" Class="mb-2" Style="opacity: 0.5;">
-        <MudCardContent Class="py-2">
-            <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
-                <MudIcon Icon="@Icons.Material.Outlined.AutoFixHigh" Size="Size.Small" Class="mr-1" />
-                Buffs &amp; Debuffs temporários — em breve
-            </MudText>
-        </MudCardContent>
-    </MudCard>
+    <EffectsManager Character="@Character" />
 
     <RollCalculatorComponent />
 }

@@ -1,0 +1,226 @@
+@using CypherSheet.Domain
+@using MudBlazor
+
+@inject IDialogService DialogService
+@inject CypherSheet.Client.Services.CharacterStateService StateService
+
+<MudCard Elevation="2" Class="mb-2">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Gerenciador de Bônus e Penalidades</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudButton StartIcon="@Icons.Material.Filled.Add"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Size="Size.Small"
+                       OnClick="OpenAddEffectDialog">
+                Novo Efeito
+            </MudButton>
+        </CardHeaderActions>
+    </MudCardHeader>
+
+    <MudCardContent Class="pt-0">
+        @if (!Character.ActiveEffects.Any())
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center" Class="pa-4">
+                Nenhum efeito ativo.
+            </MudText>
+        }
+        else
+        {
+            @foreach (var effect in Character.ActiveEffects)
+            {
+                <div style="@(effect.IsExpired ? "opacity: 0.5;" : "")" class="mb-2">
+                    <MudPaper Elevation="1" Class="pa-2" Style="cursor: pointer;" @onclick="@(async () => await OpenEditEffectDialog(effect))">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+
+                            @* Indicador de status colorido *@
+                            @if (effect.IsExpired)
+                            {
+                                <MudIcon Icon="@Icons.Material.Outlined.AccessTime"
+                                         Size="Size.Small"
+                                         Color="Color.Default" />
+                            }
+                            else if (effect.Value < 0)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Circle"
+                                         Size="Size.Small"
+                                         Color="Color.Success" />
+                            }
+                            else if (effect.Value > 0)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Circle"
+                                         Size="Size.Small"
+                                         Color="Color.Error" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Circle"
+                                         Size="Size.Small"
+                                         Color="Color.Default" />
+                            }
+
+                            @* Nome e descrição mecânica *@
+                            <MudStack Spacing="0" Style="flex: 1; min-width: 0;">
+                                <MudText Typo="Typo.subtitle2">@effect.Name</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                    @EffectDescriptionBuilder.Build(effect)
+                                </MudText>
+                                @if (!string.IsNullOrWhiteSpace(effect.Origin))
+                                {
+                                    <MudText Typo="Typo.caption" Color="Color.Tertiary">
+                                        Origem: @effect.Origin
+                                    </MudText>
+                                }
+                            </MudStack>
+
+                            @* Coluna de duração *@
+                            @if (effect.DurationType == DurationType.Turns)
+                            {
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0" @onclick:stopPropagation="true">
+                                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowDown"
+                                                   Size="Size.Small"
+                                                   OnClick="@(async () => await DecrementTurns(effect))" />
+                                    <MudText Typo="Typo.body2" Style="min-width: 24px; text-align: center;">
+                                        @effect.RemainingTurns
+                                    </MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardArrowUp"
+                                                   Size="Size.Small"
+                                                   OnClick="@(async () => await IncrementTurns(effect))" />
+                                </MudStack>
+                            }
+                            else if (effect.DurationType == DurationType.FullCombat)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Combate</MudText>
+                            }
+                            else if (effect.DurationType == DurationType.Manual)
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Manual</MudText>
+                            }
+
+                            @* Botão de remoção *@
+                            <div @onclick:stopPropagation="true">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               OnClick="@(async () => await RemoveEffect(effect))" />
+                            </div>
+                        </MudStack>
+                    </MudPaper>
+                </div>
+            }
+        }
+    </MudCardContent>
+
+    <MudCardActions Style="justify-content: space-between;">
+        <MudButton StartIcon="@Icons.Material.Filled.SkipNext"
+                   Variant="Variant.Outlined"
+                   Color="Color.Info"
+                   Size="Size.Small"
+                   OnClick="NextTurn">
+            Próximo Turno
+        </MudButton>
+        <MudButton StartIcon="@Icons.Material.Filled.SportsKabaddi"
+                   Variant="Variant.Outlined"
+                   Color="Color.Warning"
+                   Size="Size.Small"
+                   OnClick="EndCombat">
+            Encerrar Combate
+        </MudButton>
+    </MudCardActions>
+</MudCard>
+
+@code {
+    [Parameter] public Character Character { get; set; } = null!;
+
+    // Abre o AddEffectDialog para criação
+    private async Task OpenAddEffectDialog()
+    {
+        var parameters = new DialogParameters
+        {
+            ["Character"] = Character
+        };
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialogRef = await DialogService.ShowAsync<AddEffectDialog>("Novo Efeito", parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            StateHasChanged();
+        }
+    }
+
+    // Abre o AddEffectDialog para edição de um efeito existente
+    private async Task OpenEditEffectDialog(ActiveEffect effect)
+    {
+        var parameters = new DialogParameters
+        {
+            ["Character"] = Character,
+            ["EffectToEdit"] = effect
+        };
+        var options = new DialogOptions
+        {
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialogRef = await DialogService.ShowAsync<AddEffectDialog>("Editar Efeito", parameters, options);
+        var result = await dialogRef.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            StateHasChanged();
+        }
+    }
+
+    // Remove o efeito e persiste
+    private async Task RemoveEffect(ActiveEffect effect)
+    {
+        Character.ActiveEffects.Remove(effect);
+        await StateService.SaveCharacterAsync();
+    }
+
+    // Decrementa RemainingTurns com piso em 0
+    private async Task DecrementTurns(ActiveEffect effect)
+    {
+        if (effect.RemainingTurns > 0)
+        {
+            effect.RemainingTurns--;
+            await StateService.SaveCharacterAsync();
+        }
+    }
+
+    // Incrementa RemainingTurns em 1
+    private async Task IncrementTurns(ActiveEffect effect)
+    {
+        effect.RemainingTurns = (effect.RemainingTurns ?? 0) + 1;
+        await StateService.SaveCharacterAsync();
+    }
+
+    // Avança o turno: decrementa RemainingTurns de todos os efeitos de turno (piso em 0)
+    private async Task NextTurn()
+    {
+        foreach (var effect in Character.ActiveEffects.Where(e => e.DurationType == DurationType.Turns))
+        {
+            if (effect.RemainingTurns > 0)
+                effect.RemainingTurns--;
+        }
+        await StateService.SaveCharacterAsync();
+    }
+
+    // Remove todos os efeitos FullCombat OU expirados
+    private async Task EndCombat()
+    {
+        Character.ActiveEffects.RemoveAll(e =>
+            e.DurationType == DurationType.FullCombat || e.IsExpired);
+        await StateService.SaveCharacterAsync();
+    }
+}
