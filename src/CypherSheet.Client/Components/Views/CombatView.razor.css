@@ -1,0 +1,8 @@
+.active-nav-button {
+    transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.active-nav-button:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    background-color: var(--mud-palette-action-default-hover);
+}

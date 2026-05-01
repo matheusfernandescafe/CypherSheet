@@ -1,5 +1,6 @@
 @using CypherSheet.Domain
 @using CypherSheet.Client.Components.Views
+@using CypherSheet.Client.Pages
 @inject CypherSheet.Client.Services.CharacterStateService StateService
 @inject ISnackbar Snackbar
 
@@ -13,7 +14,100 @@
 }
 else
 {
-    <EffectsManager />
+    @switch (_currentSubView)
+    {
+        case CombatSubView.None:
+            <MudStack Spacing="2" Class="pa-4">
+                <MudText Typo="Typo.h6" Class="mb-2">Combat</MudText>
+                <MudStack Spacing="2">
 
-    <RollCalculatorComponent />
+                    @* Iniciativas — DisabledButton (funcionalidade futura) *@
+                    <MudPaper Elevation="1" Style="min-height: 72px; width: 100%; opacity: 0.4; cursor: default;">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="pa-3" Style="min-height: 72px;">
+                            <div style="transform: rotate(45deg); width: 40px; height: 40px; background-color: var(--mud-palette-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <MudIcon Icon="@Icons.Material.Filled.FormatListNumbered" Style="transform: rotate(-45deg);" Color="Color.Surface" />
+                            </div>
+                            <MudText Typo="Typo.h6" Style="align-self: center;">Iniciativas</MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                    @* Bônus e Penalidades — ActiveButton *@
+                    <MudPaper Elevation="1" Class="active-nav-button" Style="min-height: 72px; width: 100%; cursor: pointer;" @onclick="@(() => NavigateTo(CombatSubView.BonusesAndPenalties))">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="pa-3" Style="min-height: 72px;">
+                            <div style="transform: rotate(45deg); width: 40px; height: 40px; background-color: var(--mud-palette-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Style="transform: rotate(-45deg);" Color="Color.Surface" />
+                            </div>
+                            <MudText Typo="Typo.h6" Style="align-self: center;">Bônus e Penalidades</MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                    @* Calculadora de Rolagem — ActiveButton *@
+                    <MudPaper Elevation="1" Class="active-nav-button" Style="min-height: 72px; width: 100%; cursor: pointer;" @onclick="@(() => NavigateTo(CombatSubView.RollCalculator))">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="pa-3" Style="min-height: 72px;">
+                            <div style="transform: rotate(45deg); width: 40px; height: 40px; background-color: var(--mud-palette-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <MudIcon Icon="@Icons.Material.Filled.Calculate" Style="transform: rotate(-45deg);" Color="Color.Surface" />
+                            </div>
+                            <MudText Typo="Typo.h6" Style="align-self: center;">Calculadora de Rolagem</MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                    @* Rolagem de Dados — DisabledButton (funcionalidade futura) *@
+                    <MudPaper Elevation="1" Style="min-height: 72px; width: 100%; opacity: 0.4; cursor: default;">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3" Class="pa-3" Style="min-height: 72px;">
+                            <div style="transform: rotate(45deg); width: 40px; height: 40px; background-color: var(--mud-palette-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <MudIcon Icon="@Icons.Material.Filled.Casino" Style="transform: rotate(-45deg);" Color="Color.Surface" />
+                            </div>
+                            <MudText Typo="Typo.h6" Style="align-self: center;">Rolagem de Dados</MudText>
+                        </MudStack>
+                    </MudPaper>
+
+                </MudStack>
+            </MudStack>
+            break;
+
+        case CombatSubView.BonusesAndPenalties:
+            <MudStack>
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack" />
+                <EffectsManager />
+            </MudStack>
+            break;
+
+        case CombatSubView.RollCalculator:
+            <MudStack>
+                <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" OnClick="GoBack" />
+                <RollCalculatorComponent OnApplied="@GoBack" />
+            </MudStack>
+            break;
+
+        default:
+            // Salvaguarda: estado inválido retorna para None
+            _currentSubView = CombatSubView.None;
+            break;
+    }
+}
+
+@code {
+    [Parameter] public int ResetKey { get; set; }
+
+    private CombatSubView _currentSubView = CombatSubView.None;
+    private int _previousResetKey;
+
+    protected override void OnParametersSet()
+    {
+        if (ResetKey != _previousResetKey)
+        {
+            _previousResetKey = ResetKey;
+            _currentSubView = CombatSubView.None;
+        }
+    }
+
+    private void NavigateTo(CombatSubView subView)
+    {
+        _currentSubView = subView;
+    }
+
+    private void GoBack()
+    {
+        _currentSubView = CombatSubView.None;
+    }
 }

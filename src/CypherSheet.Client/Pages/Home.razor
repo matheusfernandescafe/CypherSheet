@@ -43,7 +43,7 @@
                     <StatsView />
                     break;
                 case TabType.Combat:
-                    <CombatView />
+                    <CombatView ResetKey="@_combatResetKey" />
                     break;
                 case TabType.Skills:
                     <SkillsView />
@@ -82,6 +82,8 @@
 
     private TabType currentTab = TabType.Stats;
 
+    private int _combatResetKey = 0;
+
     protected override async Task OnInitializedAsync()
     {
         StateService.OnChange += StateHasChanged;
@@ -104,6 +106,10 @@
 
     private void NavigateToTab(TabType tab)
     {
+        if (tab == TabType.Combat && currentTab == TabType.Combat)
+        {
+            _combatResetKey++;
+        }
         currentTab = tab;
     }
 }
