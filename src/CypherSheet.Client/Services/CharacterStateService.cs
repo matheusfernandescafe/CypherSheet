@@ -30,6 +30,12 @@ namespace CypherSheet.Client.Services
             NotifyStateChanged();
         }
 
+        public void ClearCharacter()
+        {
+            _character = null;
+            NotifyStateChanged();
+        }
+
         public async Task SaveCharacterAsync()
         {
             if (_character != null)

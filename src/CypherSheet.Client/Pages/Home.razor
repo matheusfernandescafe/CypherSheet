@@ -62,7 +62,7 @@
                     break;
                 case TabType.Characters:
                     <div class="d-flex justify-center align-center pa-4">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo(""))">Trocar Personagem</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@TrocarPersonagem">Trocar Personagem</MudButton>
                     </div>
                     break;
                 case TabType.Settings:
@@ -111,5 +111,11 @@
             _combatResetKey++;
         }
         currentTab = tab;
+    }
+
+    private void TrocarPersonagem()
+    {
+        StateService.ClearCharacter();
+        Navigation.NavigateTo("");
     }
 }

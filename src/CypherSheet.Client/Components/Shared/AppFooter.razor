@@ -1,4 +1,5 @@
 @inject CypherSheet.Client.Services.CharacterStateService StateService
+@implements IDisposable
 
 <div class="custom-footer" style="height: @(Height)px">
     <div class="footer-item @(CurrentTab == TabType.Stats ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
@@ -62,6 +63,21 @@
     [Parameter] public int Height { get; set; } = 80;
 
     private bool IsCharacterLoaded => StateService.Character != null;
+
+    protected override void OnInitialized()
+    {
+        StateService.OnChange += OnStateChanged;
+    }
+
+    private void OnStateChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        StateService.OnChange -= OnStateChanged;
+    }
 
     private async Task OnTabClick(TabType tab)
     {
