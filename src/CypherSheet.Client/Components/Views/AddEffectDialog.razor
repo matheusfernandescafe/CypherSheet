@@ -87,27 +87,29 @@
             Bônus facilita / adiciona; Penalidade dificulta / reduz. Magnitude zero não é permitida.
         </MudText>
 
-        @* Dropdown AppliesTo com grupos usando separadores nativos do MudBlazor *@
-        <MudSelect @bind-Value="appliesTo" @bind-Value:after="UpdatePreview" Label="Aplica-se a" Class="mb-4">
+        @* Dropdown AppliesTo *@
+        <MudSelect @bind-Value="appliesTo" @bind-Value:after="UpdatePreview" Label="Aplica-se a" Class="mb-2">
             <MudSelectItem Value="@AppliesTo.AnyRoll">Qualquer Rolagem</MudSelectItem>
-
-            <MudDivider />
-            <MudListSubheader>Defesas</MudListSubheader>
             <MudSelectItem Value="@AppliesTo.AllDefenses">Defesas — Todas</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.MightDefense">Defesa Might</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.SpeedDefense">Defesa Speed</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.IntellectDefense">Defesa Intellect</MudSelectItem>
-
-            <MudDivider />
-            <MudListSubheader>Ataques</MudListSubheader>
             <MudSelectItem Value="@AppliesTo.AllAttacks">Ataques — Todos</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.MeleeAttack">Ataque Melee</MudSelectItem>
             <MudSelectItem Value="@AppliesTo.RangedAttack">Ataque à Distância</MudSelectItem>
-
-            <MudDivider />
-            <MudListSubheader>Testes de Perícia</MudListSubheader>
             <MudSelectItem Value="@AppliesTo.SkillTests">Testes de Perícia</MudSelectItem>
+            <MudSelectItem Value="@AppliesTo.Other">Outro</MudSelectItem>
         </MudSelect>
+
+        @* Campo de descrição livre para "Outro" em AppliesTo *@
+        @if (appliesTo == AppliesTo.Other)
+        {
+            <MudTextField @bind-Value="appliesToCustomDescription" @bind-Value:after="UpdatePreview"
+                          Label="Onde se aplica"
+                          Placeholder="Ex: testes de natação"
+                          Immediate="true"
+                          Class="mb-2" />
+        }
 
         @* Seção 3 — Temporalidade *@
         <MudText Typo="Typo.subtitle2" Class="mb-2">Temporalidade</MudText>
@@ -172,6 +174,7 @@
     private int magnitude = 1;   // sempre positivo (1..N)
     private int effectSign = 1;  // -1 = Bônus, 0 = Neutro, 1 = Penalidade
     private AppliesTo appliesTo = AppliesTo.AnyRoll;
+    private string appliesToCustomDescription = string.Empty;
     private DurationType durationType = DurationType.Turns;
     private int remainingTurns = 1;
 
@@ -186,7 +189,8 @@
     private bool IsSubmitDisabled =>
         string.IsNullOrWhiteSpace(name) ||
         (effectSign != 0 && magnitude == 0) ||
-        (modifierType == ModifierType.Other && string.IsNullOrWhiteSpace(customDescription));
+        (modifierType == ModifierType.Other && string.IsNullOrWhiteSpace(customDescription)) ||
+        (appliesTo == AppliesTo.Other && string.IsNullOrWhiteSpace(appliesToCustomDescription));
 
     protected override void OnInitialized()
     {
@@ -197,6 +201,7 @@
             modifierType = EffectToEdit.ModifierType;
             customDescription = EffectToEdit.CustomDescription ?? string.Empty;
             appliesTo = EffectToEdit.AppliesTo;
+            appliesToCustomDescription = EffectToEdit.AppliesToCustomDescription ?? string.Empty;
             durationType = EffectToEdit.DurationType;
             remainingTurns = EffectToEdit.RemainingTurns ?? 1;
 
@@ -268,8 +273,10 @@
             Name = name,
             Origin = string.IsNullOrWhiteSpace(origin) ? null : origin,
             ModifierType = modifierType,
+            CustomDescription = modifierType == ModifierType.Other ? customDescription : null,
             Value = computedValue,
             AppliesTo = appliesTo,
+            AppliesToCustomDescription = appliesTo == AppliesTo.Other ? appliesToCustomDescription : null,
             DurationType = durationType,
             RemainingTurns = durationType == DurationType.Turns ? remainingTurns : null
         };
@@ -307,6 +314,7 @@
             EffectToEdit.CustomDescription = modifierType == ModifierType.Other ? customDescription.Trim() : null;
             EffectToEdit.Value = computedValue;
             EffectToEdit.AppliesTo = appliesTo;
+            EffectToEdit.AppliesToCustomDescription = appliesTo == AppliesTo.Other ? appliesToCustomDescription.Trim() : null;
             EffectToEdit.DurationType = durationType;
             EffectToEdit.RemainingTurns = durationType == DurationType.Turns ? remainingTurns : null;
         }
@@ -322,6 +330,7 @@
                 CustomDescription = modifierType == ModifierType.Other ? customDescription.Trim() : null,
                 Value = computedValue,
                 AppliesTo = appliesTo,
+                AppliesToCustomDescription = appliesTo == AppliesTo.Other ? appliesToCustomDescription.Trim() : null,
                 DurationType = durationType,
                 RemainingTurns = durationType == DurationType.Turns ? remainingTurns : null
             };

@@ -10,5 +10,6 @@ public enum AppliesTo
     AllAttacks,        // Ataques — Todos
     MeleeAttack,       // Ataque Melee
     RangedAttack,      // Ataque à Distância
-    SkillTests         // Testes de Perícia
+    SkillTests,        // Testes de Perícia
+    Other              // Outro (descrição livre)
 }

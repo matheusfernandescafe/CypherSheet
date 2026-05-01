@@ -40,7 +40,11 @@ public static class EffectDescriptionBuilder
         if (string.IsNullOrEmpty(modifierDescription))
             return string.Empty;
 
-        var appliesToLabel = GetAppliesToLabel(effect.AppliesTo);
+        var appliesToLabel = effect.AppliesTo == AppliesTo.Other
+            ? (string.IsNullOrWhiteSpace(effect.AppliesToCustomDescription)
+                ? string.Empty
+                : $"em {effect.AppliesToCustomDescription.Trim()}")
+            : GetAppliesToLabel(effect.AppliesTo);
         return $"{modifierDescription} {appliesToLabel}";
     }
 

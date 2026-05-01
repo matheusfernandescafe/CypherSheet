@@ -9,6 +9,7 @@ public class ActiveEffect
     public string? Origin { get; set; }
     public ModifierType ModifierType { get; set; }
     public string? CustomDescription { get; set; }
+    public string? AppliesToCustomDescription { get; set; }
     public int Value { get; set; }
     public AppliesTo AppliesTo { get; set; }
     public DurationType DurationType { get; set; }
