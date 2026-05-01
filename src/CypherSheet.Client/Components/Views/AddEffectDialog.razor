@@ -110,10 +110,16 @@
         @* Campo de turnos condicional *@
         @if (durationType == DurationType.Turns)
         {
-            <MudNumericField @bind-Value="remainingTurns" @bind-Value:after="UpdatePreview"
-                             Label="Número de Turnos"
-                             Min="1"
-                             Class="mb-2" />
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
+                <MudText Typo="Typo.body2">Turnos:</MudText>
+                <MudButton Variant="Variant.Outlined"
+                           Size="Size.Small"
+                           OnClick="DecrementTurns">-1</MudButton>
+                <MudText Typo="Typo.h6" Style="min-width: 40px; text-align: center;">@remainingTurns</MudText>
+                <MudButton Variant="Variant.Outlined"
+                           Size="Size.Small"
+                           OnClick="IncrementTurns">+1</MudButton>
+            </MudStack>
         }
 
         @* Preview em linguagem natural *@
@@ -215,6 +221,18 @@
     private void IncrementMagnitude()
     {
         magnitude++;
+        UpdatePreview();
+    }
+
+    private void DecrementTurns()
+    {
+        if (remainingTurns > 1) remainingTurns--;
+        UpdatePreview();
+    }
+
+    private void IncrementTurns()
+    {
+        remainingTurns++;
         UpdatePreview();
     }
 
