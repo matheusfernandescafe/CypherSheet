@@ -1,4 +1,4 @@
-namespace CypherSheet.Client.Pages;
+namespace CypherSheet.Client.Components.Views;
 
 public enum CombatSubView
 {

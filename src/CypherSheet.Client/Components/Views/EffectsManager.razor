@@ -1,5 +1,4 @@
 @using CypherSheet.Domain
-@using MudBlazor
 
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -138,7 +137,6 @@
 @code {
     private Character? Character => StateService.Character;
 
-    // Abre o AddEffectDialog para criação
     private async Task OpenAddEffectDialog()
     {
         var parameters = new DialogParameters
@@ -158,11 +156,9 @@
         if (result != null && !result.Canceled)
         {
             await StateService.SaveCharacterAsync();
-            StateHasChanged();
         }
     }
 
-    // Abre o AddEffectDialog para edição de um efeito existente
     private async Task OpenEditEffectDialog(ActiveEffect effect)
     {
         var parameters = new DialogParameters
@@ -183,18 +179,15 @@
         if (result != null && !result.Canceled)
         {
             await StateService.SaveCharacterAsync();
-            StateHasChanged();
         }
     }
 
-    // Remove o efeito e persiste
     private async Task RemoveEffect(ActiveEffect effect)
     {
         Character!.ActiveEffects.Remove(effect);
         await StateService.SaveCharacterAsync();
     }
 
-    // Decrementa RemainingTurns com piso em 0
     private async Task DecrementTurns(ActiveEffect effect)
     {
         if (effect.RemainingTurns > 0)
@@ -204,14 +197,12 @@
         }
     }
 
-    // Incrementa RemainingTurns em 1
     private async Task IncrementTurns(ActiveEffect effect)
     {
         effect.RemainingTurns = (effect.RemainingTurns ?? 0) + 1;
         await StateService.SaveCharacterAsync();
     }
 
-    // Avança o turno: decrementa RemainingTurns de todos os efeitos de turno (piso em 0)
     private async Task NextTurn()
     {
         var expiredNames = new List<string>();
@@ -232,7 +223,6 @@
             Snackbar.Add($"Efeitos expirados: {string.Join(", ", expiredNames)}", Severity.Info);
     }
 
-    // Remove todos os efeitos FullCombat OU expirados, com confirmação
     private async Task EndCombat()
     {
         bool? confirmed = await DialogService.ShowMessageBox(

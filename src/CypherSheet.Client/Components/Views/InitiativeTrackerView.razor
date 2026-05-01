@@ -94,14 +94,13 @@
             {
                 Character.InitiativeParticipants.Add(participant);
                 await StateService.SaveCharacterAsync();
-                StateHasChanged();
             }
         }
     }
 
     private async Task RemoveParticipant(InitiativeParticipant participant)
     {
-        Character.InitiativeParticipants.Remove(participant);
+        Character.InitiativeParticipants.RemoveAll(p => p.Id == participant.Id);
         await StateService.SaveCharacterAsync();
     }
 

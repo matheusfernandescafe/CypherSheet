@@ -23,31 +23,31 @@
         <MudStack Row="true" Spacing="2" Class="mb-3">
             <MudButton Color="Color.Default"
                        Variant="Variant.Outlined"
-                       OnClick="@(() => SetSign(-1))"
+                       OnClick="@(() => SetSign(EffectSign.Buff))"
                        Style="flex: 1;">
-                <MudIcon Icon="@(effectSign == -1 ? Icons.Material.Filled.Circle : Icons.Material.Outlined.RadioButtonUnchecked)"
+                <MudIcon Icon="@(effectSign == EffectSign.Buff ? Icons.Material.Filled.Circle : Icons.Material.Outlined.RadioButtonUnchecked)"
                          Size="Size.Small"
-                         Style="@(effectSign == -1 ? "color: var(--mud-palette-success);" : "")"
+                         Style="@(effectSign == EffectSign.Buff ? "color: var(--mud-palette-success);" : "")"
                          Class="mr-1" />
                 Bônus
             </MudButton>
             <MudButton Color="Color.Default"
                        Variant="Variant.Outlined"
-                       OnClick="@(() => SetSign(0))"
+                       OnClick="@(() => SetSign(EffectSign.Neutral))"
                        Style="flex: 1;">
-                <MudIcon Icon="@(effectSign == 0 ? Icons.Material.Filled.Circle : Icons.Material.Outlined.RadioButtonUnchecked)"
+                <MudIcon Icon="@(effectSign == EffectSign.Neutral ? Icons.Material.Filled.Circle : Icons.Material.Outlined.RadioButtonUnchecked)"
                          Size="Size.Small"
-                         Style="@(effectSign == 0 ? "color: var(--mud-palette-text-secondary);" : "")"
+                         Style="@(effectSign == EffectSign.Neutral ? "color: var(--mud-palette-text-secondary);" : "")"
                          Class="mr-1" />
                 Neutro
             </MudButton>
             <MudButton Color="Color.Default"
                        Variant="Variant.Outlined"
-                       OnClick="@(() => SetSign(1))"
+                       OnClick="@(() => SetSign(EffectSign.Debuff))"
                        Style="flex: 1;">
-                <MudIcon Icon="@(effectSign == 1 ? Icons.Material.Filled.Circle : Icons.Material.Outlined.RadioButtonUnchecked)"
+                <MudIcon Icon="@(effectSign == EffectSign.Debuff ? Icons.Material.Filled.Circle : Icons.Material.Outlined.RadioButtonUnchecked)"
                          Size="Size.Small"
-                         Style="@(effectSign == 1 ? "color: var(--mud-palette-error);" : "")"
+                         Style="@(effectSign == EffectSign.Debuff ? "color: var(--mud-palette-error);" : "")"
                          Class="mr-1" />
                 Penalidade
             </MudButton>
@@ -172,7 +172,7 @@
     private ModifierType modifierType = ModifierType.Step;
     private string customDescription = string.Empty;
     private int magnitude = 1;   // sempre positivo (1..N)
-    private int effectSign = 1;  // -1 = Bônus, 0 = Neutro, 1 = Penalidade
+    private EffectSign effectSign = EffectSign.Debuff;
     private AppliesTo appliesTo = AppliesTo.AnyRoll;
     private string appliesToCustomDescription = string.Empty;
     private DurationType durationType = DurationType.Turns;
@@ -182,13 +182,13 @@
     private string _previewDescription = string.Empty;
 
     // Value calculado a partir de magnitude e sinal
-    private int ComputedValue => effectSign == 0 ? 0 : effectSign * magnitude;
+    private int ComputedValue => effectSign == EffectSign.Neutral ? 0 : (int)effectSign * magnitude;
 
     // Validação: desabilitado quando Name vazio OU magnitude == 0 (neutro com magnitude 0 não faz sentido)
     // Para "Outro", também exige descrição preenchida
     private bool IsSubmitDisabled =>
         string.IsNullOrWhiteSpace(name) ||
-        (effectSign != 0 && magnitude == 0) ||
+        (effectSign != EffectSign.Neutral && magnitude == 0) ||
         (modifierType == ModifierType.Other && string.IsNullOrWhiteSpace(customDescription)) ||
         (appliesTo == AppliesTo.Other && string.IsNullOrWhiteSpace(appliesToCustomDescription));
 
@@ -208,17 +208,17 @@
             // Decompor Value em sinal e magnitude
             if (EffectToEdit.Value < 0)
             {
-                effectSign = -1;
+                effectSign = EffectSign.Buff;
                 magnitude = Math.Abs(EffectToEdit.Value);
             }
             else if (EffectToEdit.Value > 0)
             {
-                effectSign = 1;
+                effectSign = EffectSign.Debuff;
                 magnitude = EffectToEdit.Value;
             }
             else
             {
-                effectSign = 0;
+                effectSign = EffectSign.Neutral;
                 magnitude = 1;
             }
         }
@@ -226,11 +226,11 @@
         UpdatePreview();
     }
 
-    private void SetSign(int sign)
+    private void SetSign(EffectSign sign)
     {
         effectSign = sign;
         // Neutro força magnitude a 0 para o cálculo, mas mantemos o display em 1
-        if (sign == 0) magnitude = 1;
+        if (sign == EffectSign.Neutral) magnitude = 1;
         UpdatePreview();
     }
 
