@@ -58,7 +58,18 @@
             <MudSelectItem Value="@ModifierType.FlatDamage">Dano Fixo</MudSelectItem>
             <MudSelectItem Value="@ModifierType.Armor">Armadura</MudSelectItem>
             <MudSelectItem Value="@ModifierType.TemporaryEdge">Edge Temporário</MudSelectItem>
+            <MudSelectItem Value="@ModifierType.Other">Outro</MudSelectItem>
         </MudSelect>
+
+        @* Campo de descrição livre para "Outro" *@
+        @if (modifierType == ModifierType.Other)
+        {
+            <MudTextField @bind-Value="customDescription" @bind-Value:after="UpdatePreview"
+                          Label="Descrição do modificador"
+                          Placeholder="Ex: +2 em testes de furtividade"
+                          Immediate="true"
+                          Class="mb-2" />
+        }
 
         @* Seletor de magnitude com botões [-1] e [+1] *@
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
@@ -157,6 +168,7 @@
     private string name = string.Empty;
     private string origin = string.Empty;
     private ModifierType modifierType = ModifierType.Step;
+    private string customDescription = string.Empty;
     private int magnitude = 1;   // sempre positivo (1..N)
     private int effectSign = 1;  // -1 = Bônus, 0 = Neutro, 1 = Penalidade
     private AppliesTo appliesTo = AppliesTo.AnyRoll;
@@ -170,7 +182,11 @@
     private int ComputedValue => effectSign == 0 ? 0 : effectSign * magnitude;
 
     // Validação: desabilitado quando Name vazio OU magnitude == 0 (neutro com magnitude 0 não faz sentido)
-    private bool IsSubmitDisabled => string.IsNullOrWhiteSpace(name) || (effectSign != 0 && magnitude == 0);
+    // Para "Outro", também exige descrição preenchida
+    private bool IsSubmitDisabled =>
+        string.IsNullOrWhiteSpace(name) ||
+        (effectSign != 0 && magnitude == 0) ||
+        (modifierType == ModifierType.Other && string.IsNullOrWhiteSpace(customDescription));
 
     protected override void OnInitialized()
     {
@@ -179,6 +195,7 @@
             name = EffectToEdit.Name;
             origin = EffectToEdit.Origin ?? string.Empty;
             modifierType = EffectToEdit.ModifierType;
+            customDescription = EffectToEdit.CustomDescription ?? string.Empty;
             appliesTo = EffectToEdit.AppliesTo;
             durationType = EffectToEdit.DurationType;
             remainingTurns = EffectToEdit.RemainingTurns ?? 1;
@@ -287,6 +304,7 @@
             EffectToEdit!.Name = name.Trim();
             EffectToEdit.Origin = string.IsNullOrWhiteSpace(origin) ? null : origin.Trim();
             EffectToEdit.ModifierType = modifierType;
+            EffectToEdit.CustomDescription = modifierType == ModifierType.Other ? customDescription.Trim() : null;
             EffectToEdit.Value = computedValue;
             EffectToEdit.AppliesTo = appliesTo;
             EffectToEdit.DurationType = durationType;
@@ -301,6 +319,7 @@
                 Name = name.Trim(),
                 Origin = string.IsNullOrWhiteSpace(origin) ? null : origin.Trim(),
                 ModifierType = modifierType,
+                CustomDescription = modifierType == ModifierType.Other ? customDescription.Trim() : null,
                 Value = computedValue,
                 AppliesTo = appliesTo,
                 DurationType = durationType,

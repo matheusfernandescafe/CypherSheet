@@ -31,6 +31,9 @@ public static class EffectDescriptionBuilder
             ModifierType.FlatDamage => BuildFlatDamageDescription(effect.Value),
             ModifierType.Armor => BuildArmorDescription(effect.Value),
             ModifierType.TemporaryEdge => BuildTemporaryEdgeDescription(effect.Value),
+            ModifierType.Other => string.IsNullOrWhiteSpace(effect.CustomDescription)
+                ? string.Empty
+                : effect.CustomDescription.Trim(),
             _ => string.Empty
         };
 
