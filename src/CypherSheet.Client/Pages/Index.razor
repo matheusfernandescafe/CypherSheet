@@ -1,30 +1,30 @@
 @page "/"
 @using CypherSheet.Client.Components.Views
+@using CypherSheet.Client.Services
+@inject NavigationStateService NavigationStateService
+@implements IDisposable
 
 <PageTitle>Meus Personagens - Cypher Sheet</PageTitle>
 
-<div class="app-container">
-    <div class="content-area">
-        @switch (currentTab)
-        {
-            case TabType.Characters:
-            default:
-                <CharacterListView />
-                break;
-            case TabType.Settings:
-                <SettingsView />
-                break;
-        }
-    </div>
-
-    <AppFooter CurrentTab="currentTab" CurrentTabChanged="NavigateToTab" />
-</div>
+@switch (NavigationStateService.CurrentTab)
+{
+    case TabType.Characters:
+    default:
+        <CharacterListView />
+        break;
+    case TabType.Settings:
+        <SettingsView />
+        break;
+}
 
 @code {
-    private TabType currentTab = TabType.Characters;
-
-    private void NavigateToTab(TabType tab)
+    protected override void OnInitialized()
     {
-        currentTab = tab;
+        NavigationStateService.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        NavigationStateService.OnChange -= StateHasChanged;
     }
 }

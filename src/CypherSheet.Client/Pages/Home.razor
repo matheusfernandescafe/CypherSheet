@@ -2,120 +2,128 @@
 @using CypherSheet.Domain
 @using CypherSheet.Storage
 @using CypherSheet.Client.Components.Views
+@using CypherSheet.Client.Services
 @inject CypherSheet.Client.Services.CharacterStateService StateService
+@inject NavigationStateService NavigationStateService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @implements IDisposable
 
 <PageTitle>@(StateService.Character?.Name ?? "Carregando...") - Cypher Sheet</PageTitle>
 
-<div class="app-container">
-    <div class="content-area">
-        @if (isLoading)
-        {
-            <MudContainer Class="d-flex justify-center align-center" Style="height: 100vh;">
-                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-            </MudContainer>
-        }
-        else if (StateService.Character == null)
-        {
-            @switch (currentTab)
-            {
-                case TabType.Characters:
-                    <div class="d-flex justify-center align-center pa-4">
-                        <MudStack Spacing="3" AlignItems="AlignItems.Center">
-                            <MudAlert Severity="Severity.Info">Personagem não encontrado.</MudAlert>
-                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo(""))">Selecionar Personagem</MudButton>
-                        </MudStack>
-                    </div>
-                    break;
-                case TabType.Settings:
-                default:
-                    <SettingsView />
-                    break;
-            }
-        }
-        else
-        {
-            @switch (currentTab)
-            {
-                case TabType.Stats:
-                    <StatsView />
-                    break;
-                case TabType.Combat:
-                    <CombatView ResetKey="@_combatResetKey" />
-                    break;
-                case TabType.Skills:
-                    <SkillsView />
-                    break;
-                case TabType.Abilities:
-                    <AbilitiesView />
-                    break;
-                case TabType.Cyphers:
-                    <CyphersView />
-                    break;
-                case TabType.Equipment:
-                    <EquipmentView />
-                    break;
-                case TabType.Notes:
-                    <NotesView />
-                    break;
-                case TabType.Characters:
-                    <div class="d-flex justify-center align-center pa-4">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@TrocarPersonagem">Trocar Personagem</MudButton>
-                    </div>
-                    break;
-                case TabType.Settings:
-                    <SettingsView />
-                    break;
-            }
-        }
-    </div>
-
-    <AppFooter CurrentTab="currentTab" CurrentTabChanged="NavigateToTab" />
-</div>
+@if (isLoading)
+{
+    <MudContainer Class="d-flex justify-center align-center" Style="height: 100vh;">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+    </MudContainer>
+}
+else if (StateService.Character == null)
+{
+    @switch (NavigationStateService.CurrentTab)
+    {
+        case TabType.Characters:
+            <div class="d-flex justify-center align-center pa-4">
+                <MudStack Spacing="3" AlignItems="AlignItems.Center">
+                    <MudAlert Severity="Severity.Info">Personagem não encontrado.</MudAlert>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => Navigation.NavigateTo(""))">Selecionar Personagem</MudButton>
+                </MudStack>
+            </div>
+            break;
+        case TabType.Settings:
+        default:
+            <SettingsView />
+            break;
+    }
+}
+else
+{
+    @switch (NavigationStateService.CurrentTab)
+    {
+        case TabType.Stats:
+            <StatsView />
+            break;
+        case TabType.Combat:
+            <CombatView ResetKey="@_combatResetKey" />
+            break;
+        case TabType.Skills:
+            <SkillsView />
+            break;
+        case TabType.Abilities:
+            <AbilitiesView />
+            break;
+        case TabType.Cyphers:
+            <CyphersView />
+            break;
+        case TabType.Equipment:
+            <EquipmentView />
+            break;
+        case TabType.Notes:
+            <NotesView />
+            break;
+        case TabType.Characters:
+            <div class="d-flex justify-center align-center pa-4">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@TrocarPersonagem">Trocar Personagem</MudButton>
+            </div>
+            break;
+        case TabType.Settings:
+            <SettingsView />
+            break;
+    }
+}
 
 @code {
     [Parameter] public Guid Id { get; set; }
 
     private bool isLoading = true;
-
-    private TabType currentTab = TabType.Stats;
-
     private int _combatResetKey = 0;
+    private TabType _previousTab = TabType.Stats;
 
     protected override async Task OnInitializedAsync()
     {
         StateService.OnChange += StateHasChanged;
+        NavigationStateService.OnChange += OnNavigationChanged;
+        
         isLoading = true;
         await StateService.LoadCharacterAsync(Id);
 
         // Se não há personagem, definir Settings como aba padrão
         if (StateService.Character == null)
         {
-            currentTab = TabType.Settings;
+            NavigationStateService.SetTab(TabType.Settings);
+        }
+        else
+        {
+            // Se há personagem, definir Stats como aba padrão
+            NavigationStateService.SetTab(TabType.Stats);
         }
 
+        _previousTab = NavigationStateService.CurrentTab;
         isLoading = false;
+    }
+
+    private void OnNavigationChanged()
+    {
+        // Se a tab Combat foi clicada novamente, incrementar o reset key
+        if (NavigationStateService.CurrentTab == TabType.Combat && _previousTab == TabType.Combat)
+        {
+            _combatResetKey++;
+        }
+        
+        _previousTab = NavigationStateService.CurrentTab;
+        StateHasChanged();
     }
 
     public void Dispose()
     {
         StateService.OnChange -= StateHasChanged;
-    }
-
-    private void NavigateToTab(TabType tab)
-    {
-        if (tab == TabType.Combat && currentTab == TabType.Combat)
-        {
-            _combatResetKey++;
-        }
-        currentTab = tab;
+        NavigationStateService.OnChange -= OnNavigationChanged;
     }
 
     private void TrocarPersonagem()
     {
         StateService.ClearCharacter();
+        // Ao trocar personagem, definir Characters como tab ativa
+        NavigationStateService.SetTab(TabType.Characters);
         Navigation.NavigateTo("");
     }
 }

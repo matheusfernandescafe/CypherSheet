@@ -94,31 +94,98 @@ body.blazor-loaded #app {
 /* A loading screen controla completamente o layout durante o carregamento */
 
 /* Elementos internos do MudBlazor precisam propagar a altura - APENAS após carregamento */
-body.blazor-loaded .mud-layout,
-body.blazor-loaded .mud-main-content {
+body.blazor-loaded .mud-layout {
     height: 100% !important;
-    overflow: hidden !important;
 }
 
-/* MudContainer não deve bloquear scroll — o scroll acontece no .content-area */
+/* MudMainContent deve permitir scroll para o conteúdo não ser coberto pelo AppFooter */
+body.blazor-loaded .mud-main-content {
+    height: 100% !important;
+    /* overflow é controlado inline no MainLayout.razor */
+}
+
+/* MudContainer não deve bloquear scroll */
 .mud-container {
     min-height: 100%;
 }
 
-/* Container da página com footer */
-.app-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
+/* ========================================
+   Variáveis CSS Responsivas
+   ======================================== */
+
+:root {
+    --breakpoint-tablet: 768px;
+    --breakpoint-desktop: 1200px;
+    --sidebar-width: 240px;
+    --content-max-width: 1400px;
 }
 
-/* Área de conteúdo scrollável */
-.content-area {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    /* Espaço para não ficar atrás da footer fixa de 100px */
-    padding-bottom: 100px;
-    min-height: 0; /* necessário para flex + overflow funcionar */
+/* ========================================
+   Layout Responsivo - Sidebar e Footer
+   ======================================== */
+
+/* Sidebar: oculta em mobile/tablet por padrão */
+.sidebar-navigation {
+    display: none;
+}
+
+/* ========================================
+   Padding inferior para evitar sobreposição do AppFooter
+   ======================================== */
+
+/* Em mobile e tablet, adicionar padding-bottom para compensar o AppFooter fixo de 80px */
+.responsive-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 16px;
+    padding-bottom: 100px; /* 80px do footer + 20px de margem extra */
+}
+
+/* ========================================
+   Media Query: Tablet (768px - 1199px)
+   ======================================== */
+
+@media (min-width: 768px) and (max-width: 1199px) {
+    .responsive-container {
+        max-width: 100%;
+        padding: 0 16px;
+        padding-bottom: 100px; /* Manter padding inferior em tablet */
+    }
+}
+
+/* ========================================
+   Media Query: Desktop (≥ 1200px)
+   ======================================== */
+
+@media (min-width: 1200px) {
+    /* Exibe sidebar em desktop */
+    .sidebar-navigation {
+        display: flex;
+    }
+    
+    /* Oculta footer em desktop */
+    .footer-hidden-desktop {
+        display: none !important;
+    }
+    
+    /* Adiciona margem ao conteúdo principal para compensar a sidebar */
+    .responsive-main-content {
+        margin-left: var(--sidebar-width);
+    }
+    
+    /* Container responsivo com largura máxima e padding */
+    .responsive-container {
+        max-width: var(--content-max-width);
+        margin: 0 auto;
+        padding: 0 24px;
+        padding-bottom: 24px; /* Em desktop, não precisa de padding extra para o footer */
+    }
+    
+    /* Grid multi-coluna para views de listas */
+    .list-view-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        align-items: start;
+    }
 }

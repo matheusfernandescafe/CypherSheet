@@ -26,6 +26,7 @@ builder.Services.AddApplicationServices();
 builder.Services.AddScoped<CharacterStateService>();
 
 // Registrar serviços de UI e tema
+builder.Services.AddScoped<NavigationStateService>();
 builder.Services.AddScoped<IThemeService, ThemeService>();
 builder.Services.AddScoped<ILoadingService, LoadingService>();
 builder.Services.AddScoped<CypherSheet.Client.Services.INotificationService, NotificationService>();

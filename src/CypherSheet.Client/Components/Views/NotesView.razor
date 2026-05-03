@@ -35,23 +35,25 @@
     }
     else
     {
-        @foreach (var note in FilteredNotes.OrderBy(n => n.Title))
-        {
-            <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditNote(note))">
-                <div class="d-flex flex-column width-100">
-                    <div class="d-flex align-center justify-space-between width-100 mb-2">
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                            <MudText Typo="Typo.h6">@note.Title</MudText>
-                            <MudChip T="string" Size="Size.Small" Color="GetTypeColor(note.Type)" Variant="Variant.Filled">@GetTypeDisplayName(note.Type)</MudChip>
-                        </MudStack>
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => ConfirmRemoveNote(note))" />
-                        </MudStack>
+        <div class="list-view-grid">
+            @foreach (var note in FilteredNotes.OrderBy(n => n.Title))
+            {
+                <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditNote(note))">
+                    <div class="d-flex flex-column width-100">
+                        <div class="d-flex align-center justify-space-between width-100 mb-2">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudText Typo="Typo.h6">@note.Title</MudText>
+                                <MudChip T="string" Size="Size.Small" Color="GetTypeColor(note.Type)" Variant="Variant.Filled">@GetTypeDisplayName(note.Type)</MudChip>
+                            </MudStack>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" @onclick:stopPropagation="true">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => ConfirmRemoveNote(note))" />
+                            </MudStack>
+                        </div>
+                        <MudText Typo="Typo.body2" Style="white-space: pre-wrap;" Class="text-muted">@note.Content</MudText>
                     </div>
-                    <MudText Typo="Typo.body2" Style="white-space: pre-wrap;" Class="text-muted">@note.Content</MudText>
-                </div>
-            </MudPaper>
-        }
+                </MudPaper>
+            }
+        </div>
     }
 </MudStack>
 

@@ -1,7 +1,9 @@
 ﻿@using CypherSheet.Client.Services
 @using CypherSheet.Client.Components.Shared
+@using CypherSheet.Client.Pages
 @inherits LayoutComponentBase
 @inject IThemeService ThemeService
+@inject NavigationStateService NavigationStateService
 @implements IDisposable
 
 <MudThemeProvider Theme="_theme" IsDarkMode="@ThemeService.IsDarkMode" />
@@ -14,11 +16,15 @@
         <MudText Typo="Typo.h5" Class="ml-3" Style="color: white;">Cypher Sheet</MudText>
         <MudSpacer />
     </MudAppBar>
-    <MudMainContent Style="height: calc(100vh - var(--mud-appbar-height, 64px)); overflow: hidden;">
-        <MudContainer MaxWidth="MaxWidth.Small" Style="height: 100%; padding-top: 0; padding-bottom: 0; overflow: visible;">
+    <SidebarNavigation CurrentTab="@NavigationStateService.CurrentTab" 
+                       CurrentTabChanged="@OnTabChanged" />
+    <MudMainContent Class="responsive-main-content" Style="height: calc(100vh - var(--mud-appbar-height, 64px)); overflow-y: auto; overflow-x: hidden;">
+        <div class="responsive-container">
             @Body
-        </MudContainer>
+        </div>
     </MudMainContent>
+    <AppFooter CurrentTab="@NavigationStateService.CurrentTab" 
+               CurrentTabChanged="@OnTabChanged" />
 </MudLayout>
 
 <LoadingOverlay />
@@ -84,10 +90,17 @@
     {
         await ThemeService.InitializeAsync();
         ThemeService.OnThemeChanged += StateHasChanged;
+        NavigationStateService.OnChange += StateHasChanged;
+    }
+
+    private async Task OnTabChanged(TabType tab)
+    {
+        NavigationStateService.SetTab(tab);
     }
 
     public void Dispose()
     {
         ThemeService.OnThemeChanged -= StateHasChanged;
+        NavigationStateService.OnChange -= StateHasChanged;
     }
 }

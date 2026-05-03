@@ -1,66 +1,65 @@
 @inject CypherSheet.Client.Services.CharacterStateService StateService
 @implements IDisposable
 
-<div class="custom-footer footer-hidden-desktop" style="height: @(Height)px">
-    <div class="footer-item @(CurrentTab == TabType.Stats ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
+<div class="sidebar-navigation">
+    <div class="sidebar-item @(CurrentTab == TabType.Stats ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
          @onclick="@(() => OnTabClick(TabType.Stats))">
         <MudIcon Icon="@Icons.Material.Filled.Person" />
-        <span class="footer-item-label">Stats</span>
+        <span class="sidebar-item-label">Stats</span>
     </div>
 
-    <div class="footer-item @(CurrentTab == TabType.Combat ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
+    <div class="sidebar-item @(CurrentTab == TabType.Combat ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
          @onclick="@(() => OnTabClick(TabType.Combat))">
         <MudIcon Icon="@Icons.Material.Filled.Gavel" />
-        <span class="footer-item-label">Combat</span>
+        <span class="sidebar-item-label">Combat</span>
     </div>
 
-    <div class="footer-item @(CurrentTab == TabType.Skills ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
+    <div class="sidebar-item @(CurrentTab == TabType.Skills ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
          @onclick="@(() => OnTabClick(TabType.Skills))">
         <MudIcon Icon="@Icons.Material.Filled.SportsMma" />
-        <span class="footer-item-label">Skills</span>
+        <span class="sidebar-item-label">Skills</span>
     </div>
 
-    <div class="footer-item @(CurrentTab == TabType.Abilities ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
+    <div class="sidebar-item @(CurrentTab == TabType.Abilities ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
          @onclick="@(() => OnTabClick(TabType.Abilities))">
         <MudIcon Icon="@Icons.Material.Filled.AutoAwesome" />
-        <span class="footer-item-label">Abilities</span>
+        <span class="sidebar-item-label">Abilities</span>
     </div>
 
-    <div class="footer-item @(CurrentTab == TabType.Cyphers ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
+    <div class="sidebar-item @(CurrentTab == TabType.Cyphers ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
          @onclick="@(() => OnTabClick(TabType.Cyphers))">
         <MudIcon Icon="@Icons.Material.Filled.ChangeHistory" />
-        <span class="footer-item-label">Cyphers</span>
+        <span class="sidebar-item-label">Cyphers</span>
     </div>
 
-    <div class="footer-item @(CurrentTab == TabType.Equipment ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
+    <div class="sidebar-item @(CurrentTab == TabType.Equipment ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
          @onclick="@(() => OnTabClick(TabType.Equipment))">
         <MudIcon Icon="@Icons.Material.Filled.Backpack" />
-        <span class="footer-item-label">Equip.</span>
+        <span class="sidebar-item-label">Equipment</span>
     </div>
 
-    <div class="footer-item @(CurrentTab == TabType.Notes ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
+    <div class="sidebar-item @(CurrentTab == TabType.Notes ? "active" : "") @(!IsCharacterLoaded ? "disabled" : "")"
          @onclick="@(() => OnTabClick(TabType.Notes))">
         <MudIcon Icon="@Icons.Material.Filled.EditNote" />
-        <span class="footer-item-label">Notes</span>
+        <span class="sidebar-item-label">Notes</span>
     </div>
 
-    <div class="footer-item @(CurrentTab == TabType.Characters ? "active" : "")"
+    <div class="sidebar-item @(CurrentTab == TabType.Characters ? "active" : "")"
          @onclick="@(() => OnTabClick(TabType.Characters))">
         <MudIcon Icon="@Icons.Material.Filled.Groups" />
-        <span class="footer-item-label">Chars</span>
+        <span class="sidebar-item-label">Characters</span>
     </div>
 
-    <div class="footer-item @(CurrentTab == TabType.Settings ? "active" : "")"
+    <div class="sidebar-item @(CurrentTab == TabType.Settings ? "active" : "")"
          @onclick="@(() => OnTabClick(TabType.Settings))">
         <MudIcon Icon="@Icons.Material.Filled.Settings" />
-        <span class="footer-item-label">Config</span>
+        <span class="sidebar-item-label">Settings</span>
     </div>
 </div>
 
 @code {
     [Parameter] public TabType CurrentTab { get; set; }
     [Parameter] public EventCallback<TabType> CurrentTabChanged { get; set; }
-    [Parameter] public int Height { get; set; } = 80;
 
     private bool IsCharacterLoaded => StateService.Character != null;
 

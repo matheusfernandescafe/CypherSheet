@@ -1,0 +1,89 @@
+/* Oculta sidebar em mobile e tablet por padrão */
+.sidebar-navigation {
+    display: none;
+}
+
+/* Exibe sidebar apenas em desktop */
+@media (min-width: 1200px) {
+    .sidebar-navigation {
+        position: fixed;
+        left: 0;
+        top: var(--mud-appbar-height);
+        width: 240px;
+        height: calc(100vh - var(--mud-appbar-height));
+        background: var(--mud-palette-surface);
+        border-right: 1px solid var(--mud-palette-divider);
+        display: flex;
+        flex-direction: column;
+        z-index: 1000;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+        overflow-y: auto;
+    }
+}
+
+.sidebar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 56px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--mud-palette-text-secondary);
+    text-decoration: none;
+    padding: 12px 16px;
+    position: relative;
+}
+
+.sidebar-item:hover:not(.disabled) {
+    background: var(--mud-palette-action-default-hover);
+}
+
+.sidebar-item:active:not(.disabled) {
+    background: var(--mud-palette-action-default-hover);
+    transform: scale(0.98);
+    transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.sidebar-item.disabled:active {
+    animation: shake 0.25s ease;
+}
+
+@keyframes shake {
+    0%   { transform: translateX(0); }
+    25%  { transform: translateX(-3px); }
+    75%  { transform: translateX(3px); }
+    100% { transform: translateX(0); }
+}
+
+.sidebar-item.active {
+    color: var(--mud-palette-primary);
+    background: var(--mud-palette-action-default-hover);
+}
+
+.sidebar-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--mud-palette-primary);
+}
+
+.sidebar-item.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.sidebar-item .mud-icon-root {
+    font-size: 1.75rem;
+    margin-bottom: 4px;
+}
+
+.sidebar-item-label {
+    font-size: 0.75rem;
+    text-align: center;
+    line-height: 1.2;
+    font-weight: 500;
+}

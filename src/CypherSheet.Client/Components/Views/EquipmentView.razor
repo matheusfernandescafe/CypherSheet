@@ -62,44 +62,46 @@
                     @GetLocationDisplayName(locationGroup.Key) (@locationGroup.Count() @(locationGroup.Count() == 1 ? "item" : "itens"))
                 </MudText>
                 
-                @foreach (var item in locationGroup.OrderBy(i => i.Name))
-                {
-                    <MudPaper Class="pa-3" Elevation="1" Style="cursor: pointer;" @onclick="@(() => EditItem(item))">
-                        <MudStack Spacing="2">
-                            <div class="d-flex align-center justify-space-between">
-                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
-                                    <MudText Typo="Typo.subtitle1"><strong>@item.Name</strong></MudText>
-                                    <MudChip T="string" Color="@GetTypeColor(item.Type)" Size="Size.Small">
-                                        @GetTypeDisplayName(item.Type)
-                                    </MudChip>
-                                </MudStack>
-                                <div @onclick:stopPropagation="true">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" 
-                                                 Size="Size.Small" 
-                                                 Color="Color.Error" 
-                                                 OnClick="@(() => ConfirmRemoveItem(item))" />
+                <div class="list-view-grid">
+                    @foreach (var item in locationGroup.OrderBy(i => i.Name))
+                    {
+                        <MudPaper Class="pa-3" Elevation="1" Style="cursor: pointer;" @onclick="@(() => EditItem(item))">
+                            <MudStack Spacing="2">
+                                <div class="d-flex align-center justify-space-between">
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudText Typo="Typo.subtitle1"><strong>@item.Name</strong></MudText>
+                                        <MudChip T="string" Color="@GetTypeColor(item.Type)" Size="Size.Small">
+                                            @GetTypeDisplayName(item.Type)
+                                        </MudChip>
+                                    </MudStack>
+                                    <div @onclick:stopPropagation="true">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                     Size="Size.Small" 
+                                                     Color="Color.Error" 
+                                                     OnClick="@(() => ConfirmRemoveItem(item))" />
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
-                                <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                    <strong>Qtd:</strong> @item.Quantity
-                                </MudText>
-                                @if (item.Value > 0)
-                                {
+                                
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
                                     <MudText Typo="Typo.body2" Color="Color.Secondary">
-                                        <strong>Valor:</strong> @item.Value.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+                                        <strong>Qtd:</strong> @item.Quantity
                                     </MudText>
+                                    @if (item.Value > 0)
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                            <strong>Valor:</strong> @item.Value.ToString("C", System.Globalization.CultureInfo.GetCultureInfo("en-US"))
+                                        </MudText>
+                                    }
+                                </MudStack>
+                                
+                                @if (!string.IsNullOrWhiteSpace(item.Description))
+                                {
+                                    <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@item.Description</MudText>
                                 }
                             </MudStack>
-                            
-                            @if (!string.IsNullOrWhiteSpace(item.Description))
-                            {
-                                <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@item.Description</MudText>
-                            }
-                        </MudStack>
-                    </MudPaper>
-                }
+                        </MudPaper>
+                    }
+                </div>
             </MudStack>
         }
     }
