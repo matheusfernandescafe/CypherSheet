@@ -71,6 +71,21 @@ code {
     color: #A78BFA;
 }
 
+/* Espaçamento para listas */
+ul, ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+ul li, ol li {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+
+ul li:last-child, ol li:last-child {
+    margin-bottom: 0;
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
     color: var(--bs-secondary-color);
     text-align: end;
@@ -185,7 +200,7 @@ body.blazor-loaded .mud-main-content {
     .list-view-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+        gap: 16px;
         align-items: start;
     }
 }

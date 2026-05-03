@@ -35,7 +35,7 @@
         <div class="list-view-grid">
             @foreach (var ability in FilteredAbilities)
             {
-                <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditAbility(ability))">
+                <MudPaper Class="pa-4 mb-3" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditAbility(ability))">
                     <div class="d-flex flex-column width-100">
                         <div class="d-flex align-center justify-space-between width-100 mb-2">
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">

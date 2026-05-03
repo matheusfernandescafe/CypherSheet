@@ -65,7 +65,7 @@
                 <div class="list-view-grid">
                     @foreach (var item in locationGroup.OrderBy(i => i.Name))
                     {
-                        <MudPaper Class="pa-3" Elevation="1" Style="cursor: pointer;" @onclick="@(() => EditItem(item))">
+                        <MudPaper Class="pa-3 mb-3" Elevation="1" Style="cursor: pointer;" @onclick="@(() => EditItem(item))">
                             <MudStack Spacing="2">
                                 <div class="d-flex align-center justify-space-between">
                                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">

@@ -38,7 +38,7 @@
         <div class="list-view-grid">
             @foreach (var note in FilteredNotes.OrderBy(n => n.Title))
             {
-                <MudPaper Class="pa-4" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditNote(note))">
+                <MudPaper Class="pa-4 mb-3" Elevation="2" Style="cursor: pointer;" @onclick="@(() => EditNote(note))">
                     <div class="d-flex flex-column width-100">
                         <div class="d-flex align-center justify-space-between width-100 mb-2">
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
@@ -49,7 +49,6 @@
                                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="@(() => ConfirmRemoveNote(note))" />
                             </MudStack>
                         </div>
-                        <MudText Typo="Typo.body2" Style="white-space: pre-wrap;" Class="text-muted">@note.Content</MudText>
                     </div>
                 </MudPaper>
             }
@@ -129,4 +128,56 @@
         NoteType.Outro => "Outro",
         _ => "Outro"
     };
+
+    private string FormatNoteContent(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+            return string.Empty;
+
+        var lines = content.Split('\n');
+        var result = new System.Text.StringBuilder();
+        var inList = false;
+
+        foreach (var line in lines)
+        {
+            var trimmedLine = line.TrimStart();
+            
+            // Detecta linhas que começam com "- " (bullet points)
+            if (trimmedLine.StartsWith("- "))
+            {
+                if (!inList)
+                {
+                    result.Append("<ul>");
+                    inList = true;
+                }
+                var itemText = System.Net.WebUtility.HtmlEncode(trimmedLine.Substring(2));
+                result.Append($"<li>{itemText}</li>");
+            }
+            else
+            {
+                if (inList)
+                {
+                    result.Append("</ul>");
+                    inList = false;
+                }
+                
+                if (!string.IsNullOrWhiteSpace(trimmedLine))
+                {
+                    var encodedLine = System.Net.WebUtility.HtmlEncode(line);
+                    result.Append($"<p>{encodedLine}</p>");
+                }
+                else if (!inList)
+                {
+                    result.Append("<br/>");
+                }
+            }
+        }
+
+        if (inList)
+        {
+            result.Append("</ul>");
+        }
+
+        return result.ToString();
+    }
 }
