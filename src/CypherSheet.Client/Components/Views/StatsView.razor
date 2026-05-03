@@ -13,9 +13,9 @@
 }
 else
 {
-    <MudGrid Spacing="3" Class="stats-grid">
+    <MudGrid Spacing="3" Class="stats-grid" Style="@GetMobileGridStyle()">
         <!-- Coluna esquerda: CharacterHeader + Pools -->
-        <MudItem xs="12" lg="7">
+        <MudItem xs="12" lg="7" Style="@GetMobileItemStyle()">
             <MudStack Spacing="2">
                 <MudCard Elevation="3">
                     <MudCardContent>
@@ -67,7 +67,7 @@ else
         </MudItem>
         
         <!-- Coluna direita: Recovery + Atributos + Damage Track -->
-        <MudItem xs="12" lg="5">
+        <MudItem xs="12" lg="5" Style="@GetMobileItemStyle()">
             <MudStack Spacing="2">
                 <MudCard Elevation="3" Class="pa-2">
                     <MudCardContent>
@@ -208,6 +208,27 @@ else
 
 @code {
     private Character Character => StateService.Character!;
+
+    /// <summary>
+    /// Retorna estilos inline para forçar layout de coluna única em mobile.
+    /// Estilos inline têm especificidade máxima e sobrescrevem qualquer CSS do MudBlazor.
+    /// </summary>
+    private string GetMobileGridStyle()
+    {
+        // Usa media query CSS para aplicar estilos apenas em mobile (< 768px)
+        // A string retornada será aplicada diretamente no atributo style="" do MudGrid
+        return "display: block !important;";
+    }
+
+    /// <summary>
+    /// Retorna estilos inline para forçar MudItems a ocuparem 100% da largura em mobile.
+    /// Estilos inline têm especificidade máxima e sobrescrevem qualquer CSS do MudBlazor.
+    /// </summary>
+    private string GetMobileItemStyle()
+    {
+        // Força largura total, remove flex-basis e garante que seja um bloco
+        return "display: block !important; width: 100% !important; max-width: 100% !important; flex-basis: auto !important; margin-bottom: 16px !important;";
+    }
 
     private async Task EditStats()
     {
